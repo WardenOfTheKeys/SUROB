@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-title" content="SUROB MSI" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#0f172a" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" type="image/svg+xml" href="icon.svg" />
+<link rel="apple-touch-icon" href="icon-192.png" />
 <title>SUROB MSI Calculator</title>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--ink:#111827;--muted:#5b6472;--line:#d6dce5;--navy:#0f172a;--blue:#1d4ed8;--ok:#166534;--okbg:#ecfdf3;--warn:#92400e;--warnbg:#fff7ed;--bad:#991b1b;--badbg:#fef2f2}
@@ -26,7 +29,7 @@ label{font-size:13px;font-weight:800;color:#374151;display:block;margin-bottom:5
 </header>
 <main>
   <noscript><div class="note bad"><b>JavaScript is off.</b> The calculator cannot run until JavaScript is enabled or opened in a browser that supports scripts.</div></noscript>
-  <div id="blockedNotice" class="note warn"><b>Loading calculator.</b> If this message stays on screen, the phone preview is blocking the app logic. Open the file in Safari/Chrome or use the PWA/home-screen version.</div>
+  <div id="blockedNotice" class="note warn"><b>Loading calculator.</b> If this message stays on screen, the phone preview is blocking the app logic. Open it in any current browser (Chrome, Edge, Firefox, Safari, Samsung Internet) from the web link, not a file preview.</div>
   <section class="card">
     <h2>1. A / B / D - Wave count</h2>
     <p class="small">Enter how many waves were recorded at each height. The app calculates A / ALPHA from the highest 33 waves, B / BRAVO from the highest single wave, and D / DELTA from breaker-type counts.</p>
@@ -196,7 +199,7 @@ Secondary wave height: ${fmt(sec,1)} ft
 MSI: ${fmt(msi,1)}
 MSI math: ${formula}`;setText('callOutput',call);renderCraft(msi,alphaRaw,bravo)}
 function clearForm(){document.querySelectorAll('.hcount').forEach(i=>i.value='0');document.querySelectorAll('input').forEach(i=>{if(!i.classList.contains('hcount')&&!['checkbox'].includes(i.type))i.value=''});$('driftMinutes').value='1';$('pCount').value='0';$('sCount').value='0';$('xCount').value='0';$('echoAngle').value='0';$('secondaryHeight').value='0';$('windSpeed').value='0';$('visibilityYards').value='9999';$('windType').value='onshore';$('operationMode').value='training';$('lcacLoad').value='auto';$('lcacCraftmaster').value='go';['lcacCommsOk','lcacMarkersVisible','lcacLaneClear','lcacNoUnmovableFod'].forEach(id=>$(id).checked=true);calculate()}
-function init(){try{document.querySelectorAll('input,select,textarea').forEach(el=>{el.addEventListener('input',calculate);el.addEventListener('change',calculate)});$('applyPaste').addEventListener('click',()=>{const vals=$('pasteHeights').value.split(/[\s,]+/).map(Number).filter(Number.isFinite);setCountsFromList(vals);calculate()});$('clearAll').addEventListener('click',clearForm);$('copyCall').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('callOutput').textContent);$('copyCall').textContent='Copied';setTimeout(()=>$('copyCall').textContent='Copy call',1000)}catch(e){alert('Copy failed. Select and copy the call text manually.')}});$('jsStatus').className='status ok';$('jsStatus').textContent='App ready';$('blockedNotice').className='note ok';$('blockedNotice').innerHTML='<b>App ready.</b> If calculations stop updating on a phone, use the Calculate / refresh button or open from Safari/Chrome/PWA instead of file preview.';calculate()}catch(err){$('jsStatus').className='status bad';$('jsStatus').textContent='App error';$('blockedNotice').className='note bad';$('blockedNotice').innerHTML='<b>App error.</b> '+err.message}}
+function init(){try{document.querySelectorAll('input,select,textarea').forEach(el=>{el.addEventListener('input',calculate);el.addEventListener('change',calculate)});$('applyPaste').addEventListener('click',()=>{const vals=$('pasteHeights').value.split(/[\s,]+/).map(Number).filter(Number.isFinite);setCountsFromList(vals);calculate()});$('clearAll').addEventListener('click',clearForm);$('copyCall').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('callOutput').textContent);$('copyCall').textContent='Copied';setTimeout(()=>$('copyCall').textContent='Copy call',1000)}catch(e){alert('Copy failed. Select and copy the call text manually.')}});$('jsStatus').className='status ok';$('jsStatus').textContent='App ready';$('blockedNotice').className='note ok';$('blockedNotice').innerHTML='<b>App ready.</b> If calculations stop updating on a phone, use the Calculate / refresh button or open it from the web link in any browser instead of a file preview.';calculate()}catch(err){$('jsStatus').className='status bad';$('jsStatus').textContent='App error';$('blockedNotice').className='note bad';$('blockedNotice').innerHTML='<b>App error.</b> '+err.message}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 </script>
 </body>
