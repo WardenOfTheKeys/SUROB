@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="SUROB MSI" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#0f172a" />
+<title>SUROB MSI Calculator</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#111827;--muted:#5b6472;--line:#d6dce5;--navy:#0f172a;--blue:#1d4ed8;--ok:#166534;--okbg:#ecfdf3;--warn:#92400e;--warnbg:#fff7ed;--bad:#991b1b;--badbg:#fef2f2}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.35}header{background:linear-gradient(135deg,#0f172a,#27364e);color:#fff;padding:14px 12px;padding-top:calc(14px + env(safe-area-inset-top))}header .wrap,main{max-width:1120px;margin:0 auto}h1{margin:0;font-size:clamp(22px,5vw,34px);letter-spacing:-.02em}header p{margin:5px 0 0;color:#d5dce7;font-size:14px}.appbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.status{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:7px 11px;font-size:13px;font-weight:800;background:#334155;color:#e2e8f0}.status.ok{background:var(--okbg);color:var(--ok)}.status.bad{background:var(--badbg);color:var(--bad)}main{padding:12px;display:grid;gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 5px 18px rgba(15,23,42,.06)}.card h2{margin:0 0 8px;font-size:20px}.card h3{margin:14px 0 8px;font-size:16px}.small{font-size:13px;color:var(--muted)}.note{border-radius:12px;padding:10px 12px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-size:14px}.note.warn{background:var(--warnbg);border-color:#fed7aa;color:#7c2d12}.note.bad{background:var(--badbg);border-color:#fecaca;color:#7f1d1d}.note.ok{background:var(--okbg);border-color:#bbf7d0;color:#14532d}.grid{display:grid;gap:10px}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.four{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:780px){.two,.three,.four{grid-template-columns:1fr}main{padding:8px}.card{padding:12px;border-radius:14px}.card h2{font-size:18px}.small{font-size:12.8px}header p{display:none}}
+label{font-size:13px;font-weight:800;color:#374151;display:block;margin-bottom:5px}input,select,textarea,button{font:inherit}input,select,textarea{width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:11px 12px;background:#fff;color:#111827;font-size:16px;min-height:44px}textarea{min-height:92px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px}input:focus,select:focus,textarea:focus{outline:3px solid #dbeafe;border-color:#60a5fa}button{border:0;border-radius:12px;padding:12px 14px;background:var(--navy);color:#fff;font-weight:900;min-height:44px;cursor:pointer}button.secondary{background:#e5e7eb;color:#111827}button.ghost{background:#fff;color:#111827;border:1px solid #cbd5e1}.btnrow{display:flex;gap:8px;flex-wrap:wrap}.btnrow button{flex:0 1 auto}@media(max-width:540px){.btnrow button{flex:1 1 100%}}
+.wave-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}.wavebox{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:8px}.wavebox label{text-align:center}.wavebox input{text-align:center;padding:8px;min-height:42px}@media(max-width:900px){.wave-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:520px){.wave-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wavebox{padding:7px}.wavebox input{font-size:18px}}
+.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}@media(max-width:700px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}.sum{background:#f8fafc;border:1px solid #e2e8f0;border-radius:13px;padding:10px}.sum b{font-size:12px;color:#475569;text-transform:uppercase;letter-spacing:.04em;display:block}.sum strong{font-size:24px;display:block;margin-top:2px}.sum span{font-size:12px;color:#64748b}.breakdown{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px}@media(max-width:1060px){.breakdown{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:620px){.breakdown{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.call{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#0b1220;color:#dbeafe;border-radius:13px;padding:12px;white-space:pre-wrap;overflow:auto;font-size:13px}.result{background:#0f172a;color:#fff;border-radius:18px;padding:18px;text-align:center}.result .label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#cbd5e1}.result .num{font-size:64px;line-height:1;font-weight:950;margin:8px 0}.pill{display:inline-flex;gap:6px;align-items:center;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;background:#e5e7eb;color:#111827}.pill.ok{background:var(--okbg);color:var(--ok)}.pill.warn{background:var(--warnbg);color:var(--warn)}.pill.bad{background:var(--badbg);color:var(--bad)}details{border:1px solid #e5e7eb;border-radius:13px;padding:10px;background:#fff}summary{font-weight:900;cursor:pointer}.checkgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}@media(max-width:700px){.checkgrid{grid-template-columns:1fr}}.check{display:flex;gap:9px;align-items:flex-start;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px;font-size:14px}.check input{width:auto;min-height:auto;margin-top:3px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align:top}th{background:#f1f5f9}.scroll{overflow:auto}.footer{font-size:12px;color:#64748b;text-align:center;padding:12px}.mobile-only{display:none}@media(max-width:560px){.mobile-only{display:block}.desktop-only{display:none}.result .num{font-size:52px}}@media print{header,.no-print,button,details .no-print{display:none!important}body{background:white}.card,.result{box-shadow:none;break-inside:avoid}.breakdown{grid-template-columns:repeat(8,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap appbar">
+    <div><h1>SUROB MSI Calculator</h1><p>Field-test calculator using SUROB worksheet labels A-H with final MSI and craft status at the bottom.</p></div>
+    <div id="jsStatus" class="status bad">App logic not ready</div>
+  </div>
+</header>
+<main>
+  <noscript><div class="note bad"><b>JavaScript is off.</b> The calculator cannot run until JavaScript is enabled or opened in a browser that supports scripts.</div></noscript>
+  <div id="blockedNotice" class="note warn"><b>Loading calculator.</b> If this message stays on screen, the phone preview is blocking the app logic. Open the file in Safari/Chrome or use the PWA/home-screen version.</div>
+  <section class="card">
+    <h2>1. A / B / D - Wave count</h2>
+    <p class="small">Enter how many waves were recorded at each height. The app calculates A / ALPHA from the highest 33 waves, B / BRAVO from the highest single wave, and D / DELTA from breaker-type counts.</p>
+    <div class="btnrow no-print"><button type="button" onclick="calculate()">Calculate / refresh</button><button type="button" class="ghost" id="clearAll">Clear form</button></div>
+    <h3>Wave height occurrence count</h3>
+    <div class="wave-grid" id="heightCounts">
+      <div class="wavebox"><label>0.0 ft</label><input class="hcount" data-h="0" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+      <div class="wavebox"><label>0.5 ft</label><input class="hcount" data-h="0.5" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+      <div class="wavebox"><label>1.0 ft</label><input class="hcount" data-h="1" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+      <div class="wavebox"><label>1.5 ft</label><input class="hcount" data-h="1.5" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+      <div class="wavebox"><label>2.0 ft</label><input class="hcount" data-h="2" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+      <div class="wavebox"><label>2.5 ft</label><input class="hcount" data-h="2.5" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+      <div class="wavebox"><label>3.0 ft</label><input class="hcount" data-h="3" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+      <div class="wavebox"><label>3.5 ft</label><input class="hcount" data-h="3.5" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+      <div class="wavebox"><label>4.0 ft</label><input class="hcount" data-h="4" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+      <div class="wavebox"><label>4.5 ft</label><input class="hcount" data-h="4.5" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+      <div class="wavebox"><label>5.0 ft</label><input class="hcount" data-h="5" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+    </div>
+    <div class="summary-grid" aria-label="Calculated wave count results">
+      <div class="sum"><b>Total waves counted</b><strong id="totalWavesOut">0</strong><span>should normally be 100</span></div>
+      <div class="sum"><b>A / ALPHA avg ft</b><strong id="alphaRawOut">0.00</strong><span>enter on MSI calculation sheet</span></div>
+      <div class="sum"><b>ALPHA call round</b><strong id="alphaReportOut">0.0</strong><span>nearest 1/2 ft for BPT call</span></div>
+      <div class="sum"><b>B / BRAVO max ft</b><strong id="bravoOut">0.0</strong><span>highest single breaker</span></div>
+    </div>
+    <details style="margin-top:12px"><summary>Optional: paste 100 wave heights instead</summary><p class="small">Paste heights separated by spaces or commas. Example: 1 1.5 2 0.5.</p><textarea id="pasteHeights" placeholder="Paste wave heights here"></textarea><div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="applyPaste">Apply pasted heights</button></div></details>
+  </section>
+
+  <section class="card">
+    <h2>2. C / D - Timing and breaker type</h2>
+    <p class="small">C / CHARLIE is the time required to observe 100 waves. Enter start and stop time or enter total seconds directly.</p>
+    <div class="grid three">
+      <div><label>C / CHARLIE start time HHMM</label><input id="startTime" placeholder="0430" inputmode="numeric" pattern="[0-9]*"></div>
+      <div><label>C / CHARLIE stop time HHMM</label><input id="stopTime" placeholder="0443" inputmode="numeric" pattern="[0-9]*"></div>
+      <div><label>Or total seconds for 100 waves</label><input id="totalSeconds" placeholder="780" inputmode="decimal"></div>
+    </div>
+    <h3>D / DELTA breaker-type counts</h3>
+    <div class="grid three">
+      <div><label>Plunging count</label><input id="pCount" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+      <div><label>Spilling count</label><input id="sCount" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+      <div><label>Surging count</label><input id="xCount" inputmode="numeric" pattern="[0-9]*" value="0"></div>
+    </div>
+    <div class="summary-grid">
+      <div class="sum"><b>Elapsed seconds</b><strong id="elapsedOut">0</strong><span>for 100 waves</span></div>
+      <div class="sum"><b>C / CHARLIE avg sec</b><strong id="charlieRawOut">0.00</strong><span>seconds ÷ 100</span></div>
+      <div class="sum"><b>CHARLIE call round</b><strong id="charlieReportOut">0.0</strong><span>nearest 1/2 sec</span></div>
+      <div class="sum"><b>D / DELTA %</b><strong id="deltaPctOut">0 / 0 / 0</strong><span>P / S / X</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3. E / F / G / H - Conditions</h2>
+    <div class="grid three">
+      <div><label>E / ECHO breaker angle degrees</label><input id="echoAngle" inputmode="decimal" value="0"></div>
+      <div><label>ECHO flank</label><select id="echoFlank"><option>Right</option><option>Left</option><option>R/L</option></select></div>
+      <div><label>Secondary wave height ft</label><input id="secondaryHeight" inputmode="decimal" value="0"></div>
+    </div>
+    <h3>F / FOXTROT littoral current</h3>
+    <p class="small">Example: 223 ft in 3 minutes. The app converts ft/min to knots and uses the lower tenth for the MSI table.</p>
+    <div class="grid four">
+      <div><label>Drift distance ft</label><input id="driftFeet" inputmode="decimal" value="0"></div>
+      <div><label>Drift time min</label><input id="driftMinutes" inputmode="decimal" value="1"></div>
+      <div><label>FOXTROT flank</label><select id="foxtrotFlank"><option>Right</option><option>Left</option><option>R/L</option></select></div>
+      <div class="sum"><b>FOXTROT knots</b><strong id="foxtrotKnotsOut">0.00</strong><span>calculated</span></div>
+    </div>
+    <h3>G / GOLF and H / HOTEL</h3>
+    <div class="grid four">
+      <div><label>GOLF lines from</label><input id="golfFrom" placeholder="0"></div>
+      <div><label>GOLF lines to</label><input id="golfTo" placeholder="0"></div>
+      <div><label>Surf zone width ft</label><input id="golfWidth" placeholder="0"></div>
+      <div><label>Visibility / weather</label><input id="visibility" placeholder="clear / unrestricted"></div>
+    </div>
+    <div class="grid four" style="margin-top:10px">
+      <div><label>H / HOTEL wind speed kts</label><input id="windSpeed" inputmode="decimal" value="0"></div>
+      <div><label>H / HOTEL wind angle degrees</label><input id="windAngle" inputmode="decimal" placeholder="0-90"></div>
+      <div><label>H / HOTEL wind type</label><select id="windType"><option value="onshore">Onshore</option><option value="offshore">Offshore</option></select></div>
+      <div><label>H / HOTEL wind flank</label><select id="windFlank"><option>Right</option><option>Left</option><option>R/L</option></select></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>4. MSI worksheet breakdown</h2>
+    <div class="breakdown">
+      <div class="sum"><b>A / ALPHA</b><strong id="aVal">0.00</strong><span>highest 33 avg</span></div>
+      <div class="sum"><b>C table</b><strong id="cVal">0.0</strong><span id="cNote">period table</span></div>
+      <div class="sum"><b>D table</b><strong id="dVal">0.0</strong><span id="dNote">breaker type</span></div>
+      <div class="sum"><b>E table</b><strong id="eVal">0.0</strong><span id="eNote">wave angle</span></div>
+      <div class="sum"><b>F table</b><strong id="fVal">0.0</strong><span id="fNote">littoral</span></div>
+      <div class="sum"><b>Use E or F</b><strong id="efVal">0.0</strong><span>larger value</span></div>
+      <div class="sum"><b>H / HOTEL</b><strong id="hVal">0.0</strong><span id="hNote">wind table</span></div>
+      <div class="sum"><b>Secondary</b><strong id="secVal">0.0</strong><span>wave height</span></div>
+    </div>
+    <div id="warnings" style="margin-top:12px;display:grid;gap:8px"></div>
+  </section>
+
+  <section class="card">
+    <h2>5. BPT communicator call</h2>
+    <div class="call" id="callOutput"></div>
+    <div class="btnrow no-print" style="margin-top:10px"><button type="button" id="copyCall">Copy call</button><button type="button" class="secondary" onclick="window.print()">Print / save PDF</button></div>
+  </section>
+
+  <section class="card">
+    <h2>6. Workflow verification</h2>
+    <p class="small">Use this block to cross-check the paper worksheet. It shows the calculation steps and table values used by the app.</p>
+    <div class="call" id="auditOutput"></div>
+  </section>
+
+  <section class="card">
+    <h2>7. Craft GO / NO-GO inputs</h2>
+    <p class="small">Displacement craft use MSI limits. LCAC uses separate NO-GO items. LARC-V uses its MSI limit and listed operating condition checks if entered.</p>
+    <div class="grid four">
+      <div><label>Operation basis</label><select id="operationMode"><option value="training">Training / Operations</option><option value="wartime">Wartime</option></select></div>
+      <div><label>Visibility yards (LCAC)</label><input id="visibilityYards" inputmode="numeric" value="9999"></div>
+      <div><label>LCAC load reference</label><select id="lcacLoad"><option value="auto">Auto from ALPHA</option><option value="75">75 tons overload</option><option value="60">60 tons normal</option><option value="45">45 tons reduced</option></select></div>
+      <div><label>Craftmaster / SRM status</label><select id="lcacCraftmaster"><option value="go">No directed NO-GO</option><option value="nogo">Directed NO-GO</option></select></div>
+    </div>
+    <div class="checkgrid" style="margin-top:10px">
+      <label class="check"><input id="lcacCommsOk" type="checkbox" checked><span>LCAC communications are available</span></label>
+      <label class="check"><input id="lcacMarkersVisible" type="checkbox" checked><span>CLZ markers visible to craftmaster</span></label>
+      <label class="check"><input id="lcacLaneClear" type="checkbox" checked><span>Approach lane and CLZ are clear</span></label>
+      <label class="check"><input id="lcacNoUnmovableFod" type="checkbox" checked><span>No unmovable FOD in CLZ</span></label>
+    </div>
+    <details style="margin-top:12px"><summary>LARC-V operating condition checks</summary><p class="small">Leave blank if not observed. If entered, limits are applied in addition to the MSI limit.</p><div class="grid four" style="margin-top:10px"><div><label>Ocean current kts</label><input id="larcOceanCurrent" inputmode="decimal"></div><div><label>Swell height ft</label><input id="larcSwell" inputmode="decimal"></div><div><label>Chop height ft</label><input id="larcChop" inputmode="decimal"></div></div></details>
+  </section>
+
+  <section class="card" id="final">
+    <h2>8. Final MSI total and craft GO / NO-GO</h2>
+    <div class="result"><div class="label">Final Modified Surf Index</div><div class="num" id="msiBig">0.0</div><div id="statusPill" class="pill ok">Ready</div></div>
+    <div class="call" id="msiMathOutput" style="margin-top:10px"></div>
+    <h3>Craft status</h3>
+    <div id="craftOverall" style="font-weight:900;margin:8px 0 12px">Waiting for inputs</div>
+    <div class="scroll"><table><thead><tr><th>Craft</th><th>Basis</th><th>Limit / criterion</th><th>Status</th><th>Notes</th></tr></thead><tbody id="craftStatusBody"></tbody></table></div>
+  </section>
+  <div class="footer">Training aid. Validate against current command guidance before operational use.</div>
+</main>
+<script>
+const alphaCols=[0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5];
+const heightOptions=[0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5];
+const breakerPeriod={17:[0,0,0,-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.8,-1.0],16:[0,0,0,-0.1,-0.1,-0.2,-0.3,-0.3,-0.4,-0.5,-0.7],15:[0,0,0,0,-0.1,-0.1,-0.2,-0.2,-0.2,-0.3,-0.3],14:[0,0,0,0,0,0,0,0,0,0,0],13:[0,0,0,0,0.1,0.1,0.1,0.2,0.2,0.3,0.3],12:[0,0,0,0.1,0.1,0.2,0.2,0.3,0.4,0.5,0.7],11:[0,0,0,0.1,0.2,0.3,0.4,0.5,0.6,0.8,1.0],10:[0,0,0.1,0.1,0.2,0.3,0.5,0.7,0.9,1.1,1.3],9:[0,0,0.1,0.1,0.3,0.3,0.6,0.8,1.1,1.3,1.7],8:[0,0,0.1,0.2,0.3,0.5,0.7,1.0,1.3,1.5,2.0]};
+const spilling={100:[0,-0.1,-0.2,-0.5,-0.8,-1.3,-1.8,-2.5,-3.2,-4.1,-5.0],90:[0,0,-0.2,-0.4,-0.7,-1.1,-1.6,-2.2,-2.9,-3.6,-4.5],80:[0,0,-0.2,-0.4,-0.6,-1.0,-1.4,-2.0,-2.6,-3.2,-4.0],70:[0,0,-0.1,-0.3,-0.6,-0.9,-1.3,-1.7,-2.2,-2.8,-3.5],60:[0,0,-0.1,-0.3,-0.5,-0.8,-1.1,-1.5,-1.9,-2.4,-3.0],50:[0,0,-0.1,-0.2,-0.4,-0.7,-0.9,-1.2,-1.6,-2.0,-2.5],40:[0,0,-0.1,-0.2,-0.3,-0.6,-0.7,-1.0,-1.3,-1.6,-2.0],30:[0,0,-0.1,-0.1,-0.2,-0.4,-0.5,-0.7,-1.0,-1.2,-1.5],20:[0,0,0,-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.8,-1.0],10:[0,0,0,0,-0.1,-0.1,-0.2,-0.2,-0.3,-0.4,-0.5],0:[0,0,0,0,0,0,0,0,0,0,0]};
+const surging={100:[0,0.1,0.2,0.5,0.8,1.3,1.8,2.5,3.2,4.1,5.0],90:[0,0,0.2,0.4,0.8,1.2,1.7,2.3,3.0,3.8,4.7],80:[0,0,0.2,0.4,0.7,1.1,1.6,2.2,2.9,3.6,4.5],70:[0,0,0.2,0.4,0.6,1.0,1.5,2.0,2.7,3.4,4.2],60:[0,0,0.2,0.3,0.6,1.0,1.4,1.9,2.5,3.1,3.9],50:[0,0,0.1,0.3,0.6,0.9,1.3,1.7,2.3,2.9,3.5],40:[0,0,0.1,0.3,0.5,0.8,1.1,1.5,2.0,2.6,3.2],30:[0,0,0.1,0.2,0.4,0.7,1.0,1.3,1.8,2.2,2.7],20:[0,0,0.1,0.2,0.4,0.6,0.8,1.1,1.4,1.8,2.2],10:[0,0,0.1,0.1,0.3,0.4,0.6,0.7,1.0,1.3,1.6],0:[0,0,0,0,0,0,0,0,0,0,0]};
+const waveAngle={40:[0,0.1,0.3,0.7,1.3,2.0,2.9,3.9,5.1,6.5,8.0],35:[0,0.1,0.3,0.6,1.1,1.8,2.5,3.4,4.5,5.7,7.0],30:[0,0.1,0.2,0.5,1.0,1.5,2.2,2.9,3.8,4.9,6.0],25:[0,0.1,0.2,0.5,0.8,1.3,1.8,2.5,3.2,4.1,5.0],20:[0,0,0.2,0.4,0.6,1.0,1.4,2.0,2.6,3.2,4.0],15:[0,0,0.1,0.3,0.5,0.8,1.1,1.5,1.9,2.4,3.0],10:[0,0,0.1,0.2,0.3,0.5,0.7,1.0,1.3,1.6,2.0],5:[0,0,0,0.1,0.2,0.3,0.4,0.5,0.6,0.8,1.0],0:[0,0,0,0,0,0,0,0,0,0,0]};
+const windRows=[{label:'36-40',min:36,max:40,onshore:[2,3,4],offshore:[1.5,2,4]},{label:'31-35',min:31,max:35,onshore:[1.5,2,3],offshore:[1,1.5,3]},{label:'26-30',min:26,max:30,onshore:[1,1.5,2],offshore:[0.5,1,2]},{label:'21-25',min:21,max:25,onshore:[0.5,1,1.5],offshore:[0,0.5,1.5]},{label:'16-20',min:16,max:20,onshore:[0,0.5,1],offshore:[0,0.5,1]},{label:'11-15',min:11,max:15,onshore:[0,0.5,1],offshore:[0,0.5,1]},{label:'5-10',min:5,max:10,onshore:[0,0,0.5],offshore:[0,0,0.5]},{label:'0-5',min:0,max:5,onshore:[0,0,0],offshore:[0,0,0]}];
+const craftLimits=[{name:'LARC-V',training:6,wartime:9,notes:'MSI limit and operating condition checks'},{name:'OUB / LCM-8',training:6,wartime:9,notes:'MSI limit table'},{name:'LCU',training:6,wartime:12,notes:'MSI limit table'},{name:'INLS CF / WT',training:6,wartime:8,notes:'MSI limit table'},{name:'MPFUB',training:3,wartime:3,notes:'MSI limit table'},{name:'AAV',training:6,wartime:6,notes:'MSI limit table'}];
+const $=id=>document.getElementById(id);const num=v=>{const n=parseFloat(String(v??'').replace(/[^0-9.\-]/g,''));return Number.isFinite(n)?n:0};const fmt=(n,d=1)=>Number.isFinite(n)?Number(n).toFixed(d):(0).toFixed(d);function setText(id,v){const el=$(id);if(el)el.textContent=v}function roundHalf(n){return Math.round(num(n)*2)/2}function ceilWhole(n){return Math.ceil(num(n))}function floorTenth(n){return Math.floor((num(n)+1e-9)*10)/10}function roundUpPct(n){n=num(n);if(n<=0)return 0;return Math.min(100,Math.ceil(n/10)*10)}function nearestAngleRow(n){n=Math.max(0,Math.min(40,num(n)));return Math.round(n/5)*5}function colIndex(alpha){let a=Math.max(0,Math.min(5,roundHalf(alpha)));return alphaCols.indexOf(a)}function lookup(table,row,alpha){const ci=colIndex(alpha);return table[row]&&table[row][ci]!=null?table[row][ci]:0}function timeToMinutes(t){t=String(t||'').replace(/\D/g,'');if(t.length<3)return null;t=t.padStart(4,'0');const h=+t.slice(0,2),m=+t.slice(2);if(h>23||m>59)return null;return h*60+m}function calcElapsedSeconds(start,stop){const a=timeToMinutes(start),b=timeToMinutes(stop);if(a==null||b==null)return null;let mins=b-a;if(mins<0)mins+=1440;return mins*60}function windLookup(speed,angle,type){let s=num(speed);let row=windRows.find(r=>s>=r.min&&s<=r.max)||windRows[windRows.length-1];if(s===0)row=windRows[7];let a=Math.abs(num(angle));let idx=a<=30?0:a<=60?1:2;return{value:row[type][idx],row:row.label,angleBand:idx===0?'0-30°':idx===1?'30-60°':'60-90°'}}
+function getHeightList(){let list=[];document.querySelectorAll('.hcount').forEach(inp=>{const h=num(inp.dataset.h),c=Math.max(0,Math.floor(num(inp.value)));inp.value=c;for(let i=0;i<c;i++)list.push(h)});return list}function setCountsFromList(list){const counts={};heightOptions.forEach(h=>counts[h]=0);list.forEach(v=>{let h=roundHalf(v);h=Math.max(0,Math.min(5,h));counts[h]=(counts[h]||0)+1});document.querySelectorAll('.hcount').forEach(inp=>{inp.value=counts[num(inp.dataset.h)]||0})}function addWarning(arr,type,text){arr.push({type,text})}
+function craftStateFromLimit(msi,limit){if(msi>limit+1e-9)return{state:'NO-GO',cls:'bad',note:`MSI ${fmt(msi,1)} exceeds limit ${limit}`};if(Math.abs(msi-limit)<0.05)return{state:'AT LIMIT',cls:'warn',note:`MSI equals listed limit ${limit}`};return{state:'GO',cls:'ok',note:`MSI ${fmt(msi,1)} is below limit ${limit}`}}function lcacLoadNote(alpha){if(alpha<=4)return'Load reference: 75 tons overload range, 0-4 ft significant breaker height.';if(alpha<=8)return'Load reference: 60 tons normal range, 4-8 ft significant breaker height.';if(alpha<=12)return'Load reference: 45 tons reduced range, 8-12 ft significant breaker height.';return'Load reference: significant breaker height exceeds 12 ft table range.'}function addCraftRow(rows,name,basis,limit,status,cls,notes){rows.push(`<tr><td><b>${name}</b></td><td>${basis}</td><td>${limit}</td><td><span class="pill ${cls}">${status}</span></td><td>${notes}</td></tr>`)}function larcReasons(windSpeed){const reasons=[];const oc=num($('larcOceanCurrent')?.value),swell=num($('larcSwell')?.value),chop=num($('larcChop')?.value);if(windSpeed>25)reasons.push('wind speed over 25 kts');if(oc>4)reasons.push('ocean current over 4 kts');if(swell>6)reasons.push('swell over 6 ft');if(chop>4)reasons.push('chop over 4 ft');return reasons}
+function renderCraft(msi,alphaRaw,bravo){const rows=[],mode=$('operationMode').value,modeLabel=mode==='wartime'?'Wartime':'Training / Operations',noGo=[],atLimit=[];const windSpeed=num($('windSpeed').value);const lr=larcReasons(windSpeed);craftLimits.forEach(c=>{const limit=c[mode],res=craftStateFromLimit(msi,limit);let state=res.state,cls=res.cls,note=res.note;if(c.name==='LARC-V'){if(lr.length){state='NO-GO';cls='bad';note += '; LARC-V operating check: '+lr.join('; ')}else note += '; LARC-V operating checks clear or not entered'}addCraftRow(rows,c.name,modeLabel,`MSI <= ${limit}`,state,cls,note);if(state==='NO-GO')noGo.push(c.name);else if(state==='AT LIMIT')atLimit.push(c.name)});const lcacReasons=[];const vis=num($('visibilityYards').value);if(!$('lcacCommsOk').checked)lcacReasons.push('loss of LCAC communications');if(vis<2000)lcacReasons.push('visibility less than 2000 yd');if(!$('lcacMarkersVisible').checked)lcacReasons.push('CLZ markers not visible');if(!$('lcacLaneClear').checked)lcacReasons.push('fouled approach lane or CLZ');if(windSpeed>30)lcacReasons.push('winds greater than 30 kts');if(!$('lcacNoUnmovableFod').checked)lcacReasons.push('unmovable FOD');if(alphaRaw>6.9)lcacReasons.push('significant breaker height greater than 6.9 ft');if(bravo>8)lcacReasons.push('maximum breaker height greater than 8 ft');const load=$('lcacLoad').value;if(load==='75'&&alphaRaw>4)lcacReasons.push('selected 75-ton LCAC load exceeds 0-4 ft reference range');if(load==='60'&&alphaRaw>8)lcacReasons.push('selected 60-ton LCAC load exceeds 4-8 ft reference range');if(load==='45'&&alphaRaw>12)lcacReasons.push('selected 45-ton LCAC load exceeds 8-12 ft reference range');if($('lcacCraftmaster').value==='nogo')lcacReasons.push('craftmaster/SRM directed NO-GO');const lcacStatus=lcacReasons.length?'NO-GO':'GO';addCraftRow(rows,'LCAC','LCAC NO-GO checks','Not MSI based',lcacStatus,lcacReasons.length?'bad':'ok',(lcacReasons.length?lcacReasons.join('; '):'No LCAC NO-GO item triggered from entered data')+' '+lcacLoadNote(alphaRaw));if(lcacReasons.length)noGo.push('LCAC');$('craftStatusBody').innerHTML=rows.join('');let overall,cls;if(noGo.length===0&&atLimit.length===0){overall='GO for all listed craft based on entered MSI and GO/NO-GO checks.';cls='ok'}else if(noGo.length===0){overall=`GO, but at listed limit for: ${atLimit.join(', ')}.`;cls='warn'}else{overall=`NO-GO for: ${noGo.join(', ')}. Other listed craft may still be GO.`;cls='bad'}$('craftOverall').innerHTML=`<span class="pill ${cls}">${cls==='bad'?'NO-GO ITEMS':'GO STATUS'}</span> ${overall}`}
+function calculate(){const warnings=[];const heights=getHeightList().sort((a,b)=>b-a);const total=heights.length;const top33=heights.slice(0,33);const top33Sum=top33.reduce((a,b)=>a+b,0);const alphaRaw=top33.length?top33Sum/33:0;const alphaReport=roundHalf(alphaRaw);const tableAlpha=Math.max(0,Math.min(5,alphaReport));const bravo=heights[0]||0;if(total!==100)addWarning(warnings,'warn',`Wave count total is ${total}, not 100. SUROB should normally use 100 waves.`);if(total>0&&total<33)addWarning(warnings,'bad','Fewer than 33 waves entered. ALPHA cannot be fully built.');if(alphaReport>5)addWarning(warnings,'warn','ALPHA table value exceeds 5 ft; table lookups are capped at 5 ft.');let elapsed=calcElapsedSeconds($('startTime').value,$('stopTime').value);const manualSec=num($('totalSeconds').value);if(manualSec>0)elapsed=manualSec;const charlieRaw=elapsed?elapsed/100:0;const charlieReport=roundHalf(charlieRaw);let cRow=Math.max(8,Math.min(17,ceilWhole(charlieRaw)));if(charlieRaw>0&&charlieRaw<8)addWarning(warnings,'warn','CHARLIE is below table minimum. Using row 8 for period table.');if(charlieRaw>17)addWarning(warnings,'warn','CHARLIE is above table maximum. Using row 17 for period table.');const cVal=lookup(breakerPeriod,cRow,tableAlpha);const p=num($('pCount').value),s=num($('sCount').value),x=num($('xCount').value);const typeTotal=p+s+x||100;const pPct=p/typeTotal*100,sPct=s/typeTotal*100,xPct=x/typeTotal*100;let dType='spilling',dPct=sPct;if(xPct>sPct){dType='surging';dPct=xPct}if(pPct>sPct&&pPct>xPct)addWarning(warnings,'warn','Plunging is dominant, but the worksheet has no plunging table. Review D / DELTA manually.');const dPctRow=roundUpPct(dPct);const dVal=lookup(dType==='spilling'?spilling:surging,dPctRow,tableAlpha);const echoAngle=num($('echoAngle').value);const eRow=nearestAngleRow(echoAngle);if(echoAngle>40)addWarning(warnings,'warn','ECHO is above 40°. Table lookup uses 40° row.');const eVal=lookup(waveAngle,eRow,tableAlpha);const driftFeet=num($('driftFeet').value),driftMinutes=Math.max(0.01,num($('driftMinutes').value)||1);const fKnots=(driftFeet/driftMinutes)/100;let fRow=Math.max(0,Math.min(3,floorTenth(fKnots)));if(fKnots>3)addWarning(warnings,'warn','FOXTROT exceeds 3.0 kts. Littoral table is capped at 3.0 kts.');const fVal=+(fRow*3).toFixed(1);const efVal=Math.max(eVal,fVal);const wind=windLookup($('windSpeed').value,$('windAngle').value,$('windType').value);if(num($('windSpeed').value)>0&&String($('windAngle').value||'').trim()==='')addWarning(warnings,'warn','H / HOTEL wind speed is entered, but wind angle is blank. Blank angle is treated as 0°.');const sec=roundHalf(num($('secondaryHeight').value));const msi=alphaRaw+cVal+dVal+efVal+wind.value+sec;setText('totalWavesOut',String(total));setText('alphaRawOut',fmt(alphaRaw,2));setText('alphaReportOut',fmt(alphaReport,1));setText('bravoOut',fmt(bravo,1));setText('elapsedOut',elapsed?fmt(elapsed,0):'0');setText('charlieRawOut',fmt(charlieRaw,2));setText('charlieReportOut',fmt(charlieReport,1));setText('deltaPctOut',`${fmt(pPct,0)} / ${fmt(sPct,0)} / ${fmt(xPct,0)}`);setText('foxtrotKnotsOut',fmt(fKnots,2));setText('aVal',fmt(alphaRaw,2));setText('cVal',fmt(cVal,1));setText('dVal',fmt(dVal,1));setText('eVal',fmt(eVal,1));setText('fVal',fmt(fVal,1));setText('efVal',fmt(efVal,1));setText('hVal',fmt(wind.value,1));setText('secVal',fmt(sec,1));setText('msiBig',fmt(msi,1));setText('cNote',`C table: ${cRow} sec / ${fmt(tableAlpha,1)} ft`);setText('dNote',`${dType}, ${fmt(dPct,0)}% -> ${dPctRow}% row`);setText('eNote',`${echoAngle}° -> ${eRow}° row`);setText('fNote',`${fmt(fKnots,2)} kts -> ${fmt(fRow,1)} row`);setText('hNote',`${wind.row} kts, ${wind.angleBand}, ${$('windType').value}`);const warnBox=$('warnings');warnBox.innerHTML='';if(warnings.length===0){const d=document.createElement('div');d.className='note ok';d.textContent='No input warnings.';warnBox.appendChild(d)}warnings.forEach(w=>{const d=document.createElement('div');d.className='note '+(w.type==='bad'?'bad':'warn');d.textContent=w.text;warnBox.appendChild(d)});const pill=$('statusPill');pill.className='pill '+(warnings.some(w=>w.type==='bad')?'bad':warnings.length?'warn':'ok');pill.textContent=warnings.some(w=>w.type==='bad')?'Check inputs':warnings.length?'Review warnings':'Looks clean';const formula=`A ${fmt(alphaRaw,2)} + C ${fmt(cVal,1)} + D ${fmt(dVal,1)} + max(E ${fmt(eVal,1)}, F ${fmt(fVal,1)}) ${fmt(efVal,1)} + H ${fmt(wind.value,1)} + Secondary ${fmt(sec,1)} = MSI ${fmt(msi,1)}`;setText('msiMathOutput',formula);const audit=`A / ALPHA: highest 33 total ${fmt(top33Sum,1)} ft / 33 = ${fmt(alphaRaw,2)} ft. BPT call round: ${fmt(alphaReport,1)} ft.
+B / BRAVO: highest single breaker = ${fmt(bravo,1)} ft.
+C / CHARLIE: ${elapsed?fmt(elapsed,0):'0'} seconds / 100 waves = ${fmt(charlieRaw,2)} sec. BPT call round: ${fmt(charlieReport,1)} sec. Period table value = ${fmt(cVal,1)}.
+D / DELTA: P ${fmt(pPct,0)}%, S ${fmt(sPct,0)}%, X ${fmt(xPct,0)}%. ${dType} table, ${dPctRow}% row = ${fmt(dVal,1)}.
+E / ECHO: ${echoAngle} degrees, table value = ${fmt(eVal,1)}.
+F / FOXTROT: ${fmt(driftFeet,1)} ft / ${fmt(driftMinutes,2)} min = ${fmt(driftFeet/driftMinutes,1)} ft/min = ${fmt(fKnots,2)} kts. Lower tenth ${fmt(fRow,1)} x 3 = ${fmt(fVal,1)}.
+Use larger of E or F: max(${fmt(eVal,1)}, ${fmt(fVal,1)}) = ${fmt(efVal,1)}.
+H / HOTEL: ${$('windSpeed').value || 0} kts, ${wind.angleBand}, ${$('windType').value} = ${fmt(wind.value,1)}. Secondary wave height = ${fmt(sec,1)}.
+FINAL MSI: ${formula}`;setText('auditOutput',audit);const call=`ALPHA: ${fmt(alphaReport,1)} ft
+BRAVO: ${fmt(bravo,1)} ft
+CHARLIE: ${fmt(charlieReport,1)} sec
+DELTA: ${fmt(pPct,0)}% Plunging; ${fmt(sPct,0)}% Spilling; ${fmt(xPct,0)}% Surging
+ECHO: ${echoAngle} degrees toward ${$('echoFlank').value} flank
+FOXTROT: ${fmt(fKnots,2)} kts toward ${$('foxtrotFlank').value} flank
+GOLF: ${$('golfFrom').value || '__'} to ${$('golfTo').value || '__'} lines in a ${$('golfWidth').value || '__'} ft surf zone
+HOTEL / H: ${$('windSpeed').value || 0} kts at ${$('windAngle').value || 0} degrees ${$('windType').value.toUpperCase()} toward ${$('windFlank').value} flank
+Visibility/Weather: ${$('visibility').value || '__'}
+Secondary wave height: ${fmt(sec,1)} ft
+
+MSI: ${fmt(msi,1)}
+MSI math: ${formula}`;setText('callOutput',call);renderCraft(msi,alphaRaw,bravo)}
+function clearForm(){document.querySelectorAll('.hcount').forEach(i=>i.value='0');document.querySelectorAll('input').forEach(i=>{if(!i.classList.contains('hcount')&&!['checkbox'].includes(i.type))i.value=''});$('driftMinutes').value='1';$('pCount').value='0';$('sCount').value='0';$('xCount').value='0';$('echoAngle').value='0';$('secondaryHeight').value='0';$('windSpeed').value='0';$('visibilityYards').value='9999';$('windType').value='onshore';$('operationMode').value='training';$('lcacLoad').value='auto';$('lcacCraftmaster').value='go';['lcacCommsOk','lcacMarkersVisible','lcacLaneClear','lcacNoUnmovableFod'].forEach(id=>$(id).checked=true);calculate()}
+function init(){try{document.querySelectorAll('input,select,textarea').forEach(el=>{el.addEventListener('input',calculate);el.addEventListener('change',calculate)});$('applyPaste').addEventListener('click',()=>{const vals=$('pasteHeights').value.split(/[\s,]+/).map(Number).filter(Number.isFinite);setCountsFromList(vals);calculate()});$('clearAll').addEventListener('click',clearForm);$('copyCall').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('callOutput').textContent);$('copyCall').textContent='Copied';setTimeout(()=>$('copyCall').textContent='Copy call',1000)}catch(e){alert('Copy failed. Select and copy the call text manually.')}});$('jsStatus').className='status ok';$('jsStatus').textContent='App ready';$('blockedNotice').className='note ok';$('blockedNotice').innerHTML='<b>App ready.</b> If calculations stop updating on a phone, use the Calculate / refresh button or open from Safari/Chrome/PWA instead of file preview.';calculate()}catch(err){$('jsStatus').className='status bad';$('jsStatus').textContent='App error';$('blockedNotice').className='note bad';$('blockedNotice').innerHTML='<b>App error.</b> '+err.message}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+</script>
+</body>
+</html>
