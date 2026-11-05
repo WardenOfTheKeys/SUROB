@@ -2,7 +2,7 @@
 // Same-origin files only. Esri map pictures and the live NWS forecast always go to the
 // network; without them the app uses its packaged NOAA data.
 // Bump CACHE when the list of files changes.
-const CACHE = 'surob-v3-2';
+const CACHE = 'surob-v3-3';
 const FILES = ['./', 'index.html', 'conditions-data.js', 'data-sheet.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -22,12 +22,14 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    const net = fetch(req).then(res => { if (res.ok) cache.put(req, res.clone()); return res; });
+    // One saved copy per file: a refresh like conditions-data.js?r=123 updates conditions-data.js.
+    const key = url.origin + url.pathname;
+    const net = fetch(req).then(res => { if (res.ok) cache.put(key, res.clone()); return res; });
     net.catch(() => {});  // a late network failure after the cache answered is expected offline
     try {
       return await Promise.race([net, new Promise((_, no) => setTimeout(() => no(new Error('slow')), 4000))]);
     } catch (err) {
-      const hit = await cache.match(req, { ignoreSearch: true }) || (req.mode === 'navigate' && await cache.match('index.html'));
+      const hit = await cache.match(key) || await cache.match(req, { ignoreSearch: true }) || (req.mode === 'navigate' && await cache.match('index.html'));
       if (hit) return hit;
       return net.catch(() => Response.error());
     }

@@ -172,3 +172,5 @@ Expected result: 13 PASS, 0 failures. Known-good values: sample A = 4.0, B = 16.
 - **One NOAA chart:** the separate NOAA conditions card (wave-height sparkline, three fill buttons, Edit by hand) is gone. The Overview's 7-day / 5-day MSI chart carries the two-hour window: slide `#noaaWin` or tap the chart; the band on the chart, the NOAA estimate and **Use in worksheet** all follow it.
 - "Print / save PDF" is now "Print this page" so it is not confused with the data sheet PDF.
 - Smoke test: 83 checks.
+
+- **Refresh NOAA data** (Overview, under the chart): reloads `conditions-data.js?r=…` as a script (no eval, CSP unchanged), swaps `COND`, clears the estimate, picture and live-forecast caches and redraws. Runs by itself on `online` and when the app comes back to the screen with data over 3 h old. `sw.js` (`surob-v3-3`) now saves one copy per path, so `?r=` refreshes update the saved `conditions-data.js`. Smoke test: 86 checks.

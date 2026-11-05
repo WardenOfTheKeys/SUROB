@@ -27,6 +27,7 @@ The app has two tabs at the top.
 - **Pick the beach.** A map shows the beach with an alligator marker, so you can check it is the right spot. You can switch between satellite, hybrid and regular map.
 - **See an estimate right away.** The app uses NOAA buoy reports to guess the MSI before anyone counts a wave.
 - **See the trend.** One chart shows the estimated MSI for the last 7 days and the next 5 days, with lines for the craft limits. Slide the bar under the chart (or tap the chart) to pick a time. Tap **Use in worksheet** to start the worksheet from that time.
+- **Get the newest data.** Tap **Refresh NOAA data**. It shows how old the reports are. The app also does this by itself when you come back online, or when the data is more than 3 hours old.
 - **Add your own beach.** Type its MGRS grid or its latitude and longitude, or tap **Use my location**. It is saved on your phone only.
 
 ### Worksheet tab: the real count

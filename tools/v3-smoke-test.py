@@ -91,6 +91,26 @@ with sync_playwright() as p:
     pg.eval_on_selector("#noaaWin", "(el, v) => { el.value = v; el.dispatchEvent(new Event('input', {bubbles: true})) }", str(mx))
     pg.click("#ovEstUse")
     pg.wait_for_timeout(150)
+    # Refresh NOAA data: loads the site's newest packaged copy (here a stand-in with a newer time) without a reload.
+    import datetime, re as _re
+    newer = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+    def fresh(route):
+        body = route.fetch().text()
+        route.fulfill(body=_re.sub(r'"fetchedAt":"[^"]+"', '"fetchedAt":"%s"' % newer, body, count=1), content_type="application/javascript")
+    pg.route("**/conditions-data.js?r=*", fresh)
+    pg.click("#noaaRefresh")
+    for _ in range(40):
+        pg.wait_for_timeout(100)
+        if not pg.is_disabled("#noaaRefresh") and "Getting" not in T("refreshMsg"):
+            break
+    check("Refresh NOAA data loads the newer copy", "Updated." in T("refreshMsg") and pg.evaluate("COND.fetchedAt") == newer, T("refreshMsg"))
+    pg.click("#noaaRefresh")
+    for _ in range(40):
+        pg.wait_for_timeout(100)
+        if not pg.is_disabled("#noaaRefresh") and "Getting" not in T("refreshMsg"):
+            break
+    check("Refresh says when it is already the newest", "Already the newest copy" in T("refreshMsg"), T("refreshMsg"))
+    pg.unroute("**/conditions-data.js?r=*")
 
     pg.select_option("#decRole", "BPTC")
     pg.select_option("#decValue", "GO")
@@ -371,6 +391,9 @@ with sync_playwright() as p:
     off.click("[data-scenario=A]")
     off.wait_for_timeout(100)
     check("offline sample A MSI 4.0", off.inner_text("#msiBig") == "4.0", off.inner_text("#msiBig"))
+    off.click("#noaaRefresh")
+    off.wait_for_timeout(200)
+    check("Refresh with no signal keeps the saved data", "No connection" in off.inner_text("#refreshMsg") and "App ready" in off.inner_text("#jsStatus"), off.inner_text("#refreshMsg"))
     try:
         with off.expect_download(timeout=10000) as dl2:
             off.click("#copyDl")

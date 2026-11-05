@@ -208,6 +208,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <div id="noaaStatus" class="small" style="margin-top:6px"></div>
       <div id="noaaSrc" class="srcnote" style="display:none"></div>
       <div class="small" id="picSrc" style="margin-top:6px"></div>
+      <div class="btnrow no-print" style="margin-top:8px;align-items:center"><button type="button" class="secondary" id="noaaRefresh">Refresh NOAA data</button><span class="small" id="refreshMsg"></span></div>
       <input type="hidden" id="entrySource" value="manual"><input type="hidden" id="noaaEnd"><input type="hidden" id="srcNote">
     </div>
   </section>
@@ -595,7 +596,7 @@ const LINKS={
  'fort-story-bay':L(10,'B44087','C8638999','KNTU','Wave height is from inside the bay. It is not the Atlantic surf on the other side of the cape.'),
  'little-creek-north':L(5,'B44087','KNGU','KNGU','Wave height is from Thimble Shoal in the bay, not a gauge on this beach.')
 };
-const COND=window.SUROB_CONDITIONS||null;
+let COND=window.SUROB_CONDITIONS||null;
 const NOAA_FIELDS=['totalSeconds','startTime','stopTime','wavesTimed','echoAngle','echoFlank','windSpeed','windAngle','windType','windFlank','visibility','visibilityYards'];
 const M_TO_FT=3.280839895,MS_TO_KT=1.943844,KMH_TO_KT=0.5399568,TWO_H=72e5,TWELVE_H=432e5;
 function region(){return REGIONS.find(r=>r.id===$('regionId').value)||REGIONS[0]}
@@ -658,6 +659,31 @@ function noaaFill(useSel){
   tapHistory=[];waveLog=[];$('undoTap').disabled=true;openBigIfUsed();calculate();
 }
 function setManual(){if($('entrySource').value==='noaa'){$('entrySource').value='manual';$('noaaEnd').value=''}}
+
+/* ---------- Refresh: newest packaged NOAA data from the site, and the newest NWS forecast ---------- */
+// The site's copy is rebuilt every 3 hours. Loading it as a script keeps the security policy strict (no eval).
+function showDataAge(){
+  if(!COND){setText('refreshMsg','No NOAA data packaged.');return}
+  const t=Date.parse(COND.fetchedAt),h=(Date.now()-t)/36e5;
+  setText('refreshMsg',`NOAA reports from ${fmtWhen(t)}${h>=1?` (${h<48?Math.round(h)+' h':Math.floor(h/24)+' days'} old)`:''}.`);
+}
+let refreshing=false;
+async function refreshNoaa(quiet){
+  if(refreshing)return;
+  const btn=$('noaaRefresh'),before=COND&&COND.fetchedAt;
+  if(location.protocol==='file:'){if(!quiet)setText('refreshMsg','This is an offline copy. Download a new one from the web page for newer data.');return}
+  if(navigator.onLine===false){if(!quiet){showDataAge();$('refreshMsg').textContent='No connection. '+$('refreshMsg').textContent+' Try again when you have signal.'}return}
+  refreshing=true;btn.disabled=true;if(!quiet)setText('refreshMsg','Getting the newest NOAA data…');
+  try{
+    await new Promise((ok,bad)=>{const s=document.createElement('script');s.src='conditions-data.js?r='+Date.now();s.onload=()=>{s.remove();ok()};s.onerror=()=>{s.remove();bad(new Error('could not reach the site'))};document.head.appendChild(s)});
+    COND=window.SUROB_CONDITIONS||COND;
+    Object.keys(FC_LIVE).forEach(k=>delete FC_LIVE[k]);estCache={};picCache={};
+    renderNoaa();renderEstimate();renderPicture();calculate();
+    showDataAge();
+    if(!quiet)$('refreshMsg').textContent=(COND&&COND.fetchedAt!==before?'Updated. ':'Already the newest copy. The site updates it every 3 hours. ')+$('refreshMsg').textContent+' Forecast: checking NWS now.';
+  }catch(e){showDataAge();if(!quiet)$('refreshMsg').textContent=`Could not refresh (${e.message}). `+$('refreshMsg').textContent}
+  finally{refreshing=false;btn.disabled=false}
+}
 
 /* ---------- NOAA MSI estimate (overview only, never written to the worksheet) ---------- */
 // Same tables and rounding as calculate(). D, F and secondary are not in NOAA reports, so they count as 0.
@@ -1754,6 +1780,12 @@ function init(){
     $('clearAll').addEventListener('click',clearForm);
     $('picChart').addEventListener('click',e=>{const link=LINKS[beach().id],pts=wavePoints(link);if(pts.length<2||!picX)return;const r=e.currentTarget.getBoundingClientRect(),vx=(e.clientX-r.left)/r.width*picX.W,t=picX.t0+(vx-picX.L)/(picX.W-picX.L-picX.R)*(picX.t1-picX.t0);if(t>pts[pts.length-1].t+TWO_H)return;selEnd=pts.reduce((a,p)=>Math.abs(p.t-t)<Math.abs(a.t-t)?p:a).t;renderNoaa();renderEstimate();renderPicture()});
     window.addEventListener('resize',()=>{if(map.on)renderMap()});
+    $('noaaRefresh').addEventListener('click',()=>refreshNoaa(false));
+    // Back online, or back in the app after a while: get newer data by itself when the copy is over 3 hours old.
+    const stale=()=>!COND||Date.now()-Date.parse(COND.fetchedAt)>3*36e5;
+    window.addEventListener('online',()=>refreshNoaa(true));
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&stale())refreshNoaa(true)});
+    showDataAge();
     $('dtgNow').addEventListener('click',()=>{$('dtg').value=nowDTG();calculate()});
     $('decNow').addEventListener('click',()=>{$('decTime').value=nowClock().slice(0,4);calculate()});
     $('decConfirm').addEventListener('click',()=>{if(confirm('Confirm the recorded decision still applies to the current inputs?')){$('decMsi').value='';calculate()}});
