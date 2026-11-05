@@ -134,6 +134,8 @@ Expected result: 13 PASS, 0 failures. Known-good values: sample A = 4.0, B = 16.
 - Voice box: a breaker word after a height belongs to that wave ("two spilling", "three p").
 - Below 33 waves the craft chips show NO DATA, the overview MSI shows "—" and there is no cross-check, so nothing reads as passing mid-count.
 - Section 2 is timing only (C). Smoke test: 46 checks.
+- Decision authority (V2 and V3): only BPTC (Beach Party Team Commander) or SRM (Senior Ramp Marshal).
+- Map: `MAP_STYLES` = satellite (World_Imagery), hybrid (imagery + Reference/World_Transportation + Reference/World_Boundaries_and_Places), regular (World_Street_Map), all from server.arcgisonline.com, so the security policy is unchanged. The choice is kept in the hidden `mapStyle` input. Beach marker is the `gator()` SVG; the orange shoreline line is unchanged. Smoke test: 51 checks.
 
 ## Session history (4 Nov evening)
 

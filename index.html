@@ -249,7 +249,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid 
       <h3 style="margin-top:0">Human decision (required)</h3>
       <p class="small">The calculator only compares entered values with listed limits. It never makes, recommends or sends a GO / NO-GO decision. The responsible person records the decision here. If any input changes afterwards, the decision is flagged for re-confirmation.</p>
       <div class="grid four">
-        <div><label for="decRole">Decision authority</label><select id="decRole"><option value="">Select...</option><option>Craftmaster</option><option>Surf zone / SRM</option><option>BMU OIC</option><option>Other designated authority</option></select></div>
+        <div><label for="decRole">Decision authority</label><select id="decRole"><option value="">Select...</option><option value="BPTC">BPTC (Beach Party Team Commander)</option><option value="SRM">SRM (Senior Ramp Marshal)</option></select></div>
         <div><label for="decValue">Decision</label><select id="decValue"><option value="">PENDING</option><option>GO</option><option>GO with restrictions</option><option>NO-GO</option></select></div>
         <div><label for="decInitials">Initials / callsign</label><input id="decInitials" maxlength="10" autocomplete="off"></div>
         <div><label for="decTime">Time</label><div class="inline"><input id="decTime" inputmode="numeric" autocomplete="off" placeholder="HHMM"><button type="button" class="secondary" id="decNow">Now</button></div></div>
@@ -268,7 +268,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid 
       <li><b>Approval point:</b> only a named decision authority records GO, GO with restrictions or NO-GO in section 8. The app starts every observation as PENDING.</li>
       <li><b>Prohibited actions (enforced in code):</b> the app does not choose a decision, send data or contact any other site. A Content-Security-Policy blocks every request except its own icon and install manifest, and nothing typed into the app is ever sent. It asks for no names or other PII.</li>
       <li><b>Monitoring:</b> input warnings, the workflow verification block, and a re-confirm flag whenever inputs change after a decision.</li>
-      <li><b>Escalation:</b> any red warning, any at-limit or exceeded craft, or any mismatch with the paper worksheet goes to the BMU OIC. The paper worksheet is the reference.</li>
+      <li><b>Escalation:</b> any red warning, any at-limit or exceeded craft, or any mismatch with the paper worksheet goes to the BPTC or SRM. The paper worksheet is the reference.</li>
       <li><b>Shutdown:</b> close the tab. Clear form erases the data saved on this device. There are no background services, accounts or servers.</li>
     </ul>
     <h3>Tools and resources used</h3>

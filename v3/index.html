@@ -107,6 +107,9 @@ main>*,.ovgrid>*,.grid>*{min-width:0}select{max-width:100%;text-overflow:ellipsi
 .map .tiles{position:absolute;left:0;top:0}.map .tiles img{position:absolute;width:256px;height:256px;max-width:none;user-select:none;-webkit-user-drag:none}
 .map svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .map .mapbtns{position:absolute;right:8px;top:8px;display:grid;gap:6px;z-index:2}.map .mapbtns button{width:40px;min-height:40px;padding:0;font-size:22px;background:#fff;color:#111827;border:1px solid #cbd5e1}
+.map .mapstyle{position:absolute;left:8px;top:8px;display:flex;z-index:2;border-radius:10px;overflow:hidden;border:1px solid #cbd5e1}
+.map .mapstyle button{min-height:36px;padding:6px 10px;font-size:13px;border-radius:0;background:#fff;color:#111827}
+.map .mapstyle button[aria-pressed=true]{background:#0f172a;color:#fff}
 .map .attr{position:absolute;right:0;bottom:0;background:rgba(255,255,255,.85);font-size:10px;padding:2px 6px;color:#334155;z-index:2}
 .mapoff{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:100%;padding:16px;text-align:center;color:#334155;font-size:14px}
 .pictiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}@media(max-width:620px){.pictiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -167,8 +170,8 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
           <div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="cbHere">Use my location</button><button type="button" id="cbSave">Save beach</button></div>
           <div id="cbMsg" class="small" style="margin-top:6px"></div>
         </details>
-        <div class="map no-print" id="map"></div>
-        <p class="small" style="margin-top:6px">Map check: the pin and orange shoreline line should sit on the sand. Pins are approximate public shoreline points, not surveyed lanes.</p>
+        <div class="map no-print" id="map"></div><input type="hidden" id="mapStyle" value="sat">
+        <p class="small" style="margin-top:6px">Map check: the alligator marks the beach and should sit on the sand. Switch between satellite, hybrid (satellite with roads and names) and a regular map. Beach points are approximate public shoreline points, not surveyed lanes.</p>
       </div>
     </div>
     <div id="ovPic" style="margin-top:14px">
@@ -357,7 +360,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <h3 style="margin-top:0">Human decision (required)</h3>
       <p class="small">The calculator only compares entered values with listed limits. It never makes, recommends or sends a GO / NO-GO decision. The responsible person records the decision here. If any input changes afterwards, the decision is flagged for re-confirmation.</p>
       <div class="grid four">
-        <div><label for="decRole">Decision authority</label><select id="decRole"><option value="">Select...</option><option>Craftmaster</option><option>Surf zone / SRM</option><option>BMU OIC</option><option>Other designated authority</option></select></div>
+        <div><label for="decRole">Decision authority</label><select id="decRole"><option value="">Select...</option><option value="BPTC">BPTC (Beach Party Team Commander)</option><option value="SRM">SRM (Senior Ramp Marshal)</option></select></div>
         <div><label for="decValue">Decision</label><select id="decValue"><option value="">PENDING</option><option>GO</option><option>GO with restrictions</option><option>NO-GO</option></select></div>
         <div><label for="decInitials">Initials / callsign</label><input id="decInitials" maxlength="10" autocomplete="off"></div>
         <div><label for="decTime">Time</label><div class="inline"><input id="decTime" inputmode="numeric" autocomplete="off" placeholder="HHMM"><button type="button" class="secondary" id="decNow">Now</button></div></div>
@@ -377,7 +380,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <li><b>Prohibited actions (enforced in code):</b> the app does not choose a decision or send data. A Content-Security-Policy allows only the app's own files and, when you tap <b>Show satellite map</b>, map pictures from Esri (server.arcgisonline.com), and, when online, the NWS forecast for the selected beach's grid square (api.weather.gov). Without a connection the packaged forecast is used. Nothing typed into the app is ever sent. It asks for no names or other PII.</li>
       <li><b>NOAA fill:</b> wave, wind and visibility values come from a packaged week of public NOAA reports. The 100-wave count built from them is an estimate, marked in the call and the verification block. An observed surf-zone count replaces it.</li>
       <li><b>Monitoring:</b> input warnings, the workflow verification block, and a re-confirm flag whenever inputs change after a decision.</li>
-      <li><b>Escalation:</b> any red warning, any at-limit or exceeded craft, or any mismatch with the paper worksheet goes to the BMU OIC. The paper worksheet is the reference.</li>
+      <li><b>Escalation:</b> any red warning, any at-limit or exceeded craft, or any mismatch with the paper worksheet goes to the BPTC or SRM. The paper worksheet is the reference.</li>
       <li><b>Shutdown:</b> close the tab. Clear form erases the data saved on this device. There are no background services, accounts or servers.</li>
     </ul>
     <h3>Tools and resources used</h3>
@@ -985,24 +988,45 @@ function onBeachChange(){
   selEnd=null;map.center=null;renderBeach();renderMap();
   if($('entrySource').value==='noaa')noaaFill(false);else calculate();
 }
-const TILE_URL='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/';
+const ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/';
+// Satellite, hybrid (satellite with roads and place names on top) and regular street map, all from Esri.
+const MAP_STYLES={
+  sat:{label:'Satellite',layers:['World_Imagery'],attr:'Imagery © Esri, Maxar, Earthstar Geographics'},
+  hybrid:{label:'Hybrid',layers:['World_Imagery','Reference/World_Transportation','Reference/World_Boundaries_and_Places'],attr:'Imagery © Esri, Maxar, Earthstar Geographics · Labels © Esri, HERE, Garmin'},
+  street:{label:'Map',layers:['World_Street_Map'],attr:'© Esri, HERE, Garmin, USGS, NGA, EPA, USDA, NPS'}
+};
 const map={on:false,z:16,center:null,drag:null};
+function mapStyle(){return MAP_STYLES[$('mapStyle').value]?$('mapStyle').value:'sat'}
+// Alligator marker, centered on the beach point (the amphibious "Gator" emblem). Drawn here, no image file.
+function gator(x,y,big){
+  const f=big?'#15803d':'#475569',s=big?1.75:1.1;
+  return`<g transform="translate(${x} ${y}) scale(${s})" fill="${f}" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" paint-order="stroke">`+
+    '<path d="M-23 1.5 L-9 -2.6 L-9 3.6 Z"/><path d="M-7 3 l-2.6 4.6 h3.4 l1.8 -4.4 Z M4.5 3 l-1.6 4.6 h3.4 l0.8 -4.4 Z"/>'+
+    '<ellipse cx="0" cy="0.4" rx="10.5" ry="4.8"/><path d="M6.5 -3.4 Q11 -6 14.5 -3.4 L24.5 -1.8 Q26 -0.2 24.5 1.2 L14 2.4 Q10 4.6 6.5 3.8 Z"/>'+
+    `<path d="M-8 -4.2 l1.5 -2.6 l1.5 2.3 l1.5 -2.6 l1.5 2.3 l1.5 -2.6 l1.5 2.3 l1.5 -2.6 l1.5 2.3" fill="none" stroke="${f}" stroke-width="1.3" paint-order="normal"/>`+
+    '<circle cx="12" cy="-3.9" r="1.9" fill="#fff" stroke="none"/><circle cx="12.5" cy="-3.9" r="0.9" fill="#0f172a" stroke="none"/></g>';
+}
 function ll2px(lat,lng,z){const s=256*2**z,r=lat*Math.PI/180;return[(lng+180)/360*s,(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*s]}
 function px2ll(x,y,z){const s=256*2**z,n=Math.PI-2*Math.PI*y/s;return[180/Math.PI*Math.atan(Math.sinh(n)),x/s*360-180]}
 function offsetLL(lat,lng,bearing,m){const b=bearing*Math.PI/180;return[lat+m*Math.cos(b)/111320,lng+m*Math.sin(b)/(111320*Math.cos(lat*Math.PI/180))]}
 function renderMap(){
   const el=$('map'),b=beach();
-  if(!map.on){el.innerHTML='<div class="mapoff"><div>The satellite map is off. Opening it loads map pictures from Esri. Nothing you enter is sent.</div><button type="button" class="blue" id="mapShow">Show satellite map</button></div>';return}
+  if(!map.on){el.innerHTML='<div class="mapoff"><div>The map is off. Opening it loads map pictures from Esri. Nothing you enter is sent.</div><button type="button" class="blue" id="mapShow">Show map</button></div>';return}
   if(!map.center)map.center=[b.lat,b.lng];
-  const w=el.clientWidth||300,h=el.clientHeight||300,z=map.z,n=2**z,[cx,cy]=ll2px(map.center[0],map.center[1],z),x0=cx-w/2,y0=cy-h/2;
+  const w=el.clientWidth||300,h=el.clientHeight||300,z=map.z,n=2**z,[cx,cy]=ll2px(map.center[0],map.center[1],z),x0=cx-w/2,y0=cy-h/2,st=MAP_STYLES[mapStyle()];
   let imgs='';
   for(let ty=Math.floor(y0/256);ty<=Math.floor((y0+h)/256);ty++){if(ty<0||ty>=n)continue;
-    for(let tx=Math.floor(x0/256);tx<=Math.floor((x0+w)/256);tx++){const wx=((tx%n)+n)%n;imgs+=`<img alt="" draggable="false" src="${TILE_URL}${z}/${ty}/${wx}" style="left:${Math.round(tx*256-x0)}px;top:${Math.round(ty*256-y0)}px">`}}
+    for(let tx=Math.floor(x0/256);tx<=Math.floor((x0+w)/256);tx++){const wx=((tx%n)+n)%n,pos=`left:${Math.round(tx*256-x0)}px;top:${Math.round(ty*256-y0)}px`;
+      st.layers.forEach(l=>{imgs+=`<img alt="" draggable="false" src="${ESRI}${l}/MapServer/tile/${z}/${ty}/${wx}" style="${pos}">`})}}
   const P=(lat,lng)=>{const[x,y]=ll2px(lat,lng,z);return[(x-x0).toFixed(1),(y-y0).toFixed(1)]};
   let svg='';
   region().beaches.forEach(x=>{const a=offsetLL(x.lat,x.lng,x.alongshore,-x.halfLengthM),c=offsetLL(x.lat,x.lng,x.alongshore,x.halfLengthM),pa=P(...a),pc=P(...c),pp=P(x.lat,x.lng),sel=x.id===b.id;
-    svg+=`<line x1="${pa[0]}" y1="${pa[1]}" x2="${pc[0]}" y2="${pc[1]}" stroke="${sel?'#f97316':'#e2e8f0'}" stroke-width="${sel?5:3}" stroke-linecap="round" opacity="${sel?1:.7}"/><circle cx="${pp[0]}" cy="${pp[1]}" r="${sel?8:5}" fill="${sel?'#1d4ed8':'#64748b'}" stroke="#fff" stroke-width="2.5"/>`});
-  el.innerHTML=`<div class="tiles">${imgs}</div><svg>${svg}</svg><div class="mapbtns"><button type="button" data-map="in" aria-label="Zoom in">+</button><button type="button" data-map="out" aria-label="Zoom out">−</button><button type="button" data-map="re" aria-label="Recenter on beach">⌖</button></div><div class="attr">Imagery © Esri, Maxar, Earthstar Geographics</div>`;
+    svg+=`<line x1="${pa[0]}" y1="${pa[1]}" x2="${pc[0]}" y2="${pc[1]}" stroke="${sel?'#f97316':'#e2e8f0'}" stroke-width="${sel?5:3}" stroke-linecap="round" opacity="${sel?1:.7}"/>`});
+  // Markers after the lines so the selected alligator sits on top.
+  region().beaches.forEach(x=>{if(x.id!==b.id){const pp=P(x.lat,x.lng);svg+=gator(pp[0],pp[1],false)}});
+  const ps=P(b.lat,b.lng);svg+=gator(ps[0],ps[1],true);
+  const sw=Object.entries(MAP_STYLES).map(([k,v])=>`<button type="button" data-mapstyle="${k}" aria-pressed="${k===mapStyle()}">${v.label}</button>`).join('');
+  el.innerHTML=`<div class="tiles">${imgs}</div><svg>${svg}</svg><div class="mapstyle" role="group" aria-label="Map style">${sw}</div><div class="mapbtns"><button type="button" data-map="in" aria-label="Zoom in">+</button><button type="button" data-map="out" aria-label="Zoom out">−</button><button type="button" data-map="re" aria-label="Recenter on beach">⌖</button></div><div class="attr">${st.attr}</div>`;
 }
 function mapClick(a){if(a==='in')map.z=Math.min(19,map.z+1);else if(a==='out')map.z=Math.max(5,map.z-1);else{map.center=null;map.z=16}renderMap()}
 function initMapDrag(){
@@ -1129,7 +1153,7 @@ function renderCraft(msi,alphaRaw,bravo,hasData){
 function renderDecision(msi,overall){
   const val=$('decValue').value,role=$('decRole').value,ini=$('decInitials').value.trim(),time=$('decTime').value.trim(),rem=$('decRemarks').value.trim(),st=$('decStatus');
   // Fingerprint of every observation input (not the decision, custom-beach or readback fields), so any change flags the decision.
-  let h=5381;document.querySelectorAll('input[id],select[id]').forEach(el=>{if(/^dec|^noaaWin$|^cb|^sayCount$/.test(el.id))return;const s=el.id+'='+(el.type==='checkbox'?el.checked:el.value)+';';for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0});
+  let h=5381;document.querySelectorAll('input[id],select[id]').forEach(el=>{if(/^dec|^noaaWin$|^cb|^sayCount$|^mapStyle$/.test(el.id))return;const s=el.id+'='+(el.type==='checkbox'?el.checked:el.value)+';';for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0});
   const sig=`MSI ${fmt(msi,1)} / ${overall.short} #${(h>>>0).toString(16)}`;
   $('decConfirm').style.display=val?'':'none';
   if(!val){$('decMsi').value='';st.className='note warn';st.innerHTML='<b>Decision PENDING.</b> Waiting for the decision authority. The limit check above is advisory only.';return'PENDING - awaiting decision authority'}
@@ -1388,6 +1412,7 @@ function init(){
       const ph=e.target.closest('[data-padh]');if(ph){padWave(+ph.dataset.padh);return}
       if(e.target.closest('#padMore')){showBigPad($('padMore').getAttribute('aria-expanded')!=='true');return}
       const mb=e.target.closest('[data-map]');if(mb){mapClick(mb.dataset.map);return}
+      const ms=e.target.closest('[data-mapstyle]');if(ms){$('mapStyle').value=ms.dataset.mapstyle;renderMap();save();return}
       const b=e.target.closest('[data-step]');if(!b)return;
       const inp=$(b.dataset.step),d=+b.dataset.d,cur=int(inp.value),nv=Math.max(0,cur+d);
       if(nv===cur)return;

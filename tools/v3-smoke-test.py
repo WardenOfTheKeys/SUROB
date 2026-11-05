@@ -72,11 +72,13 @@ with sync_playwright() as p:
     est = T("ovEst").split("MSI ")[1].split()[0]
     check("estimate matches worksheet after NOAA fill", est == T("msiBig"), f"estimate {est}, worksheet {T('msiBig')}")
 
-    pg.select_option("#decRole", "BMU OIC")
+    pg.select_option("#decRole", "BPTC")
     pg.select_option("#decValue", "GO")
     pg.fill("#decInitials", "T1")
     pg.wait_for_timeout(100)
-    check("decision recorded", "GO by BMU OIC" in T("ovDecision"))
+    check("decision recorded", "GO by BPTC" in T("ovDecision"))
+    roles = pg.eval_on_selector_all("#decRole option", "o => o.map(x => x.value).filter(Boolean)")
+    check("decision authority is BPTC or SRM", roles == ["BPTC", "SRM"], str(roles))
     pg.click("#editCounts summary")
     pg.fill("#pCount", "30")
     pg.dispatch_event("#pCount", "change")
@@ -171,6 +173,17 @@ with sync_playwright() as p:
     pg.click("#cbDelete")
     pg.wait_for_timeout(200)
     check("custom beach deleted", pg.input_value("#regionId") != "custom" and pg.locator("#regionId option[value=custom]").count() == 0)
+
+    # Map: off until asked, alligator markers, and satellite / hybrid / regular styles.
+    pg.click("#mapShow")
+    pg.wait_for_timeout(100)
+    layers = lambda: sorted({s.split("/MapServer")[0].split("/services/")[1] for s in pg.eval_on_selector_all("#map img", "i => i.map(x => x.src)")})
+    check("map shows alligator markers", pg.locator("#map svg g").count() >= 1 and pg.locator("#map svg circle[r='8']").count() == 0)
+    check("map starts on satellite", layers() == ["World_Imagery"], str(layers()))
+    pg.click("[data-mapstyle=hybrid]")
+    check("hybrid adds roads and names", layers() == ["Reference/World_Boundaries_and_Places", "Reference/World_Transportation", "World_Imagery"], str(layers()))
+    pg.click("[data-mapstyle=street]")
+    check("regular map style", layers() == ["World_Street_Map"] and "Esri, HERE" in T("map"), str(layers()))
 
     pg.set_viewport_size({"width": 390, "height": 844})
     pg.wait_for_timeout(200)
