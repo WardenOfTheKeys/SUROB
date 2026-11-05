@@ -20,7 +20,7 @@ git checkout v3-merged
 - **Do not edit** `working-overview/` or `surob-msi-calculator(2).zip`. That is H4CK3R-M4N's build, and he worked on it all day 4 Nov. Review notes go in PR comments, not code changes.
 - All Version 3 work happens in `v3/` on branch `v3-merged`.
 - The calculator never makes the GO / NO-GO call. A person records it in section 8. Keep it that way.
-- Unclassified training aid. No names, unit data or operational observations in samples or tests.
+- No names, unit data or operational observations in samples or tests.
 
 ## Repo state
 
@@ -119,6 +119,14 @@ Expected result: 13 PASS, 0 failures. Known-good values: sample A = 4.0, B = 16.
 - **Custom beaches:** stored under `surob-msi-v3-beaches` in localStorage. Linked to the nearest packaged buoy and met station within 150 km. Its NWS grid is looked up once (2 km seaward) and remembered. Not read by `tools/refresh-conditions.py`, so no packaged forecast.
 - **Voice:** no speech-recognition API (Chrome's sends audio to Google and fails offline). The Sailor uses the keyboard's own dictation into the heights box; `spokenToDigits()` turns words into heights and the box updates the counts live. It never overwrites tapped counts without Apply. Spoken readback uses `speechSynthesis` (device voices).
 - Smoke test: 39 checks, including opening with no network.
+
+## MGRS, spoken reports, clean call (5 Nov)
+
+- **Custom beach location:** one box takes MGRS, deg-min-sec or decimal (`parseLocation()`). MGRS both ways (`toMgrs()` / `fromMgrs()`, WGS 84, Norway and Svalbard zones) matches the `mgrs` Python library at 10 points worldwide. Every beach shows its MGRS.
+- **Beach direction:** no longer asked. Auto points the beach toward the nearest packaged buoy (`bearingTo()`); an optional compass choice overrides it.
+- **Speak a report:** `wordsToNumbers()` turns dictated number words into digits ("eleven hundred", "three and a half", "point five") before `parseSheet()`. "Read call aloud" was removed; the spoken count every 10 waves stays.
+- **Call text:** only SITE, DTG, OBSERVER, ALPHA–HOTEL, MSI and DECISION. No EXERCISE, SOURCE, SAMPLE or MSI math lines (those stay in the verification block). No classification or training-aid banner; Fleethacker Rule 4 requires staying unclassified, not marking it.
+- Smoke test: 43 checks.
 
 ## Session history (4 Nov evening)
 

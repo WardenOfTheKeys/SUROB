@@ -118,7 +118,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="ver">Version 3 · merged build</span><div id="jsStatus" class="status bad">App logic not ready</div></div>
   </div>
 </header>
-<div class="banner">UNCLASSIFIED · TRAINING AID. Beach pins and NOAA reports are public data. Do not enter names, unit data or operational observations. The calculator gives advisory limit checks only. A person makes the GO / NO-GO decision.</div>
+<div class="banner">Do not enter names, unit data or operational observations. Limit checks are advisory. A person makes the GO / NO-GO decision.</div>
 <main>
   <noscript><div class="note bad"><b>JavaScript is off.</b> The calculator cannot run until JavaScript is enabled or the file is opened in a browser that supports scripts.</div></noscript>
   <div id="blockedNotice" class="note warn"><b>Loading calculator.</b> If this message stays on screen, the phone preview is blocking the app logic. Open the file in Safari/Chrome or use the home-screen version.</div>
@@ -148,12 +148,13 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
         <button type="button" class="ghost no-print" id="cbDelete" style="display:none">Delete this custom beach</button>
         <details id="customBox" class="no-print" style="margin:8px 0"><summary>Add a custom beach</summary>
           <p class="small">Any beach, saved on this device only. NOAA panels work when a packaged buoy and wind station are within 150 km. Use a public beach name. Do not save planned, sensitive or classified landing sites.</p>
-          <div class="grid two">
-            <div><label for="cbName">Beach name</label><input id="cbName" autocomplete="off" maxlength="60" placeholder="Training lane 2"></div>
-            <div><label for="cbFacing">Faces out to sea (° true)</label><input id="cbFacing" inputmode="numeric" placeholder="90 = faces east"></div>
-            <div><label for="cbLat">Latitude</label><input id="cbLat" inputmode="decimal" placeholder="36.92035"></div>
-            <div><label for="cbLng">Longitude</label><input id="cbLng" inputmode="decimal" placeholder="-75.99530"></div>
-          </div>
+          <div><label for="cbName">Beach name</label><input id="cbName" autocomplete="off" maxlength="60" placeholder="Lane 2"></div>
+          <div style="margin-top:8px"><label for="cbLoc">Location: MGRS or latitude / longitude</label><input id="cbLoc" autocomplete="off" autocapitalize="characters" placeholder="18S VF 11348 86499   or   36°55'13&quot;N 075°59'43&quot;W"></div>
+          <div class="small" id="cbLocOut" style="margin-top:4px">MGRS, deg-min-sec (36 55 13 N 075 59 43 W, or 36.55.13N 075.59.43W) and decimal degrees all work.</div>
+          <details style="margin-top:6px"><summary class="small">Which way the beach faces (optional)</summary>
+            <p class="small">Used only to turn NOAA wave and wind directions into the ECHO and HOTEL angles. Auto points the beach toward the nearest offshore buoy, which is right for most open-ocean beaches.</p>
+            <select id="cbFacing"><option value="">Auto (toward the nearest buoy)</option><option value="0">North</option><option value="45">Northeast</option><option value="90">East</option><option value="135">Southeast</option><option value="180">South</option><option value="225">Southwest</option><option value="270">West</option><option value="315">Northwest</option></select>
+          </details>
           <div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="cbHere">Use my location</button><button type="button" id="cbSave">Save beach</button></div>
           <div id="cbMsg" class="small" style="margin-top:6px"></div>
         </details>
@@ -166,7 +167,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <p class="small">Estimated MSI from NOAA buoy reports (past) and the NWS forecast (ahead), worked with the same tables as the worksheet. Breaker type, littoral current and secondary wave are not in those reports, so they count as 0. Use it to see the trend and to spot a count that looks off. It is not a surf-zone observation.</p>
       <div class="pictiles" id="picTiles"></div>
       <svg class="picchart" id="picChart" viewBox="0 0 640 200" role="img" aria-label="Estimated MSI for the last 7 days and the next 5 days"></svg>
-      <div class="legend small" id="picLegend"><span><i style="border-color:#1d4ed8"></i>NOAA buoy estimate</span><span><i style="border-color:#c2410c;border-top-style:dashed"></i>NWS forecast estimate</span><span><i style="border-color:#94a3b8;border-top-style:dotted"></i>Craft limit reference (training)</span><span>● Observed worksheet MSI</span></div>
+      <div class="legend small" id="picLegend"><span><i style="border-color:#1d4ed8"></i>NOAA buoy estimate</span><span><i style="border-color:#c2410c;border-top-style:dashed"></i>NWS forecast estimate</span><span><i style="border-color:#94a3b8;border-top-style:dotted"></i>Craft limit reference</span><span>● Observed worksheet MSI</span></div>
       <div class="small" id="picSrc" style="margin-top:6px"></div>
     </div>
   </section>
@@ -185,7 +186,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
 
   <section class="card">
     <h2>Observation</h2>
-    <p class="small">Use role or callsign only. No names. Samples load worked examples for training.</p>
+    <p class="small">Use role or callsign only. No names. Samples load worked examples.</p>
     <div class="btnrow no-print" style="margin-bottom:10px"><button type="button" class="blue" data-scenario="A">Load sample A (moderate)</button><button type="button" class="secondary" data-scenario="B">Load sample B (heavy)</button><button type="button" class="secondary" data-scenario="C">Load sample C (MSI 3.2)</button></div>
     <input type="hidden" id="scenarioId">
     <div class="grid three">
@@ -196,10 +197,12 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
   </section>
 
   <section class="card" id="scan">
-    <h2>Read a handwritten sheet</h2>
-    <p class="small">Works with a finished report (ALPHA to HOTEL) or a raw worksheet (wave tally such as <b>1.5 ft: 12</b>, start/stop or total seconds, P/S/X counts, drift). Get the text with your phone: on iPhone, tap the box and choose <b>Scan Text</b>, or copy from a photo with Live Text. On Android, use Google Lens <b>Copy text</b>. Then paste here. This app sends nothing. iPhone Live Text runs on the phone, and Google Lens may use Google's servers. The GO / NO-GO entry and names on the sheet are never imported.</p>
+    <h2>Speak, scan or paste a report</h2>
+    <p class="small"><b>Speak it:</b> tap the box, tap the microphone on the phone keyboard and say the report: "Alpha three and a half, Bravo five, Charlie nine seconds, Delta twenty percent plunging seventy percent spilling ten percent surging, Echo ten right, Foxtrot point five knots left, Golf two to four lines one hundred fifty feet, Hotel twelve knots at forty onshore right." Then tap <b>Read report</b>.</p>
+    <p class="small"><b>Scan it:</b> on iPhone, tap the box and choose <b>Scan Text</b>. On Android, use Google Lens <b>Copy text</b> on the sheet and paste here.</p>
+    <p class="small">Works for a finished report (ALPHA to HOTEL) or a raw worksheet (wave tally such as <b>1.5 ft: 12</b>, start/stop or total seconds, P/S/X counts, drift). You check every value in the table before it goes into the worksheet. The phone's own dictation and text recognition do the listening and reading; this app sends nothing. The GO / NO-GO entry and names are never imported.</p>
     <textarea id="scanText" placeholder="ALPHA 3.5 ft&#10;BRAVO 5 ft&#10;CHARLIE 9 sec&#10;DELTA 20% P 70% S 10% X&#10;ECHO 10 Right&#10;FOXTROT 0.5 kts Left&#10;GOLF 2 to 4 lines 150 ft&#10;HOTEL 12 kts at 40 onshore Right"></textarea>
-    <div class="btnrow no-print" style="margin-top:8px"><button type="button" class="blue" id="scanRead">Read text</button><button type="button" id="scanApply" disabled>Apply to worksheet</button><button type="button" class="secondary" id="scanPhotoBtn">Show photo to compare</button><input type="file" accept="image/*" data-role="scanPhoto" hidden></div>
+    <div class="btnrow no-print" style="margin-top:8px"><button type="button" class="blue" id="scanRead">Read report</button><button type="button" id="scanApply" disabled>Apply to worksheet</button><button type="button" class="secondary" id="scanPhotoBtn">Show photo to compare</button><input type="file" accept="image/*" data-role="scanPhoto" hidden></div>
     <div id="scanOut" style="margin-top:8px"></div>
     <div id="scanMsg" class="small" style="margin-top:6px"></div>
     <img id="scanImg" alt="Photo of the sheet, shown here only for checking" style="display:none;max-width:100%;margin-top:8px;border-radius:8px">
@@ -297,7 +300,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
   <section class="card">
     <h2>5. BPT communicator call</h2>
     <div class="call" id="callOutput"></div>
-    <div class="btnrow no-print" style="margin-top:10px"><button type="button" id="copyCall">Copy call</button><button type="button" class="secondary" id="shareCall" style="display:none">Share</button><button type="button" class="secondary speak" id="sayCall">Read call aloud</button><button type="button" class="secondary" onclick="window.print()">Print / save PDF</button></div>
+    <div class="btnrow no-print" style="margin-top:10px"><button type="button" id="copyCall">Copy call</button><button type="button" class="secondary" id="shareCall" style="display:none">Share</button><button type="button" class="secondary" onclick="window.print()">Print / save PDF</button></div>
   </section>
 
   <section class="card">
@@ -367,7 +370,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <li>MSI tables were carried over unchanged from the original worksheet version. The team must cite the source worksheet or publication.</li>
     </ul>
   </section>
-  <div class="footer">Unclassified training aid. Beach pins are approximate. Validate against current command guidance before any operational use. Entries autosave on this device only.</div>
+  <div class="footer">Beach pins are approximate. Check results against current command guidance. Entries are saved on this device only.</div>
 </main>
 
 <div class="livebar no-print"><div class="lbinner">
@@ -681,7 +684,7 @@ function sheetNums(s){return(String(s).match(NUM_RE)||[]).map(t=>parseFloat(t.re
 function sheetFlank(s){return/\bR\s*\/\s*L\b/.test(s)?'R/L':/\b(RIGHT|RT)\b/.test(s)?'Right':/\b(LEFT|LT)\b/.test(s)?'Left':null}
 function isHalf(n){return n>=0&&n<=MAX_HEIGHT&&Math.abs(n*2-Math.round(n*2))<EPS}
 function parseSheet(text){
-  const T=String(text||'').toUpperCase().replace(/[–—]/g,'-').replace(/°/g,' DEG ');
+  const T=wordsToNumbers(text||'').replace(/\s*percent\b/gi,'%').toUpperCase().replace(/[–—]/g,'-').replace(/°/g,' DEG ');
   const lines=T.replace(new RegExp(`\\b(${SHEET_KEYS})\\b`,'g'),'\n$1').split(/\n+/).map(l=>l.trim()).filter(Boolean);
   const f={},rep={},tally={},list=[],notes=[];let decision=false;
   const time=s=>{const m=s.match(/\d{1,2}:?\d{2}(?::?\d{2})?/);return m?m[0].replace(/:/g,''):null};
@@ -782,32 +785,99 @@ function renderNoaa(){
   setText('noaaWinLbl',`Selected window ends ${fmtWhen(pts[idx].t)} (${fmt(hs[idx],1)} ft). Range ${fmtWhen(t0)} to ${fmtWhen(t1)}.`);
 }
 
+/* ---------- Coordinates: MGRS and deg-min-sec (WGS 84) ---------- */
+const WGS_A=6378137,WGS_F=1/298.257223563,WGS_E2=WGS_F*(2-WGS_F),WGS_EP2=WGS_E2/(1-WGS_E2),UTM_K0=0.9996,RAD=Math.PI/180;
+const MGRS_BANDS='CDEFGHJKLMNPQRSTUVWX',MGRS_COLS=['ABCDEFGH','JKLMNPQR','STUVWXYZ'],MGRS_ROWS='ABCDEFGHJKLMNPQRSTUV';
+function utmZone(lat,lng){let z=Math.floor((lng+180)/6)+1;if(lat>=56&&lat<64&&lng>=3&&lng<12)z=32;if(lat>=72)z=lng<9?31:lng<21?33:lng<33?35:lng<42?37:z;return Math.min(60,Math.max(1,z))}
+function toUtm(lat,lng,zone){
+  zone=zone||utmZone(lat,lng);const p=lat*RAD,l=(lng-((zone-1)*6-177))*RAD,s=Math.sin(p),c=Math.cos(p),t=Math.tan(p),e2=WGS_E2;
+  const N=WGS_A/Math.sqrt(1-e2*s*s),T=t*t,C=WGS_EP2*c*c,A=c*l;
+  const M=WGS_A*((1-e2/4-3*e2*e2/64-5*e2**3/256)*p-(3*e2/8+3*e2*e2/32+45*e2**3/1024)*Math.sin(2*p)+(15*e2*e2/256+45*e2**3/1024)*Math.sin(4*p)-(35*e2**3/3072)*Math.sin(6*p));
+  const E=UTM_K0*N*(A+(1-T+C)*A**3/6+(5-18*T+T*T+72*C-58*WGS_EP2)*A**5/120)+500000;
+  let Nn=UTM_K0*(M+N*t*(A*A/2+(5-T+9*C+4*C*C)*A**4/24+(61-58*T+T*T+600*C-330*WGS_EP2)*A**6/720));if(lat<0)Nn+=1e7;
+  return{zone,E,N:Nn};
+}
+function fromUtm(zone,E,Nn,south){
+  const e2=WGS_E2,e1=(1-Math.sqrt(1-e2))/(1+Math.sqrt(1-e2)),M=(south?Nn-1e7:Nn)/UTM_K0,mu=M/(WGS_A*(1-e2/4-3*e2*e2/64-5*e2**3/256));
+  const p1=mu+(3*e1/2-27*e1**3/32)*Math.sin(2*mu)+(21*e1*e1/16-55*e1**4/32)*Math.sin(4*mu)+(151*e1**3/96)*Math.sin(6*mu)+(1097*e1**4/512)*Math.sin(8*mu);
+  const s=Math.sin(p1),c=Math.cos(p1),t=Math.tan(p1),N1=WGS_A/Math.sqrt(1-e2*s*s),T1=t*t,C1=WGS_EP2*c*c,R1=WGS_A*(1-e2)/(1-e2*s*s)**1.5,D=(E-500000)/(N1*UTM_K0);
+  const lat=p1-(N1*t/R1)*(D*D/2-(5+3*T1+10*C1-4*C1*C1-9*WGS_EP2)*D**4/24+(61+90*T1+298*C1+45*T1*T1-252*WGS_EP2-3*C1*C1)*D**6/720);
+  const lng=(D-(1+2*T1+C1)*D**3/6+(5-2*C1+28*T1-3*C1*C1+8*WGS_EP2+24*T1*T1)*D**5/120)/c;
+  return{lat:lat/RAD,lng:(zone-1)*6-177+lng/RAD};
+}
+function toMgrs(lat,lng){
+  if(lat<-80||lat>=84)return'';
+  const u=toUtm(lat,lng),band=MGRS_BANDS[Math.min(19,Math.floor((lat+80)/8))],col=MGRS_COLS[(u.zone-1)%3][Math.floor(u.E/1e5)-1];
+  const row=MGRS_ROWS[(Math.floor(u.N/1e5)+(u.zone%2?0:5))%20],p5=v=>String(Math.floor(v%1e5)).padStart(5,'0');
+  return`${u.zone}${band} ${col}${row} ${p5(u.E)} ${p5(u.N)}`;
+}
+// "18S VF 11348 86499", "18SVF0963186557", or 4/6/8-digit precision.
+function fromMgrs(s){
+  const m=String(s).toUpperCase().replace(/\s+/g,'').match(/^(\d{1,2})([C-HJ-NP-X])([A-HJ-NP-Z])([A-HJ-NP-V])(\d{2,10})$/);if(!m||m[5].length%2)return null;
+  const zone=+m[1],band=m[2],ci=MGRS_COLS[(zone-1)%3].indexOf(m[3]),ri=MGRS_ROWS.indexOf(m[4]);if(zone<1||zone>60||ci<0||ri<0)return null;
+  const half=m[5].length/2,mul=10**(5-half),E=(ci+1)*1e5+(+m[5].slice(0,half))*mul+mul/2,south=band<'N';
+  const bandLat=-80+MGRS_BANDS.indexOf(band)*8,minN=toUtm(bandLat,(zone-1)*6-177,zone).N;
+  let Nn=((ri-(zone%2?0:5)+20)%20)*1e5+(+m[5].slice(half))*mul+mul/2;
+  while(Nn<minN-1e5)Nn+=2e6;
+  return fromUtm(zone,E,Nn,south);
+}
+function fmtDms(v,pos,neg){const a=Math.abs(v),d=Math.floor(a),mf=(a-d)*60,m=Math.floor(mf),s=(mf-m)*60;return`${d}°${String(m).padStart(2,'0')}'${s.toFixed(1).padStart(4,'0')}"${v>=0?pos:neg}`}
+function fmtLatLng(lat,lng){return`${fmtDms(lat,'N','S')} ${fmtDms(lng,'E','W')}`}
+// Accepts MGRS, deg-min-sec ("36 55 13 N 075 59 43 W", "36.55.13N 075.59.43W", "N36°55'13\" W075°59'43\""),
+// deg + decimal minutes, or decimal degrees ("36.92035, -75.9953"). Returns {lat,lng,how} or {err}.
+function parseLocation(raw){
+  const s=String(raw||'').trim().toUpperCase();if(!s)return{err:'Enter a location.'};
+  const mg=fromMgrs(s);if(mg)return{...mg,how:'MGRS'};
+  const t=s.replace(/[°º'′"″:,;]/g,' ').replace(/(\d+)\.(\d+)\.(\d+(?:\.\d+)?)/g,'$1 $2 $3'),toks=t.match(/[NSEW]|-?\d+(?:\.\d+)?/g)||[];
+  const groups=[];let cur={n:[],h:null};
+  toks.forEach(k=>{if(/[NSEW]/.test(k)){if(cur.n.length&&!cur.h){cur.h=k;groups.push(cur);cur={n:[],h:null}}else if(cur.n.length){groups.push(cur);cur={n:[],h:k}}else cur.h=k}else cur.n.push(+k)});
+  if(cur.n.length)groups.push(cur);
+  if(groups.length===1&&!groups[0].h&&[2,4,6].includes(groups[0].n.length)){const n=groups[0].n,h=n.length/2;groups.splice(0,1,{n:n.slice(0,h)},{n:n.slice(h)})}
+  if(groups.length!==2)return{err:'Could not read that. Use MGRS (18S VF 11348 86499) or latitude and longitude (36 55 13 N 075 59 43 W).'};
+  const val=g=>{const[d,m=0,sec=0]=g.n;if(g.n.length>3||m<0||m>=60||sec<0||sec>=60)return NaN;let v=Math.abs(d)+m/60+sec/3600;if(d<0||g.h==='S'||g.h==='W')v=-v;return v};
+  let[a,b]=groups;if(a.h==='E'||a.h==='W'||b.h==='N'||b.h==='S')[a,b]=[b,a];
+  const lat=val(a),lng=val(b);
+  if(!(lat>=-90&&lat<=90)||!(lng>=-180&&lng<=180))return{err:'Latitude must be 0 to 90° N or S and longitude 0 to 180° E or W. Minutes and seconds must be under 60.'};
+  return{lat,lng,how:a.n.length>1?'deg-min-sec':'decimal degrees'};
+}
+function bearingTo(lat1,lng1,lat2,lng2){const p1=lat1*RAD,p2=lat2*RAD,dl=(lng2-lng1)*RAD;return(Math.atan2(Math.sin(dl)*Math.cos(p2),Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl))/RAD+360)%360}
+function compass(b){return['north','northeast','east','southeast','south','southwest','west','northwest'][Math.round(((b%360)+360)%360/45)%8]}
+
 /* ---------- Custom beaches (saved on this device only) ---------- */
 const BEACH_KEY='surob-msi-v3-beaches';
 function loadCustom(){try{const l=JSON.parse(localStorage.getItem(BEACH_KEY)||'[]');return Array.isArray(l)?l:[]}catch(e){return[]}}
 function saveCustom(list){try{localStorage.setItem(BEACH_KEY,JSON.stringify(list));return true}catch(e){return false}}
 function nearestSt(lat,lng,pred){return Object.values(ST).filter(pred).map(s=>({s,km:kmBetween(lat,lng,s.lat,s.lng)})).sort((a,b)=>a.km-b.km)[0]||null}
 // Links a custom beach to the nearest packaged buoy and wind station, the same shape as the built-in LINKS.
+// With no facing set, the beach faces the nearest buoy: buoys sit offshore, so that is out to sea on open coast.
 function linkCustom(c){
   const w=nearestSt(c.lat,c.lng,s=>!s.kind),m=nearestSt(c.lat,c.lng,s=>!!s.kind),v=nearestSt(c.lat,c.lng,s=>s.kind==='nws');
-  if(!w||w.km>150||!m||m.km>150){delete LINKS[c.id];return}
-  LINKS[c.id]={seaward:c.facing,wave:w.s,wind:m.s,visibility:v&&v.km<=150?v.s:m.s,caveat:`Custom beach: the nearest packaged buoy is ${w.km} km away and wind is from ${m.s.name}, ${m.km} km away. Surf on the beach can differ.`};
+  const auto=c.facing==null||c.facing==='',seaward=auto?(w?Math.round(bearingTo(c.lat,c.lng,w.s.lat,w.s.lng)):0):+c.facing;
+  const desc=`Faces ${compass(seaward)}${auto?(w?` (auto, toward buoy ${w.s.id})`:''):' (set by hand)'}`;
+  if(!w||w.km>150||!m||m.km>150){delete LINKS[c.id];return{seaward,desc}}
+  LINKS[c.id]={seaward,wave:w.s,wind:m.s,visibility:v&&v.km<=150?v.s:m.s,caveat:`Custom beach: the nearest packaged buoy is ${w.km} km away and wind is from ${m.s.name}, ${m.km} km away. Surf on the beach can differ.`};
+  return{seaward,desc};
 }
 function installCustom(){
   const list=loadCustom(),i=REGIONS.findIndex(r=>r.id==='custom');if(i>=0)REGIONS.splice(i,1);
   if(!list.length)return;
-  REGIONS.push({id:'custom',name:'Custom beaches',coast:'saved on this device',beaches:list.map(c=>({id:c.id,name:c.name,lat:c.lat,lng:c.lng,alongshore:(c.facing+90)%360,halfLengthM:250,facing:`Faces ${c.facing}° true`,note:'Custom beach saved on this device.',custom:true,grid:c.grid}))});
-  list.forEach(linkCustom);
+  REGIONS.push({id:'custom',name:'Custom beaches',coast:'saved on this device',beaches:list.map(c=>{const k=linkCustom(c);
+    return{id:c.id,name:c.name,lat:c.lat,lng:c.lng,alongshore:(k.seaward+90)%360,halfLengthM:250,facing:k.desc,note:'Custom beach saved on this device.',custom:true,grid:c.grid}})});
+}
+function showLocation(){
+  const p=parseLocation($('cbLoc').value),out=$('cbLocOut');
+  if(isBlank($('cbLoc').value)){out.textContent='MGRS, deg-min-sec (36 55 13 N 075 59 43 W, or 36.55.13N 075.59.43W) and decimal degrees all work.';return null}
+  out.textContent=p.err?p.err:`Reads as ${fmtLatLng(p.lat,p.lng)} · MGRS ${toMgrs(p.lat,p.lng)} (${p.how}).`;return p.err?null:p;
 }
 function rememberGrid(id,grid){const list=loadCustom(),c=list.find(x=>x.id===id);if(c){c.grid=grid;saveCustom(list)}const b=beach();if(b.id===id)b.grid=grid}
 function saveCustomBeach(){
-  const name=$('cbName').value.trim(),lat=parseFloat($('cbLat').value),lng=parseFloat($('cbLng').value),facing=parseFloat($('cbFacing').value),msg=$('cbMsg');
-  if(!name||!(lat>=-90&&lat<=90)||!(lng>=-180&&lng<=180)||!(facing>=0&&facing<360)){msg.textContent='Enter a name, latitude (-90 to 90), longitude (-180 to 180) and the direction the beach faces out to sea (0 to 359°).';return}
+  const name=$('cbName').value.trim(),p=showLocation(),fv=$('cbFacing').value,msg=$('cbMsg');
+  if(!name||!p){msg.textContent=!name?'Enter a beach name.':'Enter a location the app can read (see the note under the box).';return}
   const list=loadCustom(),id='custom-'+Date.now().toString(36);
-  list.push({id,name:name.slice(0,60),lat:+lat.toFixed(5),lng:+lng.toFixed(5),facing:Math.round(facing)%360});
+  list.push({id,name:name.slice(0,60),lat:+p.lat.toFixed(5),lng:+p.lng.toFixed(5),facing:fv===''?null:+fv});
   if(!saveCustom(list)){msg.textContent='This browser is not saving data, so the beach cannot be kept.';return}
   installCustom();fillRegions();$('regionId').value='custom';fillBeaches(id);
-  ['cbName','cbLat','cbLng','cbFacing'].forEach(i=>$(i).value='');
+  ['cbName','cbLoc','cbFacing'].forEach(i=>$(i).value='');showLocation();
   msg.textContent=LINKS[id]?`Saved. ${LINKS[id].caveat}`:'Saved. No packaged NOAA station is within 150 km, so the NOAA panels stay empty. The worksheet works as usual.';
   onBeachChange();
 }
@@ -819,19 +889,40 @@ function deleteCustomBeach(){
 function useMyLocation(){
   const msg=$('cbMsg');if(!navigator.geolocation){msg.textContent='This browser cannot read the location.';return}
   msg.textContent='Reading the location (GPS works without a connection)…';
-  navigator.geolocation.getCurrentPosition(p=>{$('cbLat').value=p.coords.latitude.toFixed(5);$('cbLng').value=p.coords.longitude.toFixed(5);msg.textContent='Location filled in. Add the name and the direction the beach faces, then Save.'},
+  navigator.geolocation.getCurrentPosition(p=>{$('cbLoc').value=toMgrs(p.coords.latitude,p.coords.longitude)||fmtLatLng(p.coords.latitude,p.coords.longitude);showLocation();msg.textContent='Location filled in. Add a name, then Save.'},
     e=>{msg.textContent='Location not available: '+(e.message||'permission denied')+'.'},{enableHighAccuracy:true,timeout:15000});
 }
 
 /* ---------- Voice entry and spoken readback (the phone's own dictation and voices) ---------- */
-// Keyboard dictation writes words: "two and a half, three, one point five". "to", "too" and "for" are
-// common mishearings of two and four, so they count as numbers in this box only.
-const NUM_WORDS={zero:0,oh:0,one:1,won:1,two:2,to:2,too:2,three:3,four:4,for:4,five:5,six:6,seven:7,eight:8,ate:8,nine:9,ten:10};
-function spokenToDigits(s){
-  return String(s).toLowerCase().replace(new RegExp(`\\b(${Object.keys(NUM_WORDS).join('|')})\\b`,'g'),w=>NUM_WORDS[w])
-    .replace(/(\d+)\s*(?:and\s+)?(?:a\s+)?half\b/g,'$1.5').replace(/\b(?:a\s+)?half\b/g,'0.5').replace(/(\d+)\s*point\s*(\d)/g,'$1.$2')
-    .replace(/\b(?:feet|foot|ft)\b/g,' ');
+// Keyboard dictation writes some numbers as words: "three and a half", "eleven hundred", "point five".
+// wordsToNumbers() turns each run of number words into digits and leaves every other word alone.
+// loose: also hear "to", "too", "for", "won", "ate", "oh" as numbers (the wave-heights box, where no other words belong).
+const W_UNITS={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19};
+const W_TENS={twenty:20,thirty:30,forty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+const W_SOUNDS={oh:'zero',won:'one',to:'two',too:'two',for:'four',ate:'eight'};
+function wordsToNumbers(text,loose){
+  const keys=[...Object.keys(W_UNITS),...Object.keys(W_TENS),'hundred','thousand','point','half','and','a',...(loose?Object.keys(W_SOUNDS):[])];
+  const re=new RegExp(`\\b(?:${keys.join('|')})(?:[\\s-]+(?:${keys.join('|')}))*\\b`,'gi');
+  let s=String(text).replace(re,run=>{
+    const w=run.toLowerCase().split(/[\s-]+/).map(x=>loose&&W_SOUNDS[x]||x);
+    if(!w.some(x=>x in W_UNITS||x in W_TENS||x==='half'))return run;
+    const out=[];let cur=null,last='',lead='';
+    while(w.length&&(w[0]==='and'||w[0]==='a'||w[0]==='point'&&!(w[1] in W_UNITS)))lead+=w.shift()+' ';
+    for(let i=0;i<w.length;i++){
+      const x=w[i];
+      if(x in W_UNITS){const v=W_UNITS[x];if(cur!=null&&((last==='tens'&&v<10)||last==='hundred'))cur+=v;else{if(cur!=null)out.push(cur);cur=v}last=v<10?'unit':'teen'}
+      else if(x in W_TENS){if(cur!=null&&last==='hundred')cur+=W_TENS[x];else{if(cur!=null)out.push(cur);cur=W_TENS[x]}last='tens'}
+      else if(x==='hundred'||x==='thousand'){cur=(cur??1)*(x==='hundred'?100:1000);last='hundred'}
+      else if(x==='point'){let d='';while(w[i+1] in W_UNITS&&W_UNITS[w[i+1]]<10)d+=W_UNITS[w[++i]];if(d){cur=parseFloat(`${cur??0}.${d}`);last='done'}}
+      else if(x==='half'){cur=(cur??0)+0.5;last='done'}
+    }
+    if(cur!=null)out.push(cur);
+    return lead+out.join(' ');
+  });
+  // Digits mixed with words: "3 and a half", "2 point 5".
+  return s.replace(/(\d+)\s+(?:and\s+)?a\s+half\b/gi,(m,d)=>String(+d+0.5)).replace(/(\d+)\s+point\s+(\d+)/gi,'$1.$2');
 }
+function spokenToDigits(s){return wordsToNumbers(s,true).toLowerCase().replace(/\b(?:feet|foot|ft)\b/g,' ')}
 let pasteLive=false,pasteTimer=null;
 // live: called while the Sailor is talking. It never overwrites counts that were tapped; Apply does, after a confirm.
 function applyHeights(live){
@@ -852,10 +943,6 @@ function sayCount(total){
     say(total>=100?`${total} waves. Count complete.`:`${Math.floor(total/10)*10} waves`);
   lastSaid=total;
 }
-function callForSpeech(){
-  const lines=$('callOutput').textContent.split('\n').filter(l=>/^(ALPHA|BRAVO|CHARLIE|DELTA|ECHO|FOXTROT|GOLF|HOTEL|Visibility|Secondary|MSI:|DECISION)/.test(l));
-  return lines.join('. ').replace(/\bft\b/g,'feet').replace(/\bkts\b/g,'knots').replace(/\bsec\b/g,'seconds').replace(/%/g,' percent').replace(/__/g,'not entered').replace(/\//g,' or ');
-}
 
 /* ---------- Beach picker and satellite map (no library; Esri tiles only after Show map) ---------- */
 function fillRegions(){$('regionId').innerHTML=REGIONS.map(r=>`<option value="${r.id}">${esc(r.name)} — ${esc(r.coast)}</option>`).join('')}
@@ -863,7 +950,7 @@ function fillBeaches(keep){const r=region(),el=$('beachId');el.innerHTML=r.beach
 function renderBeach(){
   const r=region(),b=beach();
   $('beachBtns').innerHTML=r.beaches.map(x=>`<button type="button" class="${x.id===b.id?'':'ghost'}" data-beach="${x.id}">${esc(x.name)}</button>`).join('');
-  $('beachNote').innerHTML=`${esc(b.note)}<br>${esc(b.facing)}. ${Math.abs(b.lat).toFixed(5)}° ${b.lat>=0?'N':'S'}, ${Math.abs(b.lng).toFixed(5)}° ${b.lng>=0?'E':'W'}`;
+  $('beachNote').innerHTML=`${esc(b.note)}<br>${esc(b.facing)}.<br>${fmtLatLng(b.lat,b.lng)} · MGRS ${toMgrs(b.lat,b.lng)}`;
   $('cbDelete').style.display=b.custom?'':'none';
 }
 let lastBeachName='';
@@ -1112,10 +1199,9 @@ function calculate(){
 
   const overall=renderCraft(msi,alphaRaw,bravo,total>0);
   const decisionLine=renderDecision(msi,overall);
-  const head=['EXERCISE - TRAINING AID'];
-  if(!isBlank($('scenarioId').value))head.push(`SAMPLE: ${$('scenarioId').value}`);
+  // The call is what goes over the net: site, time, observer and A-H. Source, sample and math stay in the verification block.
+  const head=[];
   if(!isBlank($('siteName').value))head.push(`SITE: ${$('siteName').value.trim()}`);
-  head.push(srcLine);
   if(!isBlank($('dtg').value))head.push(`DTG: ${$('dtg').value.trim()}`);
   if(!isBlank($('observer').value))head.push(`OBSERVER: ${$('observer').value.trim()}`);
   const v=id=>$(id).value.trim();
@@ -1132,8 +1218,6 @@ function calculate(){
     `Secondary wave height: ${fmt(sec,1)} ft`,
     ``,
     `MSI: ${fmt(msi,1)}`,
-    `MSI math: ${formula}`,
-    `ADVISORY LIMIT CHECK (not a decision): ${overall.summary}`,
     `DECISION: ${decisionLine}`
   ].join('\n'));
 
@@ -1282,8 +1366,8 @@ function init(){
     $('cbSave').addEventListener('click',saveCustomBeach);
     $('cbDelete').addEventListener('click',deleteCustomBeach);
     $('cbHere').addEventListener('click',useMyLocation);
-    if(canSpeak)$('sayCall').addEventListener('click',()=>say(callForSpeech()));
-    else document.querySelectorAll('.speak').forEach(el=>el.style.display='none');
+    $('cbLoc').addEventListener('input',showLocation);
+    if(!canSpeak)document.querySelectorAll('.speak').forEach(el=>el.style.display='none');
     $('scanRead').addEventListener('click',readSheet);
     $('scanApply').addEventListener('click',applySheet);
     // The photo is only shown next to the text for checking. It is not saved or sent.

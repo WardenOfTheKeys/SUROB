@@ -121,18 +121,32 @@ with sync_playwright() as p:
     said = pg.evaluate("""() => { const out = []; window.say = t => out.push(t); $('sayCount').checked = true;
       lastSaid = 8; sayCount(9); sayCount(10); lastSaid = 99; sayCount(100); lastSaid = 0; sayCount(100); return out; }""")
     check("count spoken every 10 waves", said == ["10 waves", "100 waves. Count complete."], str(said))
-    spoken = pg.evaluate("callForSpeech()")
-    check("call read aloud in words", spoken.startswith("ALPHA:") and "feet" in spoken and "DECISION" in spoken, spoken[:60])
 
-    # Custom beach near Fort Story: linked to the nearest packaged buoy, saved on the device, deletable.
+    # A report spoken into the keyboard's dictation, with numbers as words.
+    scan("Alpha three and a half feet. Bravo five. Charlie nine seconds. Delta twenty percent plunging seventy percent "
+         "spilling ten percent surging. Echo ten degrees right. Foxtrot point five knots left. Golf two to four lines "
+         "one hundred fifty feet. Hotel twelve knots at forty degrees onshore right.")
+    fields = {i: pg.input_value("#" + i) for i in ["pCount", "sCount", "xCount", "echoAngle", "driftFeet", "golfFrom", "golfTo", "golfWidth", "windSpeed", "windAngle", "totalSeconds"]}
+    check("spoken report fills the worksheet", fields == {"pCount": "20", "sCount": "70", "xCount": "10", "echoAngle": "10", "driftFeet": "50", "golfFrom": "2", "golfTo": "4", "golfWidth": "150", "windSpeed": "12", "windAngle": "40", "totalSeconds": "900"} and T("alphaRawOut") == "3.50", str(fields))
+
+    # The communicator call carries no EXERCISE, SOURCE or sample lines; the page has no classification banner.
+    call = T("callOutput")
+    check("call has no exercise or source lines", not any(w in call.upper() for w in ("EXERCISE", "TRAINING AID", "SOURCE:", "SAMPLE:", "MSI MATH")), call[:80])
+    check("no classification banner", "UNCLASSIFIED" not in pg.inner_text("body").upper())
+
+    # Coordinates: MGRS both ways (checked against the mgrs library), deg-min-sec and decimal.
+    coords = pg.evaluate("""() => [toMgrs(36.92035, -75.9953), toMgrs(-33.8568, 151.2153),
+      ...['18S UJ 23478 06483', '36 55 13 N 075 59 43 W', '36.55.13N 075.59.43W', '36.92035, -75.9953'].map(s => { const p = parseLocation(s); return p.lat.toFixed(4) + ',' + p.lng.toFixed(4) })]""")
+    check("MGRS and deg-min-sec read correctly", coords == ["18S VF 11348 86499", "56H LH 34900 52288", "38.8895,-77.0353", "36.9203,-75.9953", "36.9203,-75.9953", "36.9203,-75.9953"], str(coords))
+
+    # Custom beach near Fort Story from deg-min-sec: faces the nearest buoy automatically, saved on the device, deletable.
     pg.click("#customBox summary")
     pg.fill("#cbName", "Test lane")
-    pg.fill("#cbLat", "36.85")
-    pg.fill("#cbLng", "-75.97")
-    pg.fill("#cbFacing", "90")
+    pg.fill("#cbLoc", "36 51 00 N 075 58 12 W")
     pg.click("#cbSave")
     pg.wait_for_timeout(200)
     check("custom beach saved and selected", pg.input_value("#regionId") == "custom" and "Test lane" in T("ovPlace"), T("cbMsg")[:80])
+    check("custom beach faces the buoy and shows MGRS", "auto, toward buoy" in T("beachNote") and "MGRS 18S" in T("beachNote"), T("beachNote")[-90:])
     check("custom beach linked to nearest buoy", "44099" in T("ovEst") or "44087" in T("ovEst"), T("ovEst")[:60])
     pg.reload()
     pg.wait_for_timeout(400)
