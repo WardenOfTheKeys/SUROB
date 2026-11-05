@@ -1037,18 +1037,21 @@ let pasteLive=false,pasteTimer=null;
 // A breaker word right after a height belongs to that wave: "two spilling, three plunging" (or S / P / X).
 const SAID_TYPE=[[/^(?:spill\w*|s)$/,'sCount'],[/^(?:plung\w*|p)$/,'pCount'],[/^(?:surg\w*|x)$/,'xCount']];
 function applyHeights(live){
-  const tokens=spokenToDigits($('pasteHeights').value).split(/[\s,;]+/).map(t=>t.replace(/[.!?]+$/,'')).filter(t=>t!=='');
+  // Foot marks (1', 1′, 1") and stray punctuation around a word are dropped so "1'" reads as 1 ft.
+  const tokens=spokenToDigits($('pasteHeights').value).split(/[\s,;]+/).map(t=>t.replace(/^[^\w.]+|[^\w]+$/g,'').replace(/\.$/,'')).filter(t=>t!=='');
   const waves=[];let bad=0;
   // Either order works. Started with a breaker word ("spilling two, three, plunging four"): the type comes first and
   // stays picked for the heights after it, like the pad. Started with a height ("two spilling, three plunging"):
   // the type belongs to the height just before it.
   const typeOf=t=>{const k=SAID_TYPE.find(([re])=>re.test(t));return k&&k[1]};
   const first=tokens.find(t=>Number.isFinite(Number(t))||typeOf(t));
-  const typeFirst=!!(first&&typeOf(first));let cur=null;
-  tokens.forEach(t=>{const n=Number(t);if(Number.isFinite(n)&&n>=0){waves.push(typeFirst&&cur?{h:n,type:cur}:{h:n});return}
+  const typeFirst=!!(first&&typeOf(first));let cur=null,next=null;
+  tokens.forEach(t=>{const n=Number(t);if(Number.isFinite(n)&&n>=0){waves.push(typeFirst&&cur?{h:n,type:cur}:next?{h:n,type:next}:{h:n});next=null;return}
     const k=typeOf(t);
     if(k&&typeFirst)cur=k;
     else if(k&&waves.length&&!waves[waves.length-1].type)waves[waves.length-1].type=k;
+    // Height-first count, but this type has no wave before it waiting for one ("two spilling, spilling one"): it goes with the next height.
+    else if(k)next=k;
     else if(!/^(?:and|wave|waves|feet|foot|ft|then)$/.test(t))bad++});
   const vals=waves.map(w=>w.h),typed=waves.filter(w=>w.type),over=vals.filter(n=>n>MAX_HEIGHT).length;
   if(!vals.length){if(!live)$('pasteMsg').textContent='No valid heights found.';return}
