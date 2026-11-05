@@ -43,6 +43,18 @@ with sync_playwright() as p:
     check("history and forecast lines drawn", "#1d4ed8" in paths and "#c2410c" in paths, str(paths))
     check("offline uses packaged forecast", "packaged copy" in T("picSrc"), T("picSrc")[-90:])
 
+    # Counting pad: the breaker type stays picked, one tap records height and type; undo takes back both.
+    pg.click("[data-btype=sCount]")
+    for _ in range(3):
+        pg.click("[data-padh='2']")
+    pg.click("[data-btype=pCount]")
+    pg.click("[data-padh='3']")
+    pad = (T("totalWavesOut"), pg.input_value("#sCount"), pg.input_value("#pCount"), pg.input_value("#h20"), pg.input_value("#h30"))
+    check("one tap records height and breaker type", pad == ("4", "3", "1", "3", "1") and "3.0 ft plunging" in T("padLast"), str(pad) + " " + T("padLast"))
+    pg.click("#undoTap")
+    pad = (T("totalWavesOut"), pg.input_value("#pCount"), pg.input_value("#h30"), T("padS"))
+    check("undo takes back height and type", pad == ("3", "0", "0", "3"), str(pad))
+
     for k, want in [("A", "4.0"), ("B", "16.8"), ("C", "3.2")]:
         pg.click(f"[data-scenario={k}]")
         pg.wait_for_timeout(100)
@@ -65,6 +77,7 @@ with sync_playwright() as p:
     pg.fill("#decInitials", "T1")
     pg.wait_for_timeout(100)
     check("decision recorded", "GO by BMU OIC" in T("ovDecision"))
+    pg.click("#editCounts summary")
     pg.fill("#pCount", "30")
     pg.dispatch_event("#pCount", "change")
     check("re-confirm after input change", "RE-CONFIRM" in T("ovDecision"))
@@ -116,6 +129,10 @@ with sync_playwright() as p:
     pg.fill("#pasteHeights", "two, two and a half, three point five, half, for")
     pg.wait_for_timeout(500)
     check("voice updates live after Apply", T("totalWavesOut") == "5", T("pasteMsg"))
+    pg.fill("#pasteHeights", "two spilling, three plunging, two and a half s, four surging. one")
+    pg.wait_for_timeout(500)
+    said_types = (T("totalWavesOut"), pg.input_value("#sCount"), pg.input_value("#pCount"), pg.input_value("#xCount"))
+    check("voice records height and breaker type", said_types == ("5", "2", "1", "1"), str(said_types) + " " + T("pasteMsg"))
 
     # Spoken readback: every 10th wave while counting, silent on big jumps, call text read in words.
     said = pg.evaluate("""() => { const out = []; window.say = t => out.push(t); $('sayCount').checked = true;

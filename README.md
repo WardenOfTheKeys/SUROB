@@ -12,7 +12,7 @@ The calculator never makes the GO / NO-GO call. A person does. Do not enter name
 
 | | |
 |---|---|
-| **Count** | Tap a counter for each wave, or say the heights into the phone's dictation ("two, two and a half, three") and the counts fill in as you talk. Optional spoken count every 10 waves. |
+| **Count** | One pad for each wave: pick how it broke (spilling, plunging, surging; it stays picked), then tap its height. One tap records both. Or say them into the phone's dictation ("two spilling, three plunging") and the counts fill in as you talk. Optional spoken count every 10 waves. |
 | **Speak or scan a report** | Say the whole report ("Alpha three and a half, Bravo five, …"), or scan a handwritten sheet with the phone's text recognition. You check every value before it goes in. |
 | **Worksheet** | ALPHA to HOTEL, step-by-step verification, the BPT communicator call ready to copy, print or PDF. |
 | **Overview** | MSI, a check result per craft, the decision status, beach picker and satellite map. |

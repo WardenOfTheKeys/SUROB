@@ -52,6 +52,15 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .wavebox label{text-align:center}
 @media(max-width:1000px){.wave-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:600px){.wave-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pad{border:1px solid #e2e8f0;border-radius:14px;padding:10px;background:#f8fafc}
+.padtypes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.padtypes button{min-height:56px;font-size:16px;background:#fff;color:#0f172a;border:2px solid #cbd5e1;padding:8px 4px}
+.padtypes button[aria-pressed=true]{background:#0f172a;color:#fff;border-color:#0f172a}
+.padtypes span,.padheights span{display:block;font-size:12px;font-weight:700;opacity:.75}
+.padheights{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px}
+.padheights button{min-height:64px;font-size:20px;padding:6px 2px}
+.padheights button.more{grid-column:1/-1;min-height:40px;font-size:14px}
+.padbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
 .progress{height:8px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin-top:10px}.progress div{height:100%;width:0;background:var(--blue);transition:width .2s}.progress.full div{background:#16a34a}.progress.over div{background:#d97706}
 .summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
 @media(max-width:700px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -133,7 +142,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
         <div id="ovCheck" style="margin-top:8px"></div>
         <div id="ovEst" class="note" style="margin-top:8px;display:none"></div>
         <div class="chips" id="ovChips"></div>
-        <p class="small" style="margin-top:8px">Advisory limit check only. Chips show <b>NO DATA</b> until a wave count exists. The decision is recorded by a person in section 8.</p>
+        <p class="small" style="margin-top:8px">Advisory limit check only. Chips show <b>NO DATA</b> until at least 33 waves are counted. The decision is recorded by a person in section 8.</p>
         <div id="ovDecision" class="note" style="margin-top:6px"></div>
         <div class="btnrow no-print" style="margin-top:10px"><a class="pill" href="#final">Go to final MSI and decision ↓</a></div>
       </div>
@@ -208,25 +217,42 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
     <img id="scanImg" alt="Photo of the sheet, shown here only for checking" style="display:none;max-width:100%;margin-top:8px;border-radius:8px">
   </section>
 
-  <section class="card">
-    <h2>1. A / B - Wave count</h2>
-    <p class="small">Tap <b>+</b> for each wave as it breaks, or type the counts. The app calculates A / ALPHA from the highest 33 waves and B / BRAVO from the highest single wave.</p>
-    <div class="btnrow no-print"><button type="button" class="secondary" id="undoTap" disabled>Undo last +</button><button type="button" class="ghost" id="clearAll">Clear form</button><label class="check speak" style="margin:0"><input id="sayCount" type="checkbox"><span>Say the count every 10 waves</span></label></div>
-    <h3>Wave height occurrence count</h3>
-    <div class="wave-grid" id="heightCounts"></div>
-    <details id="bigWaves" style="margin-top:8px"><summary>Larger waves: 5.5 to 10 ft</summary><div class="wave-grid" id="heightCountsBig" style="margin-top:10px"></div></details>
+  <section class="card" id="countCard">
+    <h2>1. A / B / D - Count each wave</h2>
+    <p class="small">For each wave as it breaks: pick how it broke, then tap its height. The breaker type stays picked, so most waves take one tap. The app works out ALPHA (highest 33 average), BRAVO (highest wave) and DELTA (breaker percentages).</p>
+    <div class="pad no-print">
+      <div class="padtypes" role="group" aria-label="Breaker type">
+        <button type="button" data-btype="sCount" aria-pressed="false">Spilling <span id="padS">0</span></button>
+        <button type="button" data-btype="pCount" aria-pressed="false">Plunging <span id="padP">0</span></button>
+        <button type="button" data-btype="xCount" aria-pressed="false">Surging <span id="padX">0</span></button>
+      </div>
+      <div class="padheights" id="padHeights"></div>
+      <div class="padbar"><span id="padLast" class="small"><b>Pick a breaker type, then tap the height.</b></span><button type="button" class="secondary" id="undoTap" disabled>Undo last wave</button></div>
+    </div>
     <div class="progress" id="waveProgress"><div></div></div>
     <div class="summary-grid" aria-label="Calculated wave count results">
-      <div class="sum"><b>Total waves counted</b><strong id="totalWavesOut">0</strong><span>target is 100</span></div>
-      <div class="sum"><b>A / ALPHA avg ft</b><strong id="alphaRawOut">0.00</strong><span>enter on MSI calculation sheet</span></div>
-      <div class="sum"><b>ALPHA call round</b><strong id="alphaReportOut">0.0</strong><span>nearest 1/2 ft for BPT call</span></div>
+      <div class="sum"><b>Waves counted</b><strong id="totalWavesOut">0</strong><span>target is 100</span></div>
+      <div class="sum"><b>A / ALPHA avg ft</b><strong id="alphaRawOut">0.00</strong><span>call round <b id="alphaReportOut" style="display:inline;font-size:12px">0.0</b> ft</span></div>
       <div class="sum"><b>B / BRAVO max ft</b><strong id="bravoOut">0.0</strong><span>highest single breaker</span></div>
+      <div class="sum"><b>D / DELTA %</b><strong id="deltaPctOut">0 / 0 / 0</strong><span>P / S / X</span></div>
     </div>
-    <details style="margin-top:12px" id="voiceBox"><summary>Optional: say or paste the wave heights</summary><p class="small"><b>Hands-free:</b> tap the box, tap the microphone on the phone keyboard, and say each height as the wave breaks: "two, two and a half, three, one point five". The counts update as you talk, so your eyes stay on the surf. iPhone dictation and Gboard voice typing can run without a connection when the language is downloaded on the phone. You can also paste heights separated by spaces, commas or new lines. Values are rounded to the nearest 1/2 ft.</p><textarea id="pasteHeights" placeholder="Say or paste wave heights here"></textarea><div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="applyPaste">Apply pasted heights</button></div><div id="pasteMsg" class="small" style="margin-top:6px"></div></details>
+    <div class="btnrow no-print" style="margin-top:10px"><button type="button" class="ghost" id="clearAll">Clear form</button><label class="check speak" style="margin:0"><input id="sayCount" type="checkbox"><span>Say the count every 10 waves</span></label></div>
+    <details style="margin-top:12px" id="voiceBox"><summary>Say or paste the waves instead</summary><p class="small"><b>Hands-free:</b> tap the box, tap the microphone on the phone keyboard, and say each wave as it breaks, height then type: "two spilling, two and a half plunging, three surging". A wave with no type counts the height only. The counts update as you talk, so your eyes stay on the surf. iPhone dictation and Gboard voice typing can run without a connection when the language is downloaded on the phone. You can also paste heights separated by spaces, commas or new lines. Heights are rounded to the nearest 1/2 ft.</p><textarea id="pasteHeights" placeholder="Say or paste the waves here"></textarea><div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="applyPaste">Apply</button></div><div id="pasteMsg" class="small" style="margin-top:6px"></div></details>
+    <details style="margin-top:8px" id="editCounts"><summary>Check or edit the totals</summary>
+      <h3>Waves by height</h3>
+      <div class="wave-grid" id="heightCounts"></div>
+      <details id="bigWaves" style="margin-top:8px"><summary>Larger waves: 5.5 to 10 ft</summary><div class="wave-grid" id="heightCountsBig" style="margin-top:10px"></div></details>
+      <h3>Waves by breaker type</h3>
+      <div class="grid three">
+        <div><label for="pCount">Plunging (P)</label><div class="stepper"><button type="button" class="secondary" data-step="pCount" data-d="-1" aria-label="Remove one plunging">−</button><input id="pCount" class="count" inputmode="numeric" pattern="[0-9]*" value="0" autocomplete="off"><button type="button" data-step="pCount" data-d="1" aria-label="Add one plunging">+</button></div></div>
+        <div><label for="sCount">Spilling (S)</label><div class="stepper"><button type="button" class="secondary" data-step="sCount" data-d="-1" aria-label="Remove one spilling">−</button><input id="sCount" class="count" inputmode="numeric" pattern="[0-9]*" value="0" autocomplete="off"><button type="button" data-step="sCount" data-d="1" aria-label="Add one spilling">+</button></div></div>
+        <div><label for="xCount">Surging (X)</label><div class="stepper"><button type="button" class="secondary" data-step="xCount" data-d="-1" aria-label="Remove one surging">−</button><input id="xCount" class="count" inputmode="numeric" pattern="[0-9]*" value="0" autocomplete="off"><button type="button" data-step="xCount" data-d="1" aria-label="Add one surging">+</button></div></div>
+      </div>
+    </details>
   </section>
 
   <section class="card">
-    <h2>2. C / D - Timing and breaker type</h2>
+    <h2>2. C - Wave period (timing)</h2>
     <p class="small">C / CHARLIE is the average wave period. Use the stopwatch, enter start and stop clock times (HHMM or HHMMSS), or enter total seconds directly. Total seconds overrides clock times.</p>
     <div class="timerbox no-print">
       <div class="timer" id="timerDisplay">00:00</div>
@@ -238,17 +264,10 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <div><label for="totalSeconds">Or total seconds</label><input id="totalSeconds" placeholder="780" inputmode="decimal" autocomplete="off"></div>
       <div><label for="wavesTimed">Waves timed</label><input id="wavesTimed" class="count" inputmode="numeric" pattern="[0-9]*" value="100" autocomplete="off"></div>
     </div>
-    <h3>D / DELTA breaker-type counts</h3>
-    <div class="grid three">
-      <div><label for="pCount">Plunging (P)</label><div class="stepper"><button type="button" class="secondary" data-step="pCount" data-d="-1" aria-label="Remove one plunging">−</button><input id="pCount" class="count" inputmode="numeric" pattern="[0-9]*" value="0" autocomplete="off"><button type="button" data-step="pCount" data-d="1" aria-label="Add one plunging">+</button></div></div>
-      <div><label for="sCount">Spilling (S)</label><div class="stepper"><button type="button" class="secondary" data-step="sCount" data-d="-1" aria-label="Remove one spilling">−</button><input id="sCount" class="count" inputmode="numeric" pattern="[0-9]*" value="0" autocomplete="off"><button type="button" data-step="sCount" data-d="1" aria-label="Add one spilling">+</button></div></div>
-      <div><label for="xCount">Surging (X)</label><div class="stepper"><button type="button" class="secondary" data-step="xCount" data-d="-1" aria-label="Remove one surging">−</button><input id="xCount" class="count" inputmode="numeric" pattern="[0-9]*" value="0" autocomplete="off"><button type="button" data-step="xCount" data-d="1" aria-label="Add one surging">+</button></div></div>
-    </div>
     <div class="summary-grid">
       <div class="sum"><b>Elapsed seconds</b><strong id="elapsedOut">0</strong><span id="elapsedSrc">no timing yet</span></div>
       <div class="sum"><b>C / CHARLIE avg sec</b><strong id="charlieRawOut">0.00</strong><span id="charlieDiv">seconds ÷ 100</span></div>
       <div class="sum"><b>CHARLIE call round</b><strong id="charlieReportOut">0.0</strong><span>nearest 1/2 sec</span></div>
-      <div class="sum"><b>D / DELTA %</b><strong id="deltaPctOut">0 / 0 / 0</strong><span>P / S / X</span></div>
     </div>
   </section>
 
@@ -632,7 +651,7 @@ function dtgMs(s){
 // Compares an observed worksheet with the nearest NOAA estimate. Advisory: it flags, it never changes a value.
 function crossCheck(s){
   const el=$('ovCheck');
-  if($('entrySource').value==='noaa'||!getHeightList().length){el.innerHTML='';return null}
+  if($('entrySource').value==='noaa'||getHeightList().length<33){el.innerHTML='';return null}
   const tObs=dtgMs($('dtg').value)||Date.now(),msi=num($('msiBig').textContent);
   const near=s.hist.concat(s.ahead).reduce((a,x)=>!a||Math.abs(x.t-tObs)<Math.abs(a.t-tObs)?x:a,null),gapH=near?Math.abs(near.t-tObs)/36e5:Infinity;
   if(gapH>6){el.innerHTML='<div class="note">No NOAA estimate within 6 hours of the observation time (DTG), so there is no cross-check.</div>';return{t:tObs,msi}}
@@ -925,13 +944,19 @@ function wordsToNumbers(text,loose){
 function spokenToDigits(s){return wordsToNumbers(s,true).toLowerCase().replace(/\b(?:feet|foot|ft)\b/g,' ')}
 let pasteLive=false,pasteTimer=null;
 // live: called while the Sailor is talking. It never overwrites counts that were tapped; Apply does, after a confirm.
+// A breaker word right after a height belongs to that wave: "two spilling, three plunging" (or S / P / X).
+const SAID_TYPE=[[/^(?:spill\w*|s)$/,'sCount'],[/^(?:plung\w*|p)$/,'pCount'],[/^(?:surg\w*|x)$/,'xCount']];
 function applyHeights(live){
-  const tokens=spokenToDigits($('pasteHeights').value).split(/[\s,;]+/).map(t=>t.replace(/\.+$/,'')).filter(t=>t!=='');
-  const vals=tokens.map(Number).filter(n=>Number.isFinite(n)&&n>=0),bad=tokens.length-vals.length,over=vals.filter(n=>n>MAX_HEIGHT).length;
+  const tokens=spokenToDigits($('pasteHeights').value).split(/[\s,;]+/).map(t=>t.replace(/[.!?]+$/,'')).filter(t=>t!=='');
+  const waves=[];let bad=0;
+  tokens.forEach(t=>{const n=Number(t);if(Number.isFinite(n)&&n>=0){waves.push({h:n});return}
+    const k=SAID_TYPE.find(([re])=>re.test(t));if(k&&waves.length&&!waves[waves.length-1].type)waves[waves.length-1].type=k[1];else if(!/^(?:and|wave|waves|feet|foot|ft|then)$/.test(t))bad++});
+  const vals=waves.map(w=>w.h),typed=waves.filter(w=>w.type),over=vals.filter(n=>n>MAX_HEIGHT).length;
   if(!vals.length){if(!live)$('pasteMsg').textContent='No valid heights found.';return}
-  if(getHeightList().length&&!pasteLive){if(live){$('pasteMsg').textContent='Counts were already tapped. Tap Apply to replace them with these heights.';return}if(!confirm('Replace the current wave counts with these heights?'))return}
-  setManual();setCountsFromList(vals);tapHistory=[];$('undoTap').disabled=true;pasteLive=true;
-  $('pasteMsg').textContent=`${live?'Heard':'Applied'} ${vals.length} heights.`+(bad?` Skipped ${bad} word${bad>1?'s':''} that ${bad>1?'are not heights':'is not a height'}.`:'')+(over?` ${over} value${over>1?'s':''} above ${MAX_HEIGHT} ft counted as ${MAX_HEIGHT} ft.`:'');
+  if(getHeightList().length&&!pasteLive){if(live){$('pasteMsg').textContent='Waves were already tapped. Tap Apply to replace them with these.';return}if(!confirm('Replace the current wave counts with these?'))return}
+  setManual();setCountsFromList(vals);tapHistory=[];$('undoTap').disabled=true;pasteLive=true;lastWave='';
+  if(typed.length)['pCount','sCount','xCount'].forEach(id=>$(id).value=typed.filter(w=>w.type===id).length);
+  $('pasteMsg').textContent=`${live?'Heard':'Applied'} ${vals.length} wave${vals.length>1?'s':''}${typed.length?`, ${typed.length} with a breaker type`:''}.`+(bad?` Skipped ${bad} word${bad>1?'s':''} the app could not use.`:'')+(over?` ${over} value${over>1?'s':''} above ${MAX_HEIGHT} ft counted as ${MAX_HEIGHT} ft.`:'');
   calculate();
 }
 const canSpeak='speechSynthesis' in window;
@@ -1014,7 +1039,32 @@ function setCountsFromList(list){
   document.querySelectorAll('.hcount').forEach(inp=>{inp.value=counts[num(inp.dataset.h)]||0});
   openBigIfUsed();
 }
-function openBigIfUsed(){if([...document.querySelectorAll('#heightCountsBig .hcount')].some(i=>int(i.value)>0))$('bigWaves').open=true}
+function openBigIfUsed(){if([...document.querySelectorAll('#heightCountsBig .hcount')].some(i=>int(i.value)>0)){$('bigWaves').open=true;showBigPad(true)}}
+
+/* ---------- Counting pad: breaker type + height in one tap ---------- */
+const TYPE_NAME={pCount:'plunging',sCount:'spilling',xCount:'surging'};
+let padType=null,lastWave='';
+function buildPad(){
+  const btn=h=>`<button type="button" data-padh="${h}"${h>5?' class="big" hidden':''}>${h.toFixed(1)}<span id="pc_${hId(h)}">0</span></button>`;
+  $('padHeights').innerHTML=HEIGHTS.filter(h=>h>0&&h<=5).map(btn).join('')+
+    '<button type="button" class="ghost more" id="padMore" aria-expanded="false">Bigger waves: 5.5 to 10 ft</button>'+HEIGHTS.filter(h=>h>5).map(btn).join('');
+}
+function showBigPad(show){$('padMore').setAttribute('aria-expanded',String(show));document.querySelectorAll('#padHeights .big').forEach(b=>b.hidden=!show)}
+// Each tap adds the wave to its height row and, when a type is picked, to that breaker count. Undo takes back both.
+function padWave(h){
+  const hi=$(hId(h)),ids=[hi.id];hi.value=int(hi.value)+1;
+  if(padType){const t=$(padType);t.value=int(t.value)+1;ids.push(padType)}
+  setManual();pasteLive=false;tapHistory.push(ids);$('undoTap').disabled=false;
+  if(navigator.vibrate)try{navigator.vibrate(8)}catch(_){}
+  lastWave=`${fmt(h,1)} ft ${padType?TYPE_NAME[padType]:'(no breaker type)'}`;
+  calculate();
+}
+function renderPad(total){
+  HEIGHTS.forEach(h=>{const s=$('pc_'+hId(h));if(s)s.textContent=int($(hId(h)).value)});
+  setText('padS',int($('sCount').value));setText('padP',int($('pCount').value));setText('padX',int($('xCount').value));
+  document.querySelectorAll('[data-btype]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.btype===padType)));
+  $('padLast').innerHTML=total&&lastWave?`Wave ${total}: <b>${esc(lastWave)}</b>`:total?`${total} waves so far.`:`<b>${padType?'Now tap the height of each wave.':'Pick a breaker type, then tap the height.'}</b>`;
+}
 
 /* ---------- Craft ---------- */
 function craftStateFromLimit(msi,limit){
@@ -1043,7 +1093,7 @@ function renderCraft(msi,alphaRaw,bravo,hasData){
   craftLimits.forEach(c=>{
     const limit=c[mode];let{state,cls,note}=craftStateFromLimit(msi,limit);
     if(c.name==='LARC-V'){if(lr.length){state='EXCEEDS LIMIT';cls='bad';note+='; LARC-V operating check: '+lr.join('; ')}else note+='; LARC-V operating checks clear or not entered'}
-    if(!hasData){state='NO DATA';cls='';note='No wave count yet. Nothing is checked until waves are counted or filled from NOAA.'}
+    if(!hasData){state='NO DATA';cls='';note='Fewer than 33 waves. Nothing is checked until ALPHA can be worked out.'}
     addCraftRow(rows,c.name,modeLabel,`MSI ≤ ${limit}`,state,cls,note);chips.push({name:c.name,state,cls});
     if(state==='EXCEEDS LIMIT')noGo.push(c.name);else if(state==='AT LIMIT')atLimit.push(c.name);
   });
@@ -1069,7 +1119,7 @@ function renderCraft(msi,alphaRaw,bravo,hasData){
   if(lc.length)noGo.push('LCAC');
   $('craftStatusBody').innerHTML=rows.join('');
   let summary,cls,short,tag;
-  if(!hasData){summary='No wave data entered.'+(lc.length?` LCAC criterion triggered: ${lc.join('; ')}.`:'');cls=lc.length?'bad':'';short='No data';tag='NO DATA'}
+  if(!hasData){summary='Fewer than 33 waves counted.'+(lc.length?` LCAC criterion triggered: ${lc.join('; ')}.`:'');cls=lc.length?'bad':'';short='No data';tag='NO DATA'}
   else if(!noGo.length&&!atLimit.length){summary='All listed craft within entered limits and criteria.';cls='ok';short='Within limits';tag='WITHIN LIMITS'}
   else if(!noGo.length){summary=`At listed limit: ${atLimit.join(', ')}.`;cls='warn';short='At limit';tag='AT LIMIT'}
   else{summary=`Limit exceeded or criterion triggered: ${noGo.join(', ')}.`+(atLimit.length?` At limit: ${atLimit.join(', ')}.`:'');cls='bad';short=`Exceeds ×${noGo.length}`;tag='LIMIT EXCEEDED'}
@@ -1197,7 +1247,8 @@ function calculate(){
     `FINAL MSI: ${fmt(msiRaw,2)} → ${fmt(msi,1)}. Craft decisions use ${fmt(msi,1)}.`
   ].join('\n'));
 
-  const overall=renderCraft(msi,alphaRaw,bravo,total>0);
+  // Below 33 waves ALPHA is not defined, so the limit check and overview MSI wait instead of showing a passing result mid-count.
+  const overall=renderCraft(msi,alphaRaw,bravo,total>=33);
   const decisionLine=renderDecision(msi,overall);
   // The call is what goes over the net: site, time, observer and A-H. Source, sample and math stay in the verification block.
   const head=[];
@@ -1221,11 +1272,11 @@ function calculate(){
     `DECISION: ${decisionLine}`
   ].join('\n'));
 
-  setText('lbWaves',`${total}/100`);setText('lbMsi',fmt(msi,1));sayCount(total);
+  setText('lbWaves',`${total}/100`);setText('lbMsi',fmt(msi,1));sayCount(total);renderPad(total);
   const lb=$('lbStatus');lb.className='pill '+overall.cls;lb.textContent=overall.short;
 
   // Overview
-  setText('ovMsi',total?fmt(msi,1):'—');
+  setText('ovMsi',total>=33?fmt(msi,1):'—');
   const ot=$('ovTag');ot.className='pill '+overall.cls;ot.textContent=overall.tag;
   setText('ovPlace',`${b.name} · ${region().name}`);
   $('ovSource').innerHTML=fromNoaa?'<span class="pill warn">NOAA ESTIMATE</span> Built from buoy reports, not a surf-zone count.':fromSheet?'<span class="pill warn">FROM SHEET</span> Read from a handwritten sheet. Check it against the paper.':total?'<span class="pill">HAND ENTRY</span> Observed or typed count.':'';
@@ -1299,7 +1350,7 @@ function resetFields(){
     else if(el.tagName==='SELECT'){const i=[...el.options].findIndex(o=>o.defaultSelected);el.selectedIndex=i<0?0:i}
     else el.value=el.defaultValue;
   });
-  timerStart=null;clearInterval(ticker);tapHistory=[];$('undoTap').disabled=true;pasteLive=false;
+  timerStart=null;clearInterval(ticker);tapHistory=[];$('undoTap').disabled=true;pasteLive=false;lastWave='';
   $('restoreNotice').style.display='none';$('pasteMsg').textContent='';$('bigWaves').open=false;
   $('regionId').value=keepR;fillBeaches(keepB);$('siteName').value=beach().name;lastBeachName=beach().name;selEnd=null;
   tick();updateTimerUI();
@@ -1321,7 +1372,7 @@ function flash(btn,txt){const o=btn.dataset.label||btn.textContent;btn.dataset.l
 /* ---------- Init ---------- */
 function init(){
   try{
-    buildWaveGrid();
+    buildWaveGrid();buildPad();
     installCustom();fillRegions();fillBeaches();
     const savedAt=restore();
     if(isBlank($('siteName').value))$('siteName').value=beach().name;
@@ -1333,6 +1384,9 @@ function init(){
       const bb=e.target.closest('[data-beach]');if(bb){$('beachId').value=bb.dataset.beach;onBeachChange();return}
       if(e.target.closest('#mapShow')){map.on=true;renderMap();return}
       if(e.target.closest('#ovEstUse')){selEnd=null;noaaFill(false);return}
+      const bt=e.target.closest('[data-btype]');if(bt){padType=padType===bt.dataset.btype?null:bt.dataset.btype;renderPad(getHeightList().length);return}
+      const ph=e.target.closest('[data-padh]');if(ph){padWave(+ph.dataset.padh);return}
+      if(e.target.closest('#padMore')){showBigPad($('padMore').getAttribute('aria-expanded')!=='true');return}
       const mb=e.target.closest('[data-map]');if(mb){mapClick(mb.dataset.map);return}
       const b=e.target.closest('[data-step]');if(!b)return;
       const inp=$(b.dataset.step),d=+b.dataset.d,cur=int(inp.value),nv=Math.max(0,cur+d);
@@ -1344,7 +1398,7 @@ function init(){
       calculate();
     });
     $('undoTap').addEventListener('click',()=>{
-      const id=tapHistory.pop();if(id){const i=$(id);i.value=Math.max(0,int(i.value)-1);calculate()}
+      const id=tapHistory.pop();if(id){[].concat(id).forEach(x=>{const i=$(x);i.value=Math.max(0,int(i.value)-1)});lastWave='';calculate()}
       $('undoTap').disabled=!tapHistory.length;
     });
     const onEdit=e=>{

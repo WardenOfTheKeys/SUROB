@@ -128,6 +128,13 @@ Expected result: 13 PASS, 0 failures. Known-good values: sample A = 4.0, B = 16.
 - **Call text:** only SITE, DTG, OBSERVER, ALPHA–HOTEL, MSI and DECISION. No EXERCISE, SOURCE, SAMPLE or MSI math lines (those stay in the verification block). No classification or training-aid banner; Fleethacker Rule 4 requires staying unclassified, not marking it.
 - Smoke test: 43 checks.
 
+## Counting pad (5 Nov)
+
+- Section 1 is one pad: breaker type buttons (sticky, tap again to clear) and height buttons 0.5–5 ft, plus 5.5–10 behind "Bigger waves". `padWave()` adds to the height row and the picked breaker count; `tapHistory` entries can hold both ids, so Undo takes back both. The per-height and P/S/X steppers moved into "Check or edit the totals".
+- Voice box: a breaker word after a height belongs to that wave ("two spilling", "three p").
+- Below 33 waves the craft chips show NO DATA, the overview MSI shows "—" and there is no cross-check, so nothing reads as passing mid-count.
+- Section 2 is timing only (C). Smoke test: 46 checks.
+
 ## Session history (4 Nov evening)
 
 - Chrome flagged his zip as "Virus detected". This was a false positive: the zip holds `open-calculator.bat/.sh`, which only run `python -m http.server 43124`.
