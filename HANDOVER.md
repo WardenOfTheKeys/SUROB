@@ -99,12 +99,19 @@ Expected result: 13 PASS, 0 failures. Known-good values: sample A = 4.0, B = 16.
 
 1. **Merge PR #2** so `/v3/` goes live. Then check the map on a phone, then share the link.
 2. **Review with H4CK3R-M4N:** the km/h finding, and his binning method (`binsFromHs`) against the paper worksheet.
-3. **Refresh NOAA data:** `conditions-data.js` is a 4 Nov snapshot, and the page warns after 24 h. Refresh by exporting `conditions-week.json` from his app, then:
-   `python3 -c "import json;d=json.load(open('conditions-week.json'));open('v3/conditions-data.js','w').write('window.SUROB_CONDITIONS='+json.dumps(d,separators=(',',':'))+';\n')"`
-   Option: a scheduled GitHub Action that pulls NDBC / CO-OPS / NWS and commits the file daily. Convert NWS km/h there.
+3. **Refresh NOAA data:** `python3 tools/refresh-conditions.py` rebuilds `v3/conditions-data.js` (7 days of NDBC / NWS / CO-OPS history plus a 5-day NWS gridpoint forecast for every beach). Standard library only. Its rows match his export exactly; NWS `windMs` stays km/h like his export. `.github/workflows/refresh-conditions.yml` runs it every 3 hours once it is on `main`, and each run commits to `main` (live site). Run it by hand from the Actions tab with "Run workflow".
 4. **Ask him to commit his Next.js source.** Only the compiled build is in the repo. His build also needs `basePath: '/SUROB/working-overview'` to run from Pages.
 5. **Decide which version is primary** for the team (V2 root vs V3) before Fleethacker, and update the root README link.
 6. MSI correction tables still need checking against the official source publication (carried over from V2's Status note).
+
+## Branch v3-estimate-and-scan (4 Nov, late)
+
+- **Overview, now:** NOAA estimated MSI from the newest buoy window (A + C + E + H; D, F, secondary = 0). Never written to the worksheet unless "Use in worksheet" is tapped.
+- **Overview, picture:** estimated MSI for the last 7 days (buoy) and next 5 days (NWS forecast, 2 km seaward of the pin), same tables as the worksheet. Craft limit reference lines, observed worksheet MSI as a dot. When online the page fetches the newest forecast for that grid square (CSP `connect-src https://api.weather.gov`); offline it uses the packaged copy.
+- **Cross-check:** for a hand or scanned count, compares with the NOAA estimate nearest the DTG (within 6 h). CHECK note at MSI gap ≥ 1.5, ALPHA vs buoy height ≥ 50 %, or wind ≥ 10 kts. Advisory, changes nothing.
+- **Read a handwritten sheet:** parses text from phone text recognition (finished report or raw worksheet). Never imports GO / NO-GO or names.
+- **NWS swell direction:** some offices (AKQ, HFO) fill it with a single 0 lasting days. Values held over 24 h are treated as missing and the latest buoy direction is used.
+- Smoke test: 27 checks. It blocks api.weather.gov so the result does not depend on the network.
 
 ## Session history (4 Nov evening)
 

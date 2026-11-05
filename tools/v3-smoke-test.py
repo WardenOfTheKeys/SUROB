@@ -27,6 +27,8 @@ with sync_playwright() as p:
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.on("dialog", lambda d: d.accept())
+    # Block the live forecast so the test checks the packaged fallback and does not depend on the network.
+    pg.route("https://api.weather.gov/**", lambda r: r.abort())
     pg.goto(base + "/index.html")
     pg.evaluate("localStorage.clear()")
     pg.reload()
@@ -36,6 +38,9 @@ with sync_playwright() as p:
     check("app ready", "App ready" in T("jsStatus"), T("jsStatus"))
     check("no data before count", "NO DATA" in T("ovTag") and "WITHIN" not in T("ovChips"))
     check("overview shows NOAA estimate", "NOAA estimate: MSI" in T("ovEst"), T("ovEst")[:60])
+    paths = pg.eval_on_selector_all("#picChart path", "els => els.map(e => e.getAttribute('stroke'))")
+    check("history and forecast lines drawn", "#1d4ed8" in paths and "#c2410c" in paths, str(paths))
+    check("offline uses packaged forecast", "packaged copy" in T("picSrc"), T("picSrc")[-90:])
 
     for k, want in [("A", "4.0"), ("B", "16.8"), ("C", "3.2")]:
         pg.click(f"[data-scenario={k}]")
@@ -75,6 +80,16 @@ with sync_playwright() as p:
          "Hotel 12 kts 40 deg onshore right")
     check("scan raw worksheet = sample A MSI 4.0", T("msiBig") == "4.0", T("msiBig"))
     check("scan marked as from sheet", "FROM SHEET" in T("ovSource"))
+
+    # Cross-check against the buoy report nearest the observation; DTG set to the newest packaged report.
+    pg.evaluate("""() => { const d = new Date(picCache.hist[picCache.hist.length - 1].t), p = n => String(n).padStart(2, '0');
+      $('dtg').value = p(d.getUTCDate()) + p(d.getUTCHours()) + p(d.getUTCMinutes()) + 'Z'; calculate(); }""")
+    check("cross-check runs for an observed count", "Cross-check" in T("ovCheck") or "CHECK:" in T("ovCheck"), T("ovCheck")[:80])
+    check("observed MSI dot on chart", pg.locator("#picChart circle").count() == 1)
+    pg.fill("#windSpeed", "45")
+    pg.dispatch_event("#windSpeed", "change")
+    check("cross-check flags a wind gap", "CHECK:" in T("ovCheck") and "wind 45 kts" in T("ovCheck"), T("ovCheck")[:100])
+    check("cross-check changes no values", pg.input_value("#windSpeed") == "45")
 
     scan("ALPHA 3.5 ft BRAVO 5 CHARLIE 9 sec DELTA 20% P 70% S 10% X ECHO 10 Right "
          "FOXTROT 0.5 kts Left GOLF 2 to 4 lines 150 ft HOTEL 12 kts at 40 onshore Right DECISION: NO-GO")

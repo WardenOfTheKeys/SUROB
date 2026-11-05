@@ -1,0 +1,40 @@
+# Refreshes the packaged NOAA history and NWS forecast in v3/conditions-data.js
+# so the app has recent data when it opens without a connection.
+# Runs only from main. Each run that changes data commits to main, which
+# updates the live Pages site.
+name: Refresh NOAA conditions
+
+on:
+  schedule:
+    - cron: "17 */3 * * *"   # every 3 hours, off the top of the hour
+  workflow_dispatch:          # "Run workflow" button on the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-conditions
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch NOAA data
+        run: python3 tools/refresh-conditions.py
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- v3/conditions-data.js; then
+            echo "No change."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add v3/conditions-data.js
+          git commit -m "Refresh NOAA conditions"
+          git push
