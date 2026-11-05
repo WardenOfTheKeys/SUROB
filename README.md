@@ -73,7 +73,7 @@ The app has two tabs at the top.
 | Your phone's keyboard dictation and camera text scanner (Apple or Google) | Turning speech or a paper sheet into text. The app only gets the text. |
 | Claude Code (Anthropic) | Helped write and check the code |
 
-All data is public. No AI runs inside the app. The NOAA data is saved inside the app so it works offline, and it updates itself every 3 hours.
+All data is public. No AI runs inside the app. The NOAA data is saved inside the app so it works offline, and it updates itself about every hour.
 
 ## Versions
 

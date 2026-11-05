@@ -471,7 +471,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
     <ul>
       <li>Claude Code desktop app with the Anthropic Claude Opus 5.5 model, used to write and review code.</li>
       <li>A command-line shell for file checks, and the Claude Code built-in browser preview for testing.</li>
-      <li>No external libraries and no AI inside the app. Data: NOAA NDBC buoy, CO-OPS station and NWS airfield reports (7 days) and the NWS gridpoint forecast (5 days), packaged in conditions-data.js and refreshed every 3 hours. Map pictures: Esri, only when the map is opened.</li>
+      <li>No external libraries and no AI inside the app. Data: NOAA NDBC buoy, CO-OPS station and NWS airfield reports (7 days) and the NWS gridpoint forecast (5 days), packaged in conditions-data.js and refreshed about every hour. Map pictures: Esri, only when the map is opened.</li>
       <li>Speaking and scanning use the phone's own dictation and text recognition (Apple, Google). The app receives only the text.</li>
       <li>MSI tables were carried over unchanged from the original worksheet version. The team must cite the source worksheet or publication.</li>
     </ul>
@@ -661,7 +661,7 @@ function noaaFill(useSel){
 function setManual(){if($('entrySource').value==='noaa'){$('entrySource').value='manual';$('noaaEnd').value=''}}
 
 /* ---------- Refresh: newest packaged NOAA data from the site, and the newest NWS forecast ---------- */
-// The site's copy is rebuilt every 3 hours. Loading it as a script keeps the security policy strict (no eval).
+// The site's copy is rebuilt about every hour. Loading it as a script keeps the security policy strict (no eval).
 function showDataAge(){
   if(!COND){setText('refreshMsg','No NOAA data packaged.');return}
   const t=Date.parse(COND.fetchedAt),h=(Date.now()-t)/36e5;
@@ -680,7 +680,7 @@ async function refreshNoaa(quiet){
     Object.keys(FC_LIVE).forEach(k=>delete FC_LIVE[k]);estCache={};picCache={};
     renderNoaa();renderEstimate();renderPicture();calculate();
     showDataAge();
-    if(!quiet)$('refreshMsg').textContent=(COND&&COND.fetchedAt!==before?'Updated. ':'Already the newest copy. The site updates it every 3 hours. ')+$('refreshMsg').textContent+' Forecast: checking NWS now.';
+    if(!quiet)$('refreshMsg').textContent=(COND&&COND.fetchedAt!==before?'Updated. ':'Already the newest copy. The site updates it about every hour. ')+$('refreshMsg').textContent+' Forecast: checking NWS now.';
   }catch(e){showDataAge();if(!quiet)$('refreshMsg').textContent=`Could not refresh (${e.message}). `+$('refreshMsg').textContent}
   finally{refreshing=false;btn.disabled=false}
 }
