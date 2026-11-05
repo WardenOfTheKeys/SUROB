@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="SUROB MSI" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#0f172a" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: https://server.arcgisonline.com; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob: https://server.arcgisonline.com; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" type="image/svg+xml" href="icon.svg" />
 <link rel="apple-touch-icon" href="icon-192.png" />
@@ -127,6 +127,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <div>
         <div class="result"><div class="label">Modified Surf Index</div><div class="num" id="ovMsi">0.0</div><div id="ovTag" class="pill">No data</div><div class="small" id="ovPlace" style="color:#cbd5e1;margin-top:8px"></div></div>
         <div id="ovSource" class="small" style="margin-top:8px"></div>
+        <div id="ovEst" class="note" style="margin-top:8px;display:none"></div>
         <div class="chips" id="ovChips"></div>
         <p class="small" style="margin-top:8px">Advisory limit check only. Chips show <b>NO DATA</b> until a wave count exists. The decision is recorded by a person in section 8.</p>
         <div id="ovDecision" class="note" style="margin-top:6px"></div>
@@ -168,6 +169,16 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <div><label for="observer">Observer role / callsign</label><input id="observer" placeholder="OBSERVER 1 (no names)" autocomplete="off"></div>
       <div><label for="dtg">DTG</label><div class="inline"><input id="dtg" placeholder="041430Z NOV 26" autocomplete="off"><button type="button" class="secondary" id="dtgNow">Now</button></div></div>
     </div>
+  </section>
+
+  <section class="card" id="scan">
+    <h2>Read a handwritten sheet</h2>
+    <p class="small">Works with a finished report (ALPHA to HOTEL) or a raw worksheet (wave tally such as <b>1.5 ft: 12</b>, start/stop or total seconds, P/S/X counts, drift). Get the text with your phone: on iPhone, tap the box and choose <b>Scan Text</b>, or copy from a photo with Live Text. On Android, use Google Lens <b>Copy text</b>. Then paste here. This app sends nothing. iPhone Live Text runs on the phone, and Google Lens may use Google's servers. The GO / NO-GO entry and names on the sheet are never imported.</p>
+    <textarea id="scanText" placeholder="ALPHA 3.5 ft&#10;BRAVO 5 ft&#10;CHARLIE 9 sec&#10;DELTA 20% P 70% S 10% X&#10;ECHO 10 Right&#10;FOXTROT 0.5 kts Left&#10;GOLF 2 to 4 lines 150 ft&#10;HOTEL 12 kts at 40 onshore Right"></textarea>
+    <div class="btnrow no-print" style="margin-top:8px"><button type="button" class="blue" id="scanRead">Read text</button><button type="button" id="scanApply" disabled>Apply to worksheet</button><button type="button" class="secondary" id="scanPhotoBtn">Show photo to compare</button><input type="file" accept="image/*" data-role="scanPhoto" hidden></div>
+    <div id="scanOut" style="margin-top:8px"></div>
+    <div id="scanMsg" class="small" style="margin-top:6px"></div>
+    <img id="scanImg" alt="Photo of the sheet, shown here only for checking" style="display:none;max-width:100%;margin-top:8px;border-radius:8px">
   </section>
 
   <section class="card">
@@ -466,10 +477,11 @@ function breakerAngle(t){const a=Math.abs(t);return a<=90?a:180-a}
 // NWS airfield reports are in km/h. NDBC and CO-OPS are in m/s. The working overview build treated all as m/s.
 function windKts(v,station){return station&&station.kind==='nws'?v*KMH_TO_KT:v*MS_TO_KT}
 // Builds 100 counts on the half-foot rows so the highest 33 average the significant height (method from the working overview build).
-function binsFromHs(hs){
+// topFt (optional) fixes the single highest wave, e.g. BRAVO from a written report.
+function binsFromHs(hs,topFt){
   const c={},add=(h,n)=>{if(!n)return;const k=clamp(roundHalf(h),0,MAX_HEIGHT);c[k]=(c[k]||0)+n};
   if(!(hs>0)){add(0,100);return c}
-  let top=Math.round(2*Math.min(MAX_HEIGHT,1.5*hs))/2,rest=(33*hs-top)/32;
+  let top=topFt>0?clamp(roundHalf(topFt),0,MAX_HEIGHT):Math.round(2*Math.min(MAX_HEIGHT,1.5*hs))/2,rest=(33*hs-top)/32;
   if(rest>top||rest<0){top=Math.round(2*Math.min(MAX_HEIGHT,hs))/2;rest=Math.min(top,hs)}
   const lo=Math.floor(2*rest)/2,hi=Math.min(MAX_HEIGHT,lo+.5);let nHi=0;
   if(hi>lo)nHi=clamp(Math.round((rest-lo)/(hi-lo)*32),0,32);
@@ -514,6 +526,119 @@ function noaaFill(useSel){
   tapHistory=[];$('undoTap').disabled=true;openBigIfUsed();calculate();
 }
 function setManual(){if($('entrySource').value==='noaa'){$('entrySource').value='manual';$('noaaEnd').value=''}}
+
+/* ---------- NOAA MSI estimate (overview only, never written to the worksheet) ---------- */
+// Same tables and rounding as calculate(). D, F and secondary are not in NOAA reports, so they count as 0.
+function estimateMsi(p){
+  const heights=[];HEIGHTS.forEach(h=>{for(let i=0;i<int(p[hId(h)]);i++)heights.push(h)});heights.sort((a,b)=>b-a);
+  const top33=heights.slice(0,33),alpha=top33.length?top33.reduce((a,b)=>a+b,0)/33:0,col=clamp(roundHalf(alpha),0,MAX_TABLE_ALPHA);
+  const per=num(p.totalSeconds)/(int(p.wavesTimed)||100),c=per>0?lookup(breakerPeriod,clamp(Math.ceil(per-EPS),8,17),col):0;
+  const e=lookup(waveAngle,nearestAngleRow(p.echoAngle),col),h=p.windSpeed!=null?windLookup(p.windSpeed,p.windAngle,p.windType).value:0;
+  return{alpha,c,e,h,msi:roundTenth(alpha+c+e+h)};
+}
+let estCache={};
+function renderEstimate(){
+  const el=$('ovEst'),b=beach(),link=LINKS[b.id];
+  if(!COND||!link){el.style.display='none';return}
+  if(estCache.id!==b.id){const w=noaaWindow(link,b,null);estCache={id:b.id,w,e:w&&estimateMsi(w.patch)}}
+  const{w,e}=estCache;if(!w){el.style.display='none';return}
+  const ageH=(Date.now()-Date.parse(COND.fetchedAt))/36e5;
+  el.style.display='';
+  el.innerHTML=`<b>NOAA estimate: MSI ${fmt(e.msi,1)}</b> <span class="pill warn">ESTIMATE</span>`+(ageH>24?` <span class="pill warn">${Math.floor(ageH/24)} day${ageH>=48?'s':''} old</span>`:'')+
+    `<br><span class="small">NDBC ${esc(link.wave.id)}, 2 hours ending ${esc(fmtWhen(w.end))}: A ${fmt(e.alpha,2)} + C ${fmt(e.c,1)} + E ${fmt(e.e,1)} + H ${fmt(e.h,1)}${w.patch.windSpeed==null?' (no wind report)':''}. Breaker type (D), littoral current (F) and secondary wave are not in the reports, so they count as 0 and the observed MSI can be higher or lower. Not a surf-zone count and not used for the limit check.</span>`+
+    `<div class="btnrow no-print" style="margin-top:6px"><button type="button" class="secondary" id="ovEstUse">Use in worksheet</button></div>`;
+}
+
+/* ---------- Read a handwritten sheet (text from the phone's own text recognition) ---------- */
+const SHEET_KEYS='ALPHA|ALFA|BRAVO|CHARLIE|DELTA|ECHO|FOXTROT|GOLF|HOTEL|VISIBILITY\\s*/\\s*WEATHER|VISIBILITY|WEATHER|SECONDARY|MSI|DECISION|START|STOP|TOTAL|DRIFT|WAVES\\s+TIMED|OBSERVER|DTG';
+const SHEET_LABELS=[['dtg','DTG'],['totalSeconds','Total seconds'],['startTime','Start time'],['stopTime','Stop time'],['wavesTimed','Waves timed'],['pCount','Plunging (P)'],['sCount','Spilling (S)'],['xCount','Surging (X)'],['echoAngle','ECHO angle'],['echoFlank','ECHO flank'],['driftFeet','Drift ft'],['driftMinutes','Drift min'],['foxtrotFlank','FOXTROT flank'],['golfFrom','GOLF lines from'],['golfTo','GOLF lines to'],['golfWidth','Surf zone ft'],['windSpeed','HOTEL kts'],['windAngle','HOTEL angle'],['windType','Wind type'],['windFlank','HOTEL flank'],['visibility','Visibility / weather'],['secondaryHeight','Secondary ft']];
+const NUM_RE=/(?<![A-Z0-9.])[0-9OI]*[0-9][0-9OI]*(?:[.,][0-9OI]+)?/g;
+// Text recognition often reads 0 as O and 1 as I inside handwritten numbers.
+function sheetNums(s){return(String(s).match(NUM_RE)||[]).map(t=>parseFloat(t.replace(/O/g,'0').replace(/I/g,'1').replace(',','.'))).filter(Number.isFinite)}
+function sheetFlank(s){return/\bR\s*\/\s*L\b/.test(s)?'R/L':/\b(RIGHT|RT)\b/.test(s)?'Right':/\b(LEFT|LT)\b/.test(s)?'Left':null}
+function isHalf(n){return n>=0&&n<=MAX_HEIGHT&&Math.abs(n*2-Math.round(n*2))<EPS}
+function parseSheet(text){
+  const T=String(text||'').toUpperCase().replace(/[–—]/g,'-').replace(/°/g,' DEG ');
+  const lines=T.replace(new RegExp(`\\b(${SHEET_KEYS})\\b`,'g'),'\n$1').split(/\n+/).map(l=>l.trim()).filter(Boolean);
+  const f={},rep={},tally={},list=[],notes=[];let decision=false;
+  const time=s=>{const m=s.match(/\d{1,2}:?\d{2}(?::?\d{2})?/);return m?m[0].replace(/:/g,''):null};
+  const delta=rest=>{
+    // "20% P 70% S" has the number first; "P 20 S 70" has the letter first.
+    const numFirst=/^[\s:=\-]*[0-9OI]/.test(rest);
+    const pick=re=>{const m=rest.match(numFirst?new RegExp(`([0-9OI]+(?:[.,][0-9OI]+)?)\\s*%?\\s*(?:${re})`):new RegExp(`(?:${re})\\s*[:=\\-]?\\s*([0-9OI]+(?:[.,][0-9OI]+)?)`));return m?sheetNums(m[1])[0]:null};
+    [['pCount','PLUNG\\w*|P\\b'],['sCount','SPILL\\w*|S\\b'],['xCount','SURG\\w*|X\\b']].forEach(([id,re])=>{const v=pick(re);if(v!=null)f[id]=String(Math.round(v))});
+  };
+  lines.forEach(l=>{
+    const k=(l.match(new RegExp(`^(${SHEET_KEYS})\\b`))||[])[1]||'',rest=l.slice(k.length),n=sheetNums(rest),fl=sheetFlank(rest);
+    switch(k.split(/[\s/]/)[0]){
+      case'ALPHA':case'ALFA':if(n.length)rep.alpha=n[0];break;
+      case'BRAVO':if(n.length)rep.bravo=n[0];break;
+      case'CHARLIE':if(n.length)rep.charlie=n[0];break;
+      case'DELTA':delta(rest);break;
+      case'ECHO':if(n.length)f.echoAngle=String(n[0]);if(fl)f.echoFlank=fl;break;
+      case'FOXTROT':case'DRIFT':
+        if(n.length&&/\bFT\b|FEET|'/.test(rest)){f.driftFeet=String(n[0]);f.driftMinutes=String(/MIN/.test(rest)&&n[1]>0?n[1]:1)}
+        else if(n.length){f.driftFeet=String(Math.round(n[0]*100));f.driftMinutes='1'}
+        if(fl)f.foxtrotFlank=fl;break;
+      case'GOLF':['golfFrom','golfTo','golfWidth'].forEach((id,i)=>{if(n[i]!=null)f[id]=String(n[i])});break;
+      case'HOTEL':
+        if(n.length)f.windSpeed=String(n[0]);if(n.length>1)f.windAngle=String(n[1]);
+        if(/OFFSHORE|\bOFF\b/.test(rest))f.windType='offshore';else if(/ONSHORE|\bON\b/.test(rest))f.windType='onshore';
+        if(fl)f.windFlank=fl;break;
+      case'VISIBILITY':case'WEATHER':{const v=rest.replace(/^[\s:=\-/]+/,'').trim();if(v)f.visibility=v;break}
+      case'SECONDARY':if(n.length)f.secondaryHeight=String(n[0]);break;
+      case'MSI':if(/^[\s:=\-]*[0-9OI]/.test(rest))rep.msi=n[0];break;
+      case'DECISION':if(/\bGO\b/.test(rest))decision=true;break;
+      case'START':{const t=time(rest);if(t)f.startTime=t;break}
+      case'STOP':{const t=time(rest);if(t)f.stopTime=t;break}
+      case'TOTAL':if(n.length)f.totalSeconds=String(n[0]);break;
+      case'WAVES':if(n.length)f.wavesTimed=String(Math.round(n[0]));break;
+      case'OBSERVER':notes.push('The observer line was not imported (no names). Enter a role or callsign by hand.');break;
+      case'DTG':break;
+      default:{
+        if(/\bNO\s*-?\s*GO\b|^GO\b/.test(l)){decision=true;break}
+        // Raw worksheets often write breaker counts without the DELTA label: "P 20 S 70 X 10" or "Spilling 70".
+        if(/^(?:P|PLUNG\w*|S|SPILL\w*|X|SURG\w*)\b\s*[:=\-]?\s*[0-9OI]/.test(l)){delta(l);break}
+        const nums=sheetNums(l);
+        if(/^[0-9OI.,\s]+(?:FT|FEET|')?\s*[:=X×\-]?\s*[0-9OI]+\s*(?:WAVES?)?$/.test(l)&&nums.length===2&&isHalf(nums[0])&&Number.isInteger(nums[1])){tally[nums[0]]=(tally[nums[0]]||0)+nums[1];break}
+        if(!/[A-Z]/.test(l.replace(/[OI]/g,''))&&nums.length>=5&&nums.every(isHalf))list.push(...nums);
+      }
+    }
+  });
+  const dtg=T.match(/\b\d{6}Z(?:\s+[A-Z]{3}\s+\d{2})?\b/);if(dtg)f.dtg=dtg[0];
+  let counts=null,how='';
+  if(Object.keys(tally).length){counts=tally;how='wave tally'}
+  else if(list.length){counts={};list.forEach(v=>{const h=roundHalf(v);counts[h]=(counts[h]||0)+1});how=`list of ${list.length} heights`}
+  else if(rep.alpha>0){
+    const useB=rep.bravo>=rep.alpha;counts=binsFromHs(rep.alpha,useB?rep.bravo:null);how=useB?'rebuilt from ALPHA and BRAVO':'rebuilt from ALPHA';
+    notes.push('No wave tally on the sheet, so 100 counts were rebuilt so the highest 33 average ALPHA'+(useB?' and the top wave is BRAVO':'')+'. A written ALPHA is rounded to 1/2 ft, so the MSI can differ from the sheet by a few tenths.');
+    if(rep.bravo>0&&!useB)notes.push('BRAVO is lower than ALPHA, so BRAVO was not used. Check the sheet.');
+  }
+  if(counts)HEIGHTS.forEach(h=>f[hId(h)]=String(counts[h]||0));
+  if(f.totalSeconds==null&&f.startTime==null&&rep.charlie>0){f.totalSeconds=String(Math.round(rep.charlie*100));f.wavesTimed='100'}
+  if(decision)notes.push('The GO / NO-GO entry on the sheet was not imported. A person records the decision in section 8.');
+  return{f,how,notes:[...new Set(notes)],msi:rep.msi};
+}
+let sheet=null;
+function readSheet(){
+  sheet=parseSheet($('scanText').value);$('scanMsg').textContent='';
+  const out=$('scanOut'),n=HEIGHTS.reduce((s,h)=>s+int(sheet.f[hId(h)]),0);
+  const rows=SHEET_LABELS.filter(([id])=>sheet.f[id]!=null).map(([id,l])=>`<tr><td>${l}</td><td><b>${esc(sheet.f[id])}</b></td></tr>`);
+  if(n)rows.unshift(`<tr><td>Wave counts</td><td><b>${n} waves</b> (${esc(sheet.how)})</td></tr>`);
+  if(sheet.msi!=null)rows.push(`<tr><td>MSI written on sheet</td><td><b>${fmt(sheet.msi,1)}</b> (for comparison only)</td></tr>`);
+  $('scanApply').disabled=!rows.length;
+  out.innerHTML=(rows.length?`<div class="scroll"><table><thead><tr><th>Field</th><th>Read as</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`:'<div class="note warn">No SUROB values found. Check the pasted text.</div>')+
+    sheet.notes.map(t=>`<div class="note warn" style="margin-top:6px">${esc(t)}</div>`).join('');
+}
+function applySheet(){
+  if(!sheet)return;
+  if((getHeightList().length||num($('totalSeconds').value)>0)&&!confirm('Replace the current entries with the values read from the sheet? Fields the sheet does not show go back to their defaults.'))return;
+  const txt=$('scanText').value;resetFields();$('scanText').value=txt;
+  Object.entries(sheet.f).forEach(([id,v])=>{const el=$(id);if(el)el.value=v});
+  $('entrySource').value='scan';openBigIfUsed();calculate();
+  const msi=num($('msiBig').textContent);
+  $('scanMsg').textContent=`Applied. App MSI ${fmt(msi,1)}`+(sheet.msi!=null?`, sheet says ${fmt(sheet.msi,1)}${Math.abs(sheet.msi-msi)>0.05?'. Find the difference on the paper':''}`:'')+'. Check every field against the paper before using it.';
+}
 function renderNoaa(){
   const b=beach(),link=LINKS[b.id],st=$('noaaStatus');
   if(!COND||!link){st.textContent='NOAA reports are not loaded. Enter the worksheet by hand.';$('noaaChartWrap').style.display='none';return}
@@ -521,7 +646,7 @@ function renderNoaa(){
   const src=$('entrySource').value,end=num($('noaaEnd').value);
   st.innerHTML=`Waves: NDBC ${link.wave.id} ${esc(link.wave.name)}, ${kmBetween(b.lat,b.lng,link.wave.lat,link.wave.lng)} km from the pin. Wind: ${esc(link.wind.name)}${link.visibility.id!==link.wind.id?`. Visibility: ${esc(link.visibility.name)}`:''}. Packaged reports saved ${fmtWhen(fetched)}.`+
     (ageH>24?` <span class="pill warn">${Math.floor(ageH/24)} day${ageH>=48?'s':''} old</span> Check current conditions before relying on them.`:'')+
-    `<br><b>${src==='noaa'&&end?`Worksheet filled from the window ending ${fmtWhen(end)}.`:'Worksheet values are hand entries.'}</b>`;
+    `<br><b>${src==='noaa'&&end?`Worksheet filled from the window ending ${fmtWhen(end)}.`:src==='scan'?'Worksheet values were read from a handwritten sheet.':'Worksheet values are hand entries.'}</b>`;
   const sn=$('noaaSrc');if(src==='noaa'&&$('srcNote').value){sn.style.display='';sn.textContent=$('srcNote').value}else sn.style.display='none';
   const wrap=$('noaaChartWrap');if(pts.length<2){wrap.style.display='none';return}wrap.style.display='';
   const t0=pts[0].t,t1=pts[pts.length-1].t,hs=pts.map(p=>p.hsM*M_TO_FT),mx=Math.max(...hs,1);
@@ -770,8 +895,8 @@ function calculate(){
   const formula=`A ${fmt(alphaRaw,2)} + C ${fmt(cVal,1)} + D ${fmt(dVal,1)} + max(E ${fmt(eVal,1)}, F ${fmt(fVal,1)}) ${fmt(efVal,1)} + H ${fmt(wind.value,1)} + Secondary ${fmt(sec,1)} = MSI ${fmt(msi,1)}`;
   setText('msiMathOutput',formula);
 
-  const fromNoaa=$('entrySource').value==='noaa',b=beach();
-  const srcLine=fromNoaa?`SOURCE: NOAA ESTIMATE (NDBC ${LINKS[b.id]?LINKS[b.id].wave.id:'?'}, 2-hr window ending ${fmtWhen(num($('noaaEnd').value))}). Not a surf-zone count.`:'SOURCE: hand entries / observed count';
+  const fromNoaa=$('entrySource').value==='noaa',fromSheet=$('entrySource').value==='scan',b=beach();
+  const srcLine=fromNoaa?`SOURCE: NOAA ESTIMATE (NDBC ${LINKS[b.id]?LINKS[b.id].wave.id:'?'}, 2-hr window ending ${fmtWhen(num($('noaaEnd').value))}). Not a surf-zone count.`:fromSheet?'SOURCE: READ FROM HANDWRITTEN SHEET. Check every value against the paper.':'SOURCE: hand entries / observed count';
   setText('auditOutput',[
     srcLine,
     `A / ALPHA: ${total} waves ${fromNoaa?'estimated from significant height':'counted'}. Highest ${top33.length} total ${fmt(top33Sum,1)} ft / 33 = ${fmt(alphaRaw,2)} ft. BPT call round: ${fmt(alphaReport,1)} ft. Table column: ${fmt(tableAlpha,1)} ft.`,
@@ -820,7 +945,8 @@ function calculate(){
   setText('ovMsi',total?fmt(msi,1):'—');
   const ot=$('ovTag');ot.className='pill '+overall.cls;ot.textContent=overall.tag;
   setText('ovPlace',`${b.name} · ${region().name}`);
-  $('ovSource').innerHTML=fromNoaa?'<span class="pill warn">NOAA ESTIMATE</span> Built from buoy reports, not a surf-zone count.':total?'<span class="pill">HAND ENTRY</span> Observed or typed count.':'';
+  $('ovSource').innerHTML=fromNoaa?'<span class="pill warn">NOAA ESTIMATE</span> Built from buoy reports, not a surf-zone count.':fromSheet?'<span class="pill warn">FROM SHEET</span> Read from a handwritten sheet. Check it against the paper.':total?'<span class="pill">HAND ENTRY</span> Observed or typed count.':'';
+  renderEstimate();
   $('ovChips').innerHTML=overall.chips.map(c=>`<span class="pill ${c.cls}">${esc(c.name)} · ${esc(c.state)}</span>`).join('');
   const od=$('ovDecision'),dv=$('decValue').value;
   od.className='note '+(!dv?'warn':/RE-CONFIRM|INCOMPLETE/.test(decisionLine)?'bad':'ok');
@@ -923,6 +1049,7 @@ function init(){
       const sb=e.target.closest('[data-scenario]');if(sb){loadScenario(sb.dataset.scenario);return}
       const bb=e.target.closest('[data-beach]');if(bb){$('beachId').value=bb.dataset.beach;onBeachChange();return}
       if(e.target.closest('#mapShow')){map.on=true;renderMap();return}
+      if(e.target.closest('#ovEstUse')){selEnd=null;noaaFill(false);return}
       const mb=e.target.closest('[data-map]');if(mb){mapClick(mb.dataset.map);return}
       const b=e.target.closest('[data-step]');if(!b)return;
       const inp=$(b.dataset.step),d=+b.dataset.d,cur=int(inp.value),nv=Math.max(0,cur+d);
@@ -961,6 +1088,12 @@ function init(){
       $('pasteMsg').textContent=`Applied ${vals.length} heights.`+(bad?` Skipped ${bad} unreadable value${bad>1?'s':''}.`:'')+(over?` ${over} value${over>1?'s':''} above ${MAX_HEIGHT} ft counted as ${MAX_HEIGHT} ft.`:'');
       calculate();
     });
+    $('scanRead').addEventListener('click',readSheet);
+    $('scanApply').addEventListener('click',applySheet);
+    // The photo is only shown next to the text for checking. It is not saved or sent.
+    const photo=document.querySelector('[data-role=scanPhoto]');let photoUrl=null;
+    $('scanPhotoBtn').addEventListener('click',()=>photo.click());
+    photo.addEventListener('change',()=>{const file=photo.files&&photo.files[0];if(!file)return;if(photoUrl)URL.revokeObjectURL(photoUrl);photoUrl=URL.createObjectURL(file);const img=$('scanImg');img.src=photoUrl;img.style.display=''});
     $('clearAll').addEventListener('click',clearForm);
     $('noaaFill').addEventListener('click',()=>{selEnd=null;noaaFill(false)});
     $('noaaFillSel').addEventListener('click',()=>noaaFill(true));
