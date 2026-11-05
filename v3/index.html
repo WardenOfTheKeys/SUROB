@@ -307,7 +307,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <div class="sum"><b>D / DELTA %</b><strong id="deltaPctOut">0 / 0 / 0</strong><span>P / S / X</span></div>
     </div>
     <div class="btnrow no-print" style="margin-top:10px"><button type="button" class="ghost" id="clearAll">Clear form</button><label class="check speak" style="margin:0"><input id="sayCount" type="checkbox"><span>Say the count every 10 waves</span></label></div>
-    <details style="margin-top:12px" id="voiceBox"><summary>Say or paste the waves instead</summary><p class="small"><b>Hands-free:</b> tap <b>Mic</b> under the pad (or tap the box), then the microphone on the phone keyboard, and say each wave as it breaks, height then type: "two spilling, two and a half plunging, three surging". A wave with no type counts the height only. The counts update as you talk, so your eyes stay on the surf. iPhone dictation and Gboard voice typing can run without a connection when the language is downloaded on the phone. You can also paste heights separated by spaces, commas or new lines. Heights are rounded to the nearest 1/2 ft.</p><textarea id="pasteHeights" placeholder="Say or paste the waves here"></textarea><div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="applyPaste">Apply</button></div><div id="pasteMsg" class="small" style="margin-top:6px"></div></details>
+    <details style="margin-top:12px" id="voiceBox"><summary>Say or paste the waves instead</summary><p class="small"><b>Hands-free:</b> tap <b>Mic</b> under the pad (or tap the box), then the microphone on the phone keyboard, and say each wave as it breaks, in either order: height then type ("two spilling, two and a half plunging") or type then height ("spilling two, three, plunging four"; the type stays picked for the heights after it, like the pad). A wave with no type counts the height only. The counts update as you talk, so your eyes stay on the surf. iPhone dictation and Gboard voice typing can run without a connection when the language is downloaded on the phone. You can also paste heights separated by spaces, commas or new lines. Heights are rounded to the nearest 1/2 ft.</p><textarea id="pasteHeights" placeholder="Say or paste the waves here"></textarea><div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="applyPaste">Apply</button></div><div id="pasteMsg" class="small" style="margin-top:6px"></div></details>
     <details style="margin-top:8px" id="editCounts"><summary>Check or edit the totals</summary>
       <h3>Waves by height</h3>
       <div class="wave-grid" id="heightCounts"></div>
@@ -1034,8 +1034,17 @@ const SAID_TYPE=[[/^(?:spill\w*|s)$/,'sCount'],[/^(?:plung\w*|p)$/,'pCount'],[/^
 function applyHeights(live){
   const tokens=spokenToDigits($('pasteHeights').value).split(/[\s,;]+/).map(t=>t.replace(/[.!?]+$/,'')).filter(t=>t!=='');
   const waves=[];let bad=0;
-  tokens.forEach(t=>{const n=Number(t);if(Number.isFinite(n)&&n>=0){waves.push({h:n});return}
-    const k=SAID_TYPE.find(([re])=>re.test(t));if(k&&waves.length&&!waves[waves.length-1].type)waves[waves.length-1].type=k[1];else if(!/^(?:and|wave|waves|feet|foot|ft|then)$/.test(t))bad++});
+  // Either order works. Started with a breaker word ("spilling two, three, plunging four"): the type comes first and
+  // stays picked for the heights after it, like the pad. Started with a height ("two spilling, three plunging"):
+  // the type belongs to the height just before it.
+  const typeOf=t=>{const k=SAID_TYPE.find(([re])=>re.test(t));return k&&k[1]};
+  const first=tokens.find(t=>Number.isFinite(Number(t))||typeOf(t));
+  const typeFirst=!!(first&&typeOf(first));let cur=null;
+  tokens.forEach(t=>{const n=Number(t);if(Number.isFinite(n)&&n>=0){waves.push(typeFirst&&cur?{h:n,type:cur}:{h:n});return}
+    const k=typeOf(t);
+    if(k&&typeFirst)cur=k;
+    else if(k&&waves.length&&!waves[waves.length-1].type)waves[waves.length-1].type=k;
+    else if(!/^(?:and|wave|waves|feet|foot|ft|then)$/.test(t))bad++});
   const vals=waves.map(w=>w.h),typed=waves.filter(w=>w.type),over=vals.filter(n=>n>MAX_HEIGHT).length;
   if(!vals.length){if(!live)$('pasteMsg').textContent='No valid heights found.';return}
   if(getHeightList().length&&!pasteLive){if(live){$('pasteMsg').textContent='Waves were already tapped. Tap Apply to replace them with these.';return}if(!confirm('Replace the current wave counts with these?'))return}
@@ -1637,7 +1646,7 @@ function startMic(target){
   if(target==='pasteHeights'&&box.value.trim()&&!/[,\s]$/.test(box.value))box.value+=', ';
   box.scrollIntoView({behavior:'smooth',block:'center'});
   micMsg(target,target==='pasteHeights'
-    ?'Now tap the microphone on the keyboard (iPhone: bottom right; Android: top right) and say each wave as it breaks: "two spilling, three plunging". The counts update as you talk.'
+    ?'Now tap the microphone on the keyboard (iPhone: bottom right; Android: top right) and say each wave as it breaks: "two spilling, three plunging" or "spilling two, plunging three". The counts update as you talk.'
     :'Now tap the microphone on the keyboard (iPhone: bottom right; Android: top right) and say the report. Then tap Read report.');
 }
 
