@@ -319,6 +319,10 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
     <h2>5. BPT communicator call</h2>
     <div class="call" id="callOutput"></div>
     <div class="btnrow no-print" style="margin-top:10px"><button type="button" id="copyCall">Copy call</button><button type="button" class="secondary" id="shareCall" style="display:none">Share</button><button type="button" class="secondary" onclick="window.print()">Print / save PDF</button></div>
+    <h3 class="no-print">SUROB / MSI data sheet (PDF)</h3>
+    <p class="small no-print">The 2-page fillable data sheet: MSI calculation, BPT communicator calls, correction tables, 100-wave count, breaker period and highest-33 computation. Download it blank, or filled from this worksheet. Every field stays editable.</p>
+    <div class="btnrow no-print"><button type="button" id="sheetFilled">Fill data sheet (PDF)</button><button type="button" class="secondary" id="sheetBlank">Blank data sheet (PDF)</button></div>
+    <div id="sheetMsg" class="small no-print" style="margin-top:6px"></div>
   </section>
 
   <section class="card">
@@ -980,7 +984,7 @@ function sayCount(total){
 }
 
 /* ---------- Offline copy: a .zip built in the browser (works without a connection, from the saved copy) ---------- */
-const COPY_FILES=['index.html','conditions-data.js','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png'];
+const COPY_FILES=['index.html','conditions-data.js','data-sheet.js','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png'];
 const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
 function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC_T[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
 // Stored (uncompressed) zip: no library needed, and every computer opens it with no extra software.
@@ -1013,6 +1017,92 @@ async function downloadCopy(){
     a.href=url;a.download=`SUROB-MSI-${new Date().toISOString().slice(0,10)}.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
     msg.textContent=`Saved. Unzip it and open index.html. NOAA data in the copy is from ${COND?fmtWhen(Date.parse(COND.fetchedAt)):'(none packaged)'}.`;
   }catch(e){msg.textContent=`Could not build the copy (${e.message||e}). Open the page once with a connection and try again.`}
+}
+
+/* ---------- SUROB / MSI data sheet (fillable PDF), filled in the browser with no library ---------- */
+let lastCalc=null;
+// The PDF is packaged in data-sheet.js (works from the home screen, offline and from the unzipped copy) and loaded on first use.
+function loadSheet(){
+  if(window.SUROB_SHEET)return Promise.resolve(window.SUROB_SHEET);
+  return new Promise((ok,bad)=>{const s=document.createElement('script');s.src='data-sheet.js';s.onload=()=>window.SUROB_SHEET?ok(window.SUROB_SHEET):bad(new Error('data sheet missing'));s.onerror=()=>bad(new Error('data sheet not available'));document.head.appendChild(s)});
+}
+const b64bin=b=>atob(b);
+function binBytes(s){const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i)&255;return u}
+function saveBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000)}
+const sheetName=()=>'SUROB-MSI-data-sheet'+(($('dtg').value||'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'')?'-'+$('dtg').value.replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,''):'')+'.pdf';
+// Field name → text (or true for a ticked box). Only what the worksheet holds; tide table stays blank.
+function sheetValues(){
+  calculate();
+  const c=lastCalc,v=id=>$(id).value.trim(),f={},ok=c.total>=33,n1=x=>fmt(x,1),put=(k,x)=>{if(x!==''&&x!=null)f[k]=String(x)};
+  put('surob_datetime',v('dtg'));put('surob_beach',v('siteName'));
+  if(ok){put('msi_alpha_ft',n1(c.alphaReport));put('msi_alpha_calc',fmt(c.alphaRaw,2))}
+  if(c.charlieRaw>0){put('msi_charlie_sec',n1(c.charlieReport));put('msi_charlie_calc',n1(c.cVal))}
+  if(c.pPct+c.sPct+c.xPct>0){put('msi_delta_spill',fmt(c.sPct,0));put('msi_delta_plunge',fmt(c.pPct,0));put('msi_delta_surge',fmt(c.xPct,0));put('msi_delta_calc',n1(c.dVal))}
+  put('msi_echo_deg',fmt(c.echoAngle,0));put('msi_echo_a',n1(c.eVal));
+  put('msi_foxtrot_kts',fmt(c.fKnots,2));put('msi_foxtrot_b',n1(c.fVal));put('msi_larger_ab',n1(c.efVal));
+  put('msi_wind_kts',fmt(c.wind.speed,0));put('msi_wind_deg',v('windAngle')||'0');f[v('windType')==='offshore'?'msi_wind_offshore':'msi_wind_onshore']=true;put('msi_wind_calc',n1(c.wind.value));
+  put('msi_secondary_ft',n1(c.sec));put('msi_secondary_calc',n1(c.sec));
+  if(ok)put('msi_result',n1(c.msi));
+  if(ok)put('bpt_alpha',n1(c.alphaReport));
+  if(c.total)put('bpt_bravo',n1(c.bravo));
+  if(c.charlieRaw>0)put('bpt_charlie',n1(c.charlieReport));
+  if(c.pPct+c.sPct+c.xPct>0){put('bpt_delta_plunge',fmt(c.pPct,0));put('bpt_delta_spill',fmt(c.sPct,0));put('bpt_delta_surge',fmt(c.xPct,0))}
+  const flank=(id,pre)=>{const x=v(id);if(x==='Right'||x==='R/L')f[pre+'_right']=true;if(x==='Left'||x==='R/L')f[pre+'_left']=true};
+  put('bpt_echo',fmt(c.echoAngle,0));flank('echoFlank','bpt_echo');
+  put('bpt_foxtrot',fmt(c.fKnots,2));flank('foxtrotFlank','bpt_foxtrot');
+  put('bpt_golf_lines_min',v('golfFrom'));put('bpt_golf_lines_max',v('golfTo'));put('bpt_golf_width_ft',v('golfWidth'));
+  put('bpt_hotel_kts',fmt(c.wind.speed,0));put('bpt_hotel_deg',v('windAngle')||'0');f[v('windType')==='offshore'?'bpt_hotel_offshore':'bpt_hotel_onshore']=true;flank('windFlank','bpt_hotel');
+  const yd=num($('visibilityYards').value);if(yd>0)put('bpt_visibility_mi',yd>=9999?'10+':fmt(yd/1760,1));
+  const wx=v('visibility').toLowerCase();[['unrestricted',/unrestrict/],['overcast',/overcast|cloud/],['foggy',/fog/],['hazy',/haz/],['clear',/clear/]].forEach(([k,re])=>{if(re.test(wx))f['bpt_wx_'+k]=true});
+  // 100-wave table: only when every wave was tapped on the pad, so the order and breaker type of each wave are known.
+  const taps=tapHistory.filter(Array.isArray);
+  if(taps.length&&taps.length===tapHistory.length&&taps.length===c.total&&c.total<=100)taps.forEach((ids,i)=>{const k='wave_'+String(i+1).padStart(3,'0');put(k+'_ht',n1(num($(ids[0]).dataset.h)));if(ids[1])put(k+'_type',{pCount:'P',sCount:'S',xCount:'X'}[ids[1]])});
+  // Breaker period computation
+  if(c.elapsed>0){put('bpc_start',v('startTime'));put('bpc_stop',v('stopTime'));put('bpc_total_seconds',fmt(c.elapsed,0));put('bpc_charlie',fmt(c.charlieRaw,2))}
+  // Highest 33 waves: height x occurrence (4 rows on the sheet)
+  if(ok){const g=[];c.top33.forEach(h=>{const l=g[g.length-1];if(l&&l.h===h)l.n++;else g.push({h,n:1})});
+    if(g.length<=4)g.forEach((r,i)=>{put(`sbh_${i+1}_height`,n1(r.h));put(`sbh_${i+1}_occurrence`,r.n);put(`sbh_${i+1}_product`,n1(r.h*r.n))});
+    put('sbh_total',n1(c.top33.reduce((a,b)=>a+b,0)));put('sbh_alpha',fmt(c.alphaRaw,2))}
+  return f;
+}
+const pdfStr=s=>String(s).replace(/[^\x20-\x7e]/g,'').replace(/[\\()]/g,m=>'\\'+m);
+// Incremental update: the original file is kept byte for byte; changed fields and their pictures are appended with a new xref.
+function fillPdf(src,vals){
+  const tr=src.slice(src.lastIndexOf('trailer')),grab=re=>(tr.match(re)||[])[1];
+  const prev=+src.slice(src.lastIndexOf('startxref')+9).trim().split(/\s/)[0],size=+grab(/\/Size (\d+)/);
+  const helv=(src.match(/\/Helv (\d+) 0 R/)||[])[1];
+  let next=size,out='',objs=[];const at=src.length+1;
+  const add=(num,body)=>{objs.push([num,at+out.length]);out+=`${num} 0 obj\n${body}\nendobj\n`};
+  Object.entries(vals).forEach(([name,val])=>{
+    const i=src.indexOf(`/T (${name})`);if(i<0)return;
+    const head=src.lastIndexOf(' 0 obj',i),ls=src.lastIndexOf('\n',head)+1,num=+src.slice(ls,head),end=src.indexOf('endobj',i);
+    let d=src.slice(head+6,end).trim();
+    if(val===true){d=d.replace('/AS /Off','/AS /Yes').replace('/V /Off','/V /Yes')}
+    else{
+      const r=(d.match(/\/Rect \[([^\]]+)\]/)[1]).trim().split(/\s+/).map(Number),w=r[2]-r[0],h=r[3]-r[1],t=pdfStr(val);
+      const fs=Math.max(5,Math.min(9,(w-4)/Math.max(1,t.length*0.56))),y=Math.max(1,(h-fs*0.72)/2);
+      const ap=next++,body=`/Tx BMC q 1 1 ${fmt(w-2,2)} ${fmt(h-2,2)} re W n BT /Helv ${fmt(fs,2)} Tf .043137 .184314 .541176 rg 2 ${fmt(y,2)} Td (${t}) Tj ET Q EMC`;
+      add(ap,`<< /Type /XObject /Subtype /Form /FormType 1 /BBox [ 0 0 ${w} ${h} ] /Resources << /ProcSet [/PDF /Text] /Font << /Helv ${helv} 0 R >> >> /Length ${body.length} >>\nstream\n${body}\nendstream`);
+      d=d.replace(/\/AP\s*<<\s*\/N \d+ 0 R\s*>>/,`/AP << /N ${ap} 0 R >>`).replace(/\/V \(\)/,`/V (${t})`);
+    }
+    add(num,d);
+  });
+  objs.sort((a,b)=>a[0]-b[0]);
+  let x='xref\n0 1\n0000000000 65535 f \n';objs.forEach(([n,o])=>{x+=`${n} 1\n${String(o).padStart(10,'0')} 00000 n \n`});
+  const xo=at+out.length;
+  const id=grab(/\/ID\s*(\[[^\]]*\])/),info=grab(/\/Info (\d+ 0 R)/),root=grab(/\/Root (\d+ 0 R)/);
+  return src+'\n'+out+x+`trailer\n<< /Size ${next} /Root ${root}${info?' /Info '+info:''}${id?' /ID '+id:''} /Prev ${prev} >>\nstartxref\n${xo}\n%%EOF\n`;
+}
+async function sheetDownload(filled){
+  const msg=$('sheetMsg');msg.textContent='Preparing the data sheet…';
+  try{
+    const src=b64bin(await loadSheet());
+    if(!filled){saveBlob(new Blob([binBytes(src)],{type:'application/pdf'}),'SUROB-MSI-data-sheet-blank.pdf');msg.textContent='Saved the blank data sheet. It can be printed or filled in any PDF app.';return}
+    const vals=sheetValues(),n=Object.keys(vals).length;
+    saveBlob(new Blob([binBytes(fillPdf(src,vals))],{type:'application/pdf'}),sheetName());
+    const c=lastCalc,taps=tapHistory.length&&tapHistory.every(Array.isArray)&&tapHistory.length===c.total;
+    msg.textContent=`Saved with ${n} fields filled from the worksheet. Every field can still be edited in the PDF app.`+(c.total<33?' ALPHA and MSI are left blank until 33 waves are counted.':'')+(c.total&&!taps?' The 100-wave table is filled only when every wave was tapped on the pad.':'')+' Check it against the paper sheet.';
+  }catch(e){msg.textContent=`Could not make the data sheet (${e.message||e}). Open the page once with a connection and try again.`}
 }
 
 /* ---------- Beach picker and satellite map (no library; Esri tiles only after Show map) ---------- */
@@ -1313,6 +1403,7 @@ function calculate(){
     `Secondary wave height (nearest 1/2 ft) = ${fmt(sec,1)}.`,
     `FINAL MSI: ${fmt(msiRaw,2)} → ${fmt(msi,1)}. Craft decisions use ${fmt(msi,1)}.`
   ].join('\n'));
+  lastCalc={total,top33,alphaRaw,alphaReport,bravo,elapsed,wavesTimed,charlieRaw,charlieReport,cVal,pPct,sPct,xPct,dVal,echoAngle,eVal,fKnots,fVal,efVal,wind,sec,msi};
 
   // Below 33 waves ALPHA is not defined, so the limit check and overview MSI wait instead of showing a passing result mid-count.
   const overall=renderCraft(msi,alphaRaw,bravo,total>=33);
@@ -1492,6 +1583,8 @@ function init(){
     // Opened from an unzipped copy, the page cannot read its own files back, and the copy is already on hand.
     if(location.protocol==='file:')$('takeIt').querySelector('.btnrow').style.display='none',$('copyMsg').textContent='This is an offline copy. For newer NOAA data, download a new one from the web page.';
     else $('copyDl').addEventListener('click',downloadCopy);
+    $('sheetFilled').addEventListener('click',()=>sheetDownload(true));
+    $('sheetBlank').addEventListener('click',()=>sheetDownload(false));
     if(!canSpeak)document.querySelectorAll('.speak').forEach(el=>el.style.display='none');
     $('scanRead').addEventListener('click',readSheet);
     $('scanApply').addEventListener('click',applySheet);

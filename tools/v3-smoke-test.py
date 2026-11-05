@@ -215,7 +215,57 @@ with sync_playwright() as p:
     check("unzipped copy runs from disk", "App ready" in disk.inner_text("#jsStatus") and disk.inner_text("#msiBig") == "4.0" and not disk_errs,
           disk.inner_text("#jsStatus") + " " + disk.inner_text("#msiBig") + " " + "; ".join(disk_errs))
     check("unzipped copy has NOAA data", "NOAA estimate: MSI" in disk.inner_text("#ovEst"), disk.inner_text("#ovEst")[:50])
+    with disk.expect_download() as dl3:
+        disk.click("#sheetFilled")
+    check("unzipped copy fills the data sheet", dl3.value.path().read_bytes().rstrip().endswith(b"%%EOF"), disk.inner_text("#sheetMsg"))
     disk.close()
+
+    # Data sheet PDF: blank copy is the packaged sheet; the filled copy carries the worksheet values in its form fields.
+    def sheet_fields(path):
+        try:
+            import pypdf
+        except ImportError:
+            return None
+        r = pypdf.PdfReader(str(path))
+        return {k: v.get("/V") for k, v in (r.get_fields() or {}).items()}, len(r.pages)
+    with pg.expect_download() as dl:
+        pg.click("#sheetBlank")
+    blank = dl.value.path().read_bytes()
+    check("blank data sheet", blank.startswith(b"%PDF") and len(blank) > 200000 and dl.value.suggested_filename.endswith(".pdf"), dl.value.suggested_filename)
+    pg.click("[data-scenario=A]")
+    pg.fill("#dtg", "051430Z NOV 26")
+    pg.wait_for_timeout(100)
+    with pg.expect_download() as dl:
+        pg.click("#sheetFilled")
+    fpath = tmp / "sheet-a.pdf"
+    dl.value.save_as(fpath)
+    got = sheet_fields(fpath)
+    if got is None:
+        check("filled data sheet (pypdf not installed, file only)", fpath.read_bytes().startswith(blank), "")
+    else:
+        f, pages = got
+        want = {"surob_datetime": "051430Z NOV 26", "msi_result": "4.0", "msi_alpha_ft": "2.5", "bpt_bravo": "3.0", "msi_delta_spill": "70",
+                "bpt_golf_width_ft": "150", "msi_wind_onshore": "/Yes", "bpt_foxtrot_left": "/Yes", "bpt_wx_clear": "/Yes", "bpt_wx_unrestricted": "/Yes",
+                "sbh_alpha": f["sbh_alpha"], "msi_wind_offshore": "/Off", "wave_001_ht": ""}
+        bad = {k: (f.get(k), v) for k, v in want.items() if str(f.get(k)) != v}
+        check("filled data sheet carries the worksheet", pages == 2 and not bad and fpath.read_bytes().startswith(blank), str(bad))
+    # Every wave tapped on the pad: the 100-wave table is filled in order with its breaker type.
+    pg.click("#clearAll")
+    pg.click("[data-btype=sCount]")
+    for _ in range(20):
+        pg.click("[data-padh='2']")
+    pg.click("[data-btype=xCount]")
+    for _ in range(15):
+        pg.click("[data-padh='3']")
+    with pg.expect_download() as dl:
+        pg.click("#sheetFilled")
+    fpath = tmp / "sheet-pad.pdf"
+    dl.value.save_as(fpath)
+    got = sheet_fields(fpath)
+    if got is not None:
+        f = got[0]
+        row = (f.get("wave_001_ht"), f.get("wave_001_type"), f.get("wave_035_ht"), f.get("wave_035_type"), f.get("wave_036_ht"), f.get("sbh_1_height"), f.get("sbh_1_occurrence"), f.get("sbh_2_occurrence"))
+        check("pad waves fill the 100-wave table", row == ("2.0", "S", "3.0", "X", "", "3.0", "15", "18"), str(row))
 
     pg.set_viewport_size({"width": 390, "height": 844})
     pg.wait_for_timeout(200)
@@ -248,6 +298,13 @@ with sync_playwright() as p:
     except Exception:
         got = False
     check("offline copy downloads with no network", got, off.inner_text("#copyMsg"))
+    try:
+        with off.expect_download(timeout=10000) as dl4:
+            off.click("#sheetFilled")
+        got = dl4.value.path().read_bytes().startswith(b"%PDF")
+    except Exception:
+        got = False
+    check("data sheet fills with no network", got, off.inner_text("#sheetMsg"))
     b.close()
 
 print(f"\n{len(fails)} failure(s)")
