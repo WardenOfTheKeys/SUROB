@@ -232,6 +232,12 @@ with sync_playwright() as p:
         pg.click("#sheetBlank")
     blank = dl.value.path().read_bytes()
     check("blank data sheet", blank.startswith(b"%PDF") and len(blank) > 200000 and dl.value.suggested_filename.endswith(".pdf"), dl.value.suggested_filename)
+    try:
+        import pypdf, io
+        txt = pypdf.PdfReader(io.BytesIO(blank)).pages[0].extract_text()
+        check("data sheet tables match the app", "-2.0\n-0.3\n-0.4" not in txt and "21 TO 25" in txt and "5 TO 10" in txt, "")
+    except ImportError:
+        pass
     pg.click("[data-scenario=A]")
     pg.fill("#dtg", "051430Z NOV 26")
     pg.wait_for_timeout(100)
