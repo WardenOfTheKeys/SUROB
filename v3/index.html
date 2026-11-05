@@ -163,10 +163,6 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
           <div><label for="cbName">Beach name</label><input id="cbName" autocomplete="off" maxlength="60" placeholder="Lane 2"></div>
           <div style="margin-top:8px"><label for="cbLoc">Location: MGRS or latitude / longitude</label><input id="cbLoc" autocomplete="off" autocapitalize="characters" placeholder="18S VF 11348 86499   or   36°55'13&quot;N 075°59'43&quot;W"></div>
           <div class="small" id="cbLocOut" style="margin-top:4px">MGRS, deg-min-sec (36 55 13 N 075 59 43 W, or 36.55.13N 075.59.43W) and decimal degrees all work.</div>
-          <details style="margin-top:6px"><summary class="small">Which way the beach faces (optional)</summary>
-            <p class="small">Used only to turn NOAA wave and wind directions into the ECHO and HOTEL angles. Auto points the beach toward the nearest offshore buoy, which is right for most open-ocean beaches.</p>
-            <select id="cbFacing"><option value="">Auto (toward the nearest buoy)</option><option value="0">North</option><option value="45">Northeast</option><option value="90">East</option><option value="135">Southeast</option><option value="180">South</option><option value="225">Southwest</option><option value="270">West</option><option value="315">Northwest</option></select>
-          </details>
           <div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="cbHere">Use my location</button><button type="button" id="cbSave">Save beach</button></div>
           <div id="cbMsg" class="small" style="margin-top:6px"></div>
         </details>
@@ -871,11 +867,12 @@ function loadCustom(){try{const l=JSON.parse(localStorage.getItem(BEACH_KEY)||'[
 function saveCustom(list){try{localStorage.setItem(BEACH_KEY,JSON.stringify(list));return true}catch(e){return false}}
 function nearestSt(lat,lng,pred){return Object.values(ST).filter(pred).map(s=>({s,km:kmBetween(lat,lng,s.lat,s.lng)})).sort((a,b)=>a.km-b.km)[0]||null}
 // Links a custom beach to the nearest packaged buoy and wind station, the same shape as the built-in LINKS.
-// With no facing set, the beach faces the nearest buoy: buoys sit offshore, so that is out to sea on open coast.
+// A custom beach faces the nearest buoy: buoys sit offshore, so that is out to sea. It turns NOAA wave and wind
+// directions into the ECHO and HOTEL angles. Any facing saved by an earlier version is ignored.
 function linkCustom(c){
   const w=nearestSt(c.lat,c.lng,s=>!s.kind),m=nearestSt(c.lat,c.lng,s=>!!s.kind),v=nearestSt(c.lat,c.lng,s=>s.kind==='nws');
-  const auto=c.facing==null||c.facing==='',seaward=auto?(w?Math.round(bearingTo(c.lat,c.lng,w.s.lat,w.s.lng)):0):+c.facing;
-  const desc=`Faces ${compass(seaward)}${auto?(w?` (auto, toward buoy ${w.s.id})`:''):' (set by hand)'}`;
+  const seaward=w?Math.round(bearingTo(c.lat,c.lng,w.s.lat,w.s.lng)):0;
+  const desc=w?`Faces ${compass(seaward)}, toward buoy ${w.s.id}`:'No buoy nearby';
   if(!w||w.km>150||!m||m.km>150){delete LINKS[c.id];return{seaward,desc}}
   LINKS[c.id]={seaward,wave:w.s,wind:m.s,visibility:v&&v.km<=150?v.s:m.s,caveat:`Custom beach: the nearest packaged buoy is ${w.km} km away and wind is from ${m.s.name}, ${m.km} km away. Surf on the beach can differ.`};
   return{seaward,desc};
@@ -893,13 +890,13 @@ function showLocation(){
 }
 function rememberGrid(id,grid){const list=loadCustom(),c=list.find(x=>x.id===id);if(c){c.grid=grid;saveCustom(list)}const b=beach();if(b.id===id)b.grid=grid}
 function saveCustomBeach(){
-  const name=$('cbName').value.trim(),p=showLocation(),fv=$('cbFacing').value,msg=$('cbMsg');
+  const name=$('cbName').value.trim(),p=showLocation(),msg=$('cbMsg');
   if(!name||!p){msg.textContent=!name?'Enter a beach name.':'Enter a location the app can read (see the note under the box).';return}
   const list=loadCustom(),id='custom-'+Date.now().toString(36);
-  list.push({id,name:name.slice(0,60),lat:+p.lat.toFixed(5),lng:+p.lng.toFixed(5),facing:fv===''?null:+fv});
+  list.push({id,name:name.slice(0,60),lat:+p.lat.toFixed(5),lng:+p.lng.toFixed(5)});
   if(!saveCustom(list)){msg.textContent='This browser is not saving data, so the beach cannot be kept.';return}
   installCustom();fillRegions();$('regionId').value='custom';fillBeaches(id);
-  ['cbName','cbLoc','cbFacing'].forEach(i=>$(i).value='');showLocation();
+  ['cbName','cbLoc'].forEach(i=>$(i).value='');showLocation();
   msg.textContent=LINKS[id]?`Saved. ${LINKS[id].caveat}`:'Saved. No packaged NOAA station is within 150 km, so the NOAA panels stay empty. The worksheet works as usual.';
   onBeachChange();
 }

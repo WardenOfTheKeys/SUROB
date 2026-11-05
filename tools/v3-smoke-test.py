@@ -165,7 +165,15 @@ with sync_playwright() as p:
     pg.click("#cbSave")
     pg.wait_for_timeout(200)
     check("custom beach saved and selected", pg.input_value("#regionId") == "custom" and "Test lane" in T("ovPlace"), T("cbMsg")[:80])
-    check("custom beach faces the buoy and shows MGRS", "auto, toward buoy" in T("beachNote") and "MGRS 18S" in T("beachNote"), T("beachNote")[-90:])
+    check("custom beach faces the buoy and shows MGRS", "toward buoy 44099" in T("beachNote") and "MGRS 18S" in T("beachNote"), T("beachNote")[-90:])
+    # The direction is really used: the link points at the buoy, and NOAA's ECHO angle follows it.
+    facing = pg.evaluate("""() => { const b = beach(), l = LINKS[b.id];
+      return [l.seaward, Math.round(bearingTo(b.lat, b.lng, l.wave.lat, l.wave.lng)), noaaWindow(l, b, null).patch.echoAngle] }""")
+    check("custom beach direction feeds the angles", facing[0] == facing[1] and facing[2] is not None, str(facing))
+    old = pg.evaluate("""() => { const b = beach(), list = loadCustom(); list.find(c => c.id === b.id).facing = 180; saveCustom(list);
+      installCustom(); return LINKS[b.id].seaward === Math.round(bearingTo(b.lat, b.lng, LINKS[b.id].wave.lat, LINKS[b.id].wave.lng)) }""")
+    check("old saved facing is ignored", old is True)
+    check("no beach-faces option shown", pg.locator("#cbFacing").count() == 0)
     check("custom beach linked to nearest buoy", "44099" in T("ovEst") or "44087" in T("ovEst"), T("ovEst")[:60])
     pg.reload()
     pg.wait_for_timeout(400)

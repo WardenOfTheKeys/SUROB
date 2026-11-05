@@ -123,7 +123,7 @@ Expected result: 13 PASS, 0 failures. Known-good values: sample A = 4.0, B = 16.
 ## MGRS, spoken reports, clean call (5 Nov)
 
 - **Custom beach location:** one box takes MGRS, deg-min-sec or decimal (`parseLocation()`). MGRS both ways (`toMgrs()` / `fromMgrs()`, WGS 84, Norway and Svalbard zones) matches the `mgrs` Python library at 10 points worldwide. Every beach shows its MGRS.
-- **Beach direction:** no longer asked. Auto points the beach toward the nearest packaged buoy (`bearingTo()`); an optional compass choice overrides it.
+- **Beach direction:** no longer asked. The beach always faces the nearest packaged buoy (`bearingTo()`); there is no manual option, and a facing saved by an earlier version is ignored.
 - **Speak a report:** `wordsToNumbers()` turns dictated number words into digits ("eleven hundred", "three and a half", "point five") before `parseSheet()`. "Read call aloud" was removed; the spoken count every 10 waves stays.
 - **Call text:** only SITE, DTG, OBSERVER, ALPHA–HOTEL, MSI and DECISION. No EXERCISE, SOURCE, SAMPLE or MSI math lines (those stay in the verification block). No classification or training-aid banner; Fleethacker Rule 4 requires staying unclassified, not marking it.
 - Smoke test: 43 checks.
