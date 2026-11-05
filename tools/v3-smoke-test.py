@@ -193,6 +193,30 @@ with sync_playwright() as p:
     pg.click("[data-mapstyle=street]")
     check("regular map style", layers() == ["World_Street_Map"] and "Esri, HERE" in T("map"), str(layers()))
 
+    # Offline copy: the downloaded zip is valid, and the unzipped index.html runs from disk.
+    import tempfile, zipfile, pathlib
+    with pg.expect_download() as dl:
+        pg.click("#copyDl")
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    zpath = tmp / "copy.zip"
+    dl.value.save_as(zpath)
+    with zipfile.ZipFile(zpath) as z:
+        names, bad = z.namelist(), z.testzip()
+        z.extractall(tmp)
+    check("offline copy zip is valid", bad is None and "SUROB-MSI/index.html" in names and "SUROB-MSI/conditions-data.js" in names, str(names))
+    disk = pg.context.new_page()
+    disk_errs = []
+    disk.on("pageerror", lambda e: disk_errs.append(str(e)))
+    disk.on("dialog", lambda d: d.accept())
+    disk.goto((tmp / "SUROB-MSI" / "index.html").as_uri())
+    disk.wait_for_timeout(500)
+    disk.click("[data-scenario=A]")
+    disk.wait_for_timeout(100)
+    check("unzipped copy runs from disk", "App ready" in disk.inner_text("#jsStatus") and disk.inner_text("#msiBig") == "4.0" and not disk_errs,
+          disk.inner_text("#jsStatus") + " " + disk.inner_text("#msiBig") + " " + "; ".join(disk_errs))
+    check("unzipped copy has NOAA data", "NOAA estimate: MSI" in disk.inner_text("#ovEst"), disk.inner_text("#ovEst")[:50])
+    disk.close()
+
     pg.set_viewport_size({"width": 390, "height": 844})
     pg.wait_for_timeout(200)
     w = pg.evaluate("document.documentElement.scrollWidth")
@@ -217,6 +241,13 @@ with sync_playwright() as p:
     off.click("[data-scenario=A]")
     off.wait_for_timeout(100)
     check("offline sample A MSI 4.0", off.inner_text("#msiBig") == "4.0", off.inner_text("#msiBig"))
+    try:
+        with off.expect_download(timeout=10000) as dl2:
+            off.click("#copyDl")
+        got = dl2.value.path().stat().st_size > 100000
+    except Exception:
+        got = False
+    check("offline copy downloads with no network", got, off.inner_text("#copyMsg"))
     b.close()
 
 print(f"\n{len(fails)} failure(s)")

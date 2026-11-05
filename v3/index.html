@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="SUROB MSI" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#0f172a" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob: https://server.arcgisonline.com; connect-src https://api.weather.gov; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob: https://server.arcgisonline.com; connect-src 'self' https://api.weather.gov; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" type="image/svg+xml" href="icon.svg" />
 <link rel="apple-touch-icon" href="icon-192.png" />
@@ -368,23 +368,33 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
     </div>
   </section>
 
+  <section class="card no-print" id="takeIt">
+    <h2>9. Use it without a connection</h2>
+    <ul class="small">
+      <li><b>Phone or tablet:</b> open this page once with a connection, then add it to the home screen (Share → <b>Add to Home Screen</b> on iPhone, ⋮ → <b>Install app</b> on Android). It opens with no signal from then on.</li>
+      <li><b>Laptop, ship's computer or USB stick:</b> download a copy, unzip it and open <b>index.html</b> in any browser. No install, no account and no internet needed. Share the zip the same way you share any file.</li>
+    </ul>
+    <div class="btnrow"><button type="button" id="copyDl">Download offline copy (.zip)</button></div>
+    <div id="copyMsg" class="small" style="margin-top:6px"></div>
+  </section>
+
   <section class="card disclose" id="about">
-    <h2>9. Human control and tools used</h2>
+    <h2>10. Human control and tools used</h2>
     <h3>Human control</h3>
     <ul>
-      <li><b>Approval point:</b> only a named decision authority records GO, GO with restrictions or NO-GO in section 8. The app starts every observation as PENDING.</li>
-      <li><b>Prohibited actions (enforced in code):</b> the app does not choose a decision or send data. A Content-Security-Policy allows only the app's own files and, when you tap <b>Show satellite map</b>, map pictures from Esri (server.arcgisonline.com), and, when online, the NWS forecast for the selected beach's grid square (api.weather.gov). Without a connection the packaged forecast is used. Nothing typed into the app is ever sent. It asks for no names or other PII.</li>
-      <li><b>NOAA fill:</b> wave, wind and visibility values come from a packaged week of public NOAA reports. The 100-wave count built from them is an estimate, marked in the call and the verification block. An observed surf-zone count replaces it.</li>
-      <li><b>Monitoring:</b> input warnings, the workflow verification block, and a re-confirm flag whenever inputs change after a decision.</li>
-      <li><b>Escalation:</b> any red warning, any at-limit or exceeded craft, or any mismatch with the paper worksheet goes to the BPTC or SRM. The paper worksheet is the reference.</li>
-      <li><b>Shutdown:</b> close the tab. Clear form erases the data saved on this device. There are no background services, accounts or servers.</li>
+      <li><b>Approval point:</b> only the BPTC or SRM records GO, GO with restrictions or NO-GO in section 8. The app starts every observation as PENDING.</li>
+      <li><b>Prohibited actions (enforced in code):</b> the app does not choose a decision or send data. A Content-Security-Policy allows only the app's own files and, when you tap <b>Show map</b>, map pictures from Esri (server.arcgisonline.com), and, when online, the NWS forecast for the selected beach's grid square (api.weather.gov). Without a connection the packaged forecast is used. Nothing typed into the app is ever sent. It asks for no names or other PII.</li>
+      <li><b>NOAA estimates:</b> wave, wind and visibility values come from public NOAA reports. The 100-wave count built from them is an estimate, marked in the overview and the verification block. An observed surf-zone count replaces it.</li>
+      <li><b>Monitoring:</b> input warnings, the workflow verification block, the NOAA cross-check, and a re-confirm flag whenever inputs change after a decision.</li>
+      <li><b>Escalation:</b> any red warning, CHECK note, at-limit or exceeded craft, or any mismatch with the paper worksheet goes to the BPTC or SRM. The paper worksheet is the reference.</li>
+      <li><b>Shutdown:</b> close the tab. Clear form erases the data saved on this device. The browser keeps an offline copy of the app's own files; clearing the site's data removes it. There are no accounts or servers.</li>
     </ul>
     <h3>Tools and resources used</h3>
     <ul>
       <li>Claude Code desktop app with the Anthropic Claude Opus 5.5 model, used to write and review code.</li>
       <li>A command-line shell for file checks, and the Claude Code built-in browser preview for testing.</li>
-      <li>No external libraries or cloud services. Data: a packaged week of NOAA NDBC buoy, CO-OPS station and NWS airfield reports (conditions-data.js). Map pictures: Esri World Imagery, only when the map is opened.</li>
-      <li>Beach list, buoy matching and the NOAA-to-worksheet method come from the team's working overview build. Version 3 converts NWS airfield wind from km/h to knots.</li>
+      <li>No external libraries and no AI inside the app. Data: NOAA NDBC buoy, CO-OPS station and NWS airfield reports (7 days) and the NWS gridpoint forecast (5 days), packaged in conditions-data.js and refreshed every 3 hours. Map pictures: Esri, only when the map is opened.</li>
+      <li>Speaking and scanning use the phone's own dictation and text recognition (Apple, Google). The app receives only the text.</li>
       <li>MSI tables were carried over unchanged from the original worksheet version. The team must cite the source worksheet or publication.</li>
     </ul>
   </section>
@@ -969,6 +979,42 @@ function sayCount(total){
   lastSaid=total;
 }
 
+/* ---------- Offline copy: a .zip built in the browser (works without a connection, from the saved copy) ---------- */
+const COPY_FILES=['index.html','conditions-data.js','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png'];
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC_T[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+// Stored (uncompressed) zip: no library needed, and every computer opens it with no extra software.
+function makeZip(files){
+  const enc=new TextEncoder(),parts=[],central=[],d=new Date(),tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  let off=0;
+  files.forEach(({name,data})=>{
+    const nb=enc.encode(name),crc=crc32(data),h=new DataView(new ArrayBuffer(30)),c=new DataView(new ArrayBuffer(46));
+    [[0,0x04034b50,4],[4,20,2],[6,0x0800,2],[10,tm,2],[12,dt,2],[14,crc,4],[18,data.length,4],[22,data.length,4],[26,nb.length,2]].forEach(([o,v,n])=>n===4?h.setUint32(o,v,true):h.setUint16(o,v,true));
+    [[0,0x02014b50,4],[4,20,2],[6,20,2],[8,0x0800,2],[12,tm,2],[14,dt,2],[16,crc,4],[20,data.length,4],[24,data.length,4],[28,nb.length,2],[42,off,4]].forEach(([o,v,n])=>n===4?c.setUint32(o,v,true):c.setUint16(o,v,true));
+    parts.push(h.buffer,nb,data);central.push(c.buffer,nb);off+=30+nb.length+data.length;
+  });
+  const size=central.reduce((s,x)=>s+x.byteLength,0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,size,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...central,e.buffer],{type:'application/zip'});
+}
+function openMeText(){
+  return['SUROB MSI Calculator - offline copy','','1. Unzip this folder.','2. Open index.html in Chrome, Edge, Safari or Firefox.','',
+    'It runs with no internet and no install. The map and the live forecast need a connection; everything else works without one.',
+    `NOAA reports and forecast in this copy: ${fmtWhen(Date.parse(COND&&COND.fetchedAt||Date.now()))}.`,
+    'For newer data, download a new copy from https://wardenofthekeys.github.io/SUROB/v3/','',
+    'The calculator never makes the GO / NO-GO call. The BPTC or SRM does.'].join('\r\n');
+}
+async function downloadCopy(){
+  const msg=$('copyMsg');msg.textContent='Building the offline copy…';
+  try{
+    const files=await Promise.all(COPY_FILES.map(async f=>{const r=await fetch(f,{cache:'no-cache'});if(!r.ok)throw new Error(f+' not available');return{name:'SUROB-MSI/'+f,data:new Uint8Array(await r.arrayBuffer())}}));
+    files.push({name:'SUROB-MSI/OPEN-ME.txt',data:new TextEncoder().encode(openMeText())});
+    const url=URL.createObjectURL(makeZip(files)),a=document.createElement('a');
+    a.href=url;a.download=`SUROB-MSI-${new Date().toISOString().slice(0,10)}.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
+    msg.textContent=`Saved. Unzip it and open index.html. NOAA data in the copy is from ${COND?fmtWhen(Date.parse(COND.fetchedAt)):'(none packaged)'}.`;
+  }catch(e){msg.textContent=`Could not build the copy (${e.message||e}). Open the page once with a connection and try again.`}
+}
+
 /* ---------- Beach picker and satellite map (no library; Esri tiles only after Show map) ---------- */
 function fillRegions(){$('regionId').innerHTML=REGIONS.map(r=>`<option value="${r.id}">${esc(r.name)} — ${esc(r.coast)}</option>`).join('')}
 function fillBeaches(keep){const r=region(),el=$('beachId');el.innerHTML=r.beaches.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('');el.value=r.beaches.some(b=>b.id===keep)?keep:r.beaches[0].id}
@@ -1443,6 +1489,9 @@ function init(){
     $('cbDelete').addEventListener('click',deleteCustomBeach);
     $('cbHere').addEventListener('click',useMyLocation);
     $('cbLoc').addEventListener('input',showLocation);
+    // Opened from an unzipped copy, the page cannot read its own files back, and the copy is already on hand.
+    if(location.protocol==='file:')$('takeIt').querySelector('.btnrow').style.display='none',$('copyMsg').textContent='This is an offline copy. For newer NOAA data, download a new one from the web page.';
+    else $('copyDl').addEventListener('click',downloadCopy);
     if(!canSpeak)document.querySelectorAll('.speak').forEach(el=>el.style.display='none');
     $('scanRead').addEventListener('click',readSheet);
     $('scanApply').addEventListener('click',applySheet);

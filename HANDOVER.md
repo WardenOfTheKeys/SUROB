@@ -143,3 +143,9 @@ Expected result: 13 PASS, 0 failures. Known-good values: sample A = 4.0, B = 16.
 - Unpacked the zip unchanged → PR #1.
 - Reviewed his build. Found: GO with no data, conflict with V2's human-control rule, outside requests with no CSP, the wind unit bug, and only compiled code in the repo.
 - Built Version 3 → PR #2, tested headless, added this handover and the smoke test.
+
+## Offline copy and README (5 Nov)
+
+- **Download offline copy (.zip)** (V3 section 9): builds a stored zip in the browser from the app's own files (`makeZip()`, no library), plus OPEN-ME.txt. Works offline from the saved copy. The unzipped `index.html` runs from disk; the button is hidden there. The security policy's `connect-src` now includes `'self'` so the page can read its own files.
+- README: no developer section; the overview prototype is listed as the team's first build. Smoke test: 58 checks, including the zip, the unzipped copy and an offline download.
+
