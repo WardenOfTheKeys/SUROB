@@ -145,6 +145,18 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
         </div>
         <div class="beachbtns no-print" id="beachBtns"></div>
         <p class="small" id="beachNote" style="margin-top:8px"></p>
+        <button type="button" class="ghost no-print" id="cbDelete" style="display:none">Delete this custom beach</button>
+        <details id="customBox" class="no-print" style="margin:8px 0"><summary>Add a custom beach</summary>
+          <p class="small">Any beach, saved on this device only. NOAA panels work when a packaged buoy and wind station are within 150 km. Use a public beach name. Do not save planned, sensitive or classified landing sites.</p>
+          <div class="grid two">
+            <div><label for="cbName">Beach name</label><input id="cbName" autocomplete="off" maxlength="60" placeholder="Training lane 2"></div>
+            <div><label for="cbFacing">Faces out to sea (° true)</label><input id="cbFacing" inputmode="numeric" placeholder="90 = faces east"></div>
+            <div><label for="cbLat">Latitude</label><input id="cbLat" inputmode="decimal" placeholder="36.92035"></div>
+            <div><label for="cbLng">Longitude</label><input id="cbLng" inputmode="decimal" placeholder="-75.99530"></div>
+          </div>
+          <div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="cbHere">Use my location</button><button type="button" id="cbSave">Save beach</button></div>
+          <div id="cbMsg" class="small" style="margin-top:6px"></div>
+        </details>
         <div class="map no-print" id="map"></div>
         <p class="small" style="margin-top:6px">Map check: the pin and orange shoreline line should sit on the sand. Pins are approximate public shoreline points, not surveyed lanes.</p>
       </div>
@@ -196,7 +208,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
   <section class="card">
     <h2>1. A / B - Wave count</h2>
     <p class="small">Tap <b>+</b> for each wave as it breaks, or type the counts. The app calculates A / ALPHA from the highest 33 waves and B / BRAVO from the highest single wave.</p>
-    <div class="btnrow no-print"><button type="button" class="secondary" id="undoTap" disabled>Undo last +</button><button type="button" class="ghost" id="clearAll">Clear form</button></div>
+    <div class="btnrow no-print"><button type="button" class="secondary" id="undoTap" disabled>Undo last +</button><button type="button" class="ghost" id="clearAll">Clear form</button><label class="check speak" style="margin:0"><input id="sayCount" type="checkbox"><span>Say the count every 10 waves</span></label></div>
     <h3>Wave height occurrence count</h3>
     <div class="wave-grid" id="heightCounts"></div>
     <details id="bigWaves" style="margin-top:8px"><summary>Larger waves: 5.5 to 10 ft</summary><div class="wave-grid" id="heightCountsBig" style="margin-top:10px"></div></details>
@@ -207,7 +219,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <div class="sum"><b>ALPHA call round</b><strong id="alphaReportOut">0.0</strong><span>nearest 1/2 ft for BPT call</span></div>
       <div class="sum"><b>B / BRAVO max ft</b><strong id="bravoOut">0.0</strong><span>highest single breaker</span></div>
     </div>
-    <details style="margin-top:12px"><summary>Optional: paste 100 wave heights instead</summary><p class="small">Paste heights separated by spaces, commas or new lines. Example: 1 1.5 2 0.5. Values are rounded to the nearest 1/2 ft. This replaces the current counts.</p><textarea id="pasteHeights" placeholder="Paste wave heights here"></textarea><div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="applyPaste">Apply pasted heights</button></div><div id="pasteMsg" class="small" style="margin-top:6px"></div></details>
+    <details style="margin-top:12px" id="voiceBox"><summary>Optional: say or paste the wave heights</summary><p class="small"><b>Hands-free:</b> tap the box, tap the microphone on the phone keyboard, and say each height as the wave breaks: "two, two and a half, three, one point five". The counts update as you talk, so your eyes stay on the surf. iPhone dictation and Gboard voice typing can run without a connection when the language is downloaded on the phone. You can also paste heights separated by spaces, commas or new lines. Values are rounded to the nearest 1/2 ft.</p><textarea id="pasteHeights" placeholder="Say or paste wave heights here"></textarea><div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="applyPaste">Apply pasted heights</button></div><div id="pasteMsg" class="small" style="margin-top:6px"></div></details>
   </section>
 
   <section class="card">
@@ -285,7 +297,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
   <section class="card">
     <h2>5. BPT communicator call</h2>
     <div class="call" id="callOutput"></div>
-    <div class="btnrow no-print" style="margin-top:10px"><button type="button" id="copyCall">Copy call</button><button type="button" class="secondary" id="shareCall" style="display:none">Share</button><button type="button" class="secondary" onclick="window.print()">Print / save PDF</button></div>
+    <div class="btnrow no-print" style="margin-top:10px"><button type="button" id="copyCall">Copy call</button><button type="button" class="secondary" id="shareCall" style="display:none">Share</button><button type="button" class="secondary speak" id="sayCall">Read call aloud</button><button type="button" class="secondary" onclick="window.print()">Print / save PDF</button></div>
   </section>
 
   <section class="card">
@@ -574,18 +586,19 @@ function gridRows(g){
   return rows;
 }
 function forecastFor(b){return FC_LIVE[b.id]&&FC_LIVE[b.id].rows?FC_LIVE[b.id]:COND&&COND.forecast&&COND.forecast[b.id]||null}
-// Only the grid square of the packaged forecast is requested. Offline or blocked, the packaged copy stays in use.
+// Only a forecast grid square is requested. Offline or blocked, the packaged copy stays in use.
+// A custom beach has no packaged grid, so its grid square is looked up once (2 km seaward) and remembered.
 async function fetchForecast(b){
-  const pk=COND&&COND.forecast&&COND.forecast[b.id];
-  if(!pk||!pk.grid||FC_LIVE[b.id]||navigator.onLine===false)return;
+  const pk=COND&&COND.forecast&&COND.forecast[b.id];let grid=pk&&pk.grid||b.grid;
+  if((!grid&&!b.custom)||FC_LIVE[b.id]||navigator.onLine===false)return;
   FC_LIVE[b.id]={pending:true};
+  const get=async u=>{const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),8000);
+    try{const r=await fetch(u,{signal:ctl.signal,headers:{Accept:'application/geo+json'}});if(!r.ok)throw new Error(r.status===404?'outside NWS coverage':'HTTP '+r.status);return(await r.json()).properties}finally{clearTimeout(tm)}};
   try{
-    const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),8000);
-    const r=await fetch(`https://api.weather.gov/gridpoints/${pk.grid}`,{signal:ctl.signal,headers:{Accept:'application/geo+json'}});clearTimeout(tm);
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const g=(await r.json()).properties,rows=gridRows(g);
+    if(!grid){const lk=LINKS[b.id],[la,ln]=offsetLL(b.lat,b.lng,lk?lk.seaward:0,2000),p=await get(`https://api.weather.gov/points/${la.toFixed(4)},${ln.toFixed(4)}`);grid=`${p.gridId}/${p.gridX},${p.gridY}`;rememberGrid(b.id,grid)}
+    const g=await get(`https://api.weather.gov/gridpoints/${grid}`),rows=gridRows(g);
     if(!rows.some(x=>x.hsM))throw new Error('no wave forecast');
-    FC_LIVE[b.id]={grid:pk.grid,updated:g.updateTime,rows,live:true};
+    FC_LIVE[b.id]={grid,updated:g.updateTime,rows,live:true};
   }catch(e){FC_LIVE[b.id]={failed:e&&e.name==='AbortError'?'timed out':String(e&&e.message||e)}}
   if(beach().id===b.id)renderPicture();
 }
@@ -640,7 +653,7 @@ function renderPicture(){
   $('picTiles').innerHTML=tile('Latest buoy estimate',last,p=>fmtWhen(p.t))+tile('High, 24 h before that',last&&maxIn(s.hist,last.t-864e5,last.t),p=>fmtWhen(p.t))+
     tile('Forecast high, next 24 h',maxIn(s.ahead,now,now+864e5),p=>fmtWhen(p.t))+tile('Forecast high, 5 days',maxIn(s.ahead,now,now+5*864e5),p=>fmtWhen(p.t));
   const fc=s.fc,lv=FC_LIVE[b.id]||{},fcAge=fc&&fc.updated?(now-Date.parse(fc.updated))/36e5:null;
-  $('picSrc').innerHTML=`Buoy reports packaged ${esc(fmtWhen(Date.parse(COND.fetchedAt)))}. `+(!fc?'No forecast packaged for this beach.':
+  $('picSrc').innerHTML=`Buoy reports packaged ${esc(fmtWhen(Date.parse(COND.fetchedAt)))}. `+(!fc?(lv.pending?'Getting the NWS forecast…':lv.failed?`No forecast (${esc(lv.failed)}).`:'No forecast packaged for this beach. It loads when online.'):
     `Forecast: NWS grid ${esc(fc.grid)} off the beach, issued ${fc.updated?esc(fmtWhen(Date.parse(fc.updated))):'?'}, ${fc.live?'fetched live':lv.pending?'packaged copy (checking for a newer one)':lv.failed?`packaged copy (live update failed: ${esc(lv.failed)})`:'packaged copy'}.`+(s.dirFromBuoy?' The forecast has no swell direction for some hours, so the latest buoy wave direction is used there.':'')+(fcAge>12?` <span class="pill warn">${fmt(fcAge,0)} h old</span>`:''));
   const svg=$('picChart');if(!pts.length){svg.innerHTML='';return}
   const W=640,H=200,L=26,R=8,T=10,B=24,t0=Math.min(now,...pts.map(p=>p.t)),t1=Math.max(now,...pts.map(p=>p.t));
@@ -769,6 +782,81 @@ function renderNoaa(){
   setText('noaaWinLbl',`Selected window ends ${fmtWhen(pts[idx].t)} (${fmt(hs[idx],1)} ft). Range ${fmtWhen(t0)} to ${fmtWhen(t1)}.`);
 }
 
+/* ---------- Custom beaches (saved on this device only) ---------- */
+const BEACH_KEY='surob-msi-v3-beaches';
+function loadCustom(){try{const l=JSON.parse(localStorage.getItem(BEACH_KEY)||'[]');return Array.isArray(l)?l:[]}catch(e){return[]}}
+function saveCustom(list){try{localStorage.setItem(BEACH_KEY,JSON.stringify(list));return true}catch(e){return false}}
+function nearestSt(lat,lng,pred){return Object.values(ST).filter(pred).map(s=>({s,km:kmBetween(lat,lng,s.lat,s.lng)})).sort((a,b)=>a.km-b.km)[0]||null}
+// Links a custom beach to the nearest packaged buoy and wind station, the same shape as the built-in LINKS.
+function linkCustom(c){
+  const w=nearestSt(c.lat,c.lng,s=>!s.kind),m=nearestSt(c.lat,c.lng,s=>!!s.kind),v=nearestSt(c.lat,c.lng,s=>s.kind==='nws');
+  if(!w||w.km>150||!m||m.km>150){delete LINKS[c.id];return}
+  LINKS[c.id]={seaward:c.facing,wave:w.s,wind:m.s,visibility:v&&v.km<=150?v.s:m.s,caveat:`Custom beach: the nearest packaged buoy is ${w.km} km away and wind is from ${m.s.name}, ${m.km} km away. Surf on the beach can differ.`};
+}
+function installCustom(){
+  const list=loadCustom(),i=REGIONS.findIndex(r=>r.id==='custom');if(i>=0)REGIONS.splice(i,1);
+  if(!list.length)return;
+  REGIONS.push({id:'custom',name:'Custom beaches',coast:'saved on this device',beaches:list.map(c=>({id:c.id,name:c.name,lat:c.lat,lng:c.lng,alongshore:(c.facing+90)%360,halfLengthM:250,facing:`Faces ${c.facing}° true`,note:'Custom beach saved on this device.',custom:true,grid:c.grid}))});
+  list.forEach(linkCustom);
+}
+function rememberGrid(id,grid){const list=loadCustom(),c=list.find(x=>x.id===id);if(c){c.grid=grid;saveCustom(list)}const b=beach();if(b.id===id)b.grid=grid}
+function saveCustomBeach(){
+  const name=$('cbName').value.trim(),lat=parseFloat($('cbLat').value),lng=parseFloat($('cbLng').value),facing=parseFloat($('cbFacing').value),msg=$('cbMsg');
+  if(!name||!(lat>=-90&&lat<=90)||!(lng>=-180&&lng<=180)||!(facing>=0&&facing<360)){msg.textContent='Enter a name, latitude (-90 to 90), longitude (-180 to 180) and the direction the beach faces out to sea (0 to 359°).';return}
+  const list=loadCustom(),id='custom-'+Date.now().toString(36);
+  list.push({id,name:name.slice(0,60),lat:+lat.toFixed(5),lng:+lng.toFixed(5),facing:Math.round(facing)%360});
+  if(!saveCustom(list)){msg.textContent='This browser is not saving data, so the beach cannot be kept.';return}
+  installCustom();fillRegions();$('regionId').value='custom';fillBeaches(id);
+  ['cbName','cbLat','cbLng','cbFacing'].forEach(i=>$(i).value='');
+  msg.textContent=LINKS[id]?`Saved. ${LINKS[id].caveat}`:'Saved. No packaged NOAA station is within 150 km, so the NOAA panels stay empty. The worksheet works as usual.';
+  onBeachChange();
+}
+function deleteCustomBeach(){
+  const b=beach();if(!b.custom||!confirm(`Delete the custom beach "${b.name}" from this device?`))return;
+  saveCustom(loadCustom().filter(c=>c.id!==b.id));delete LINKS[b.id];delete FC_LIVE[b.id];
+  installCustom();fillRegions();$('regionId').value=REGIONS[0].id;fillBeaches();$('cbMsg').textContent='Deleted.';onBeachChange();
+}
+function useMyLocation(){
+  const msg=$('cbMsg');if(!navigator.geolocation){msg.textContent='This browser cannot read the location.';return}
+  msg.textContent='Reading the location (GPS works without a connection)…';
+  navigator.geolocation.getCurrentPosition(p=>{$('cbLat').value=p.coords.latitude.toFixed(5);$('cbLng').value=p.coords.longitude.toFixed(5);msg.textContent='Location filled in. Add the name and the direction the beach faces, then Save.'},
+    e=>{msg.textContent='Location not available: '+(e.message||'permission denied')+'.'},{enableHighAccuracy:true,timeout:15000});
+}
+
+/* ---------- Voice entry and spoken readback (the phone's own dictation and voices) ---------- */
+// Keyboard dictation writes words: "two and a half, three, one point five". "to", "too" and "for" are
+// common mishearings of two and four, so they count as numbers in this box only.
+const NUM_WORDS={zero:0,oh:0,one:1,won:1,two:2,to:2,too:2,three:3,four:4,for:4,five:5,six:6,seven:7,eight:8,ate:8,nine:9,ten:10};
+function spokenToDigits(s){
+  return String(s).toLowerCase().replace(new RegExp(`\\b(${Object.keys(NUM_WORDS).join('|')})\\b`,'g'),w=>NUM_WORDS[w])
+    .replace(/(\d+)\s*(?:and\s+)?(?:a\s+)?half\b/g,'$1.5').replace(/\b(?:a\s+)?half\b/g,'0.5').replace(/(\d+)\s*point\s*(\d)/g,'$1.$2')
+    .replace(/\b(?:feet|foot|ft)\b/g,' ');
+}
+let pasteLive=false,pasteTimer=null;
+// live: called while the Sailor is talking. It never overwrites counts that were tapped; Apply does, after a confirm.
+function applyHeights(live){
+  const tokens=spokenToDigits($('pasteHeights').value).split(/[\s,;]+/).map(t=>t.replace(/\.+$/,'')).filter(t=>t!=='');
+  const vals=tokens.map(Number).filter(n=>Number.isFinite(n)&&n>=0),bad=tokens.length-vals.length,over=vals.filter(n=>n>MAX_HEIGHT).length;
+  if(!vals.length){if(!live)$('pasteMsg').textContent='No valid heights found.';return}
+  if(getHeightList().length&&!pasteLive){if(live){$('pasteMsg').textContent='Counts were already tapped. Tap Apply to replace them with these heights.';return}if(!confirm('Replace the current wave counts with these heights?'))return}
+  setManual();setCountsFromList(vals);tapHistory=[];$('undoTap').disabled=true;pasteLive=true;
+  $('pasteMsg').textContent=`${live?'Heard':'Applied'} ${vals.length} heights.`+(bad?` Skipped ${bad} word${bad>1?'s':''} that ${bad>1?'are not heights':'is not a height'}.`:'')+(over?` ${over} value${over>1?'s':''} above ${MAX_HEIGHT} ft counted as ${MAX_HEIGHT} ft.`:'');
+  calculate();
+}
+const canSpeak='speechSynthesis' in window;
+function say(t){if(!canSpeak)return;try{speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t))}catch(e){}}
+let lastSaid=null;
+// Speaks each 10th wave while counting by tap or voice. Big jumps (a sample or a paste) stay silent.
+function sayCount(total){
+  if(lastSaid!=null&&$('sayCount').checked&&total>lastSaid&&total-lastSaid<=3&&Math.floor(total/10)>Math.floor(lastSaid/10))
+    say(total>=100?`${total} waves. Count complete.`:`${Math.floor(total/10)*10} waves`);
+  lastSaid=total;
+}
+function callForSpeech(){
+  const lines=$('callOutput').textContent.split('\n').filter(l=>/^(ALPHA|BRAVO|CHARLIE|DELTA|ECHO|FOXTROT|GOLF|HOTEL|Visibility|Secondary|MSI:|DECISION)/.test(l));
+  return lines.join('. ').replace(/\bft\b/g,'feet').replace(/\bkts\b/g,'knots').replace(/\bsec\b/g,'seconds').replace(/%/g,' percent').replace(/__/g,'not entered').replace(/\//g,' or ');
+}
+
 /* ---------- Beach picker and satellite map (no library; Esri tiles only after Show map) ---------- */
 function fillRegions(){$('regionId').innerHTML=REGIONS.map(r=>`<option value="${r.id}">${esc(r.name)} — ${esc(r.coast)}</option>`).join('')}
 function fillBeaches(keep){const r=region(),el=$('beachId');el.innerHTML=r.beaches.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('');el.value=r.beaches.some(b=>b.id===keep)?keep:r.beaches[0].id}
@@ -776,6 +864,7 @@ function renderBeach(){
   const r=region(),b=beach();
   $('beachBtns').innerHTML=r.beaches.map(x=>`<button type="button" class="${x.id===b.id?'':'ghost'}" data-beach="${x.id}">${esc(x.name)}</button>`).join('');
   $('beachNote').innerHTML=`${esc(b.note)}<br>${esc(b.facing)}. ${Math.abs(b.lat).toFixed(5)}° ${b.lat>=0?'N':'S'}, ${Math.abs(b.lng).toFixed(5)}° ${b.lng>=0?'E':'W'}`;
+  $('cbDelete').style.display=b.custom?'':'none';
 }
 let lastBeachName='';
 function onBeachChange(){
@@ -902,8 +991,8 @@ function renderCraft(msi,alphaRaw,bravo,hasData){
 }
 function renderDecision(msi,overall){
   const val=$('decValue').value,role=$('decRole').value,ini=$('decInitials').value.trim(),time=$('decTime').value.trim(),rem=$('decRemarks').value.trim(),st=$('decStatus');
-  // Fingerprint of every observation input (not the decision fields), so any change flags the decision.
-  let h=5381;document.querySelectorAll('input[id],select[id]').forEach(el=>{if(/^dec|^noaaWin$/.test(el.id))return;const s=el.id+'='+(el.type==='checkbox'?el.checked:el.value)+';';for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0});
+  // Fingerprint of every observation input (not the decision, custom-beach or readback fields), so any change flags the decision.
+  let h=5381;document.querySelectorAll('input[id],select[id]').forEach(el=>{if(/^dec|^noaaWin$|^cb|^sayCount$/.test(el.id))return;const s=el.id+'='+(el.type==='checkbox'?el.checked:el.value)+';';for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0});
   const sig=`MSI ${fmt(msi,1)} / ${overall.short} #${(h>>>0).toString(16)}`;
   $('decConfirm').style.display=val?'':'none';
   if(!val){$('decMsi').value='';st.className='note warn';st.innerHTML='<b>Decision PENDING.</b> Waiting for the decision authority. The limit check above is advisory only.';return'PENDING - awaiting decision authority'}
@@ -1048,7 +1137,7 @@ function calculate(){
     `DECISION: ${decisionLine}`
   ].join('\n'));
 
-  setText('lbWaves',`${total}/100`);setText('lbMsi',fmt(msi,1));
+  setText('lbWaves',`${total}/100`);setText('lbMsi',fmt(msi,1));sayCount(total);
   const lb=$('lbStatus');lb.className='pill '+overall.cls;lb.textContent=overall.short;
 
   // Overview
@@ -1126,7 +1215,7 @@ function resetFields(){
     else if(el.tagName==='SELECT'){const i=[...el.options].findIndex(o=>o.defaultSelected);el.selectedIndex=i<0?0:i}
     else el.value=el.defaultValue;
   });
-  timerStart=null;clearInterval(ticker);tapHistory=[];$('undoTap').disabled=true;
+  timerStart=null;clearInterval(ticker);tapHistory=[];$('undoTap').disabled=true;pasteLive=false;
   $('restoreNotice').style.display='none';$('pasteMsg').textContent='';$('bigWaves').open=false;
   $('regionId').value=keepR;fillBeaches(keepB);$('siteName').value=beach().name;lastBeachName=beach().name;selEnd=null;
   tick();updateTimerUI();
@@ -1149,7 +1238,7 @@ function flash(btn,txt){const o=btn.dataset.label||btn.textContent;btn.dataset.l
 function init(){
   try{
     buildWaveGrid();
-    fillRegions();fillBeaches();
+    installCustom();fillRegions();fillBeaches();
     const savedAt=restore();
     if(isBlank($('siteName').value))$('siteName').value=beach().name;
     lastBeachName=$('siteName').value===beach().name?beach().name:'';
@@ -1164,7 +1253,7 @@ function init(){
       const b=e.target.closest('[data-step]');if(!b)return;
       const inp=$(b.dataset.step),d=+b.dataset.d,cur=int(inp.value),nv=Math.max(0,cur+d);
       if(nv===cur)return;
-      if(inp.classList.contains('hcount'))setManual();
+      if(inp.classList.contains('hcount')){setManual();pasteLive=false}
       inp.value=nv;
       if(d>0){tapHistory.push(inp.id);$('undoTap').disabled=false}
       if(navigator.vibrate)try{navigator.vibrate(8)}catch(_){}
@@ -1188,16 +1277,13 @@ function init(){
     document.addEventListener('input',onEdit);document.addEventListener('change',onEdit);
     document.addEventListener('focusin',e=>{if(e.target.classList&&e.target.classList.contains('count')&&e.target.value==='0')e.target.select()});
 
-    $('applyPaste').addEventListener('click',()=>{
-      const tokens=$('pasteHeights').value.split(/[\s,;]+/).filter(t=>t!=='');
-      const vals=tokens.map(Number).filter(Number.isFinite).filter(n=>n>=0);
-      const bad=tokens.length-vals.length,over=vals.filter(n=>n>MAX_HEIGHT).length;
-      if(!vals.length){$('pasteMsg').textContent='No valid heights found.';return}
-      if(getHeightList().length&&!confirm('Replace the current wave counts with the pasted heights?'))return;
-      setManual();setCountsFromList(vals);tapHistory=[];$('undoTap').disabled=true;
-      $('pasteMsg').textContent=`Applied ${vals.length} heights.`+(bad?` Skipped ${bad} unreadable value${bad>1?'s':''}.`:'')+(over?` ${over} value${over>1?'s':''} above ${MAX_HEIGHT} ft counted as ${MAX_HEIGHT} ft.`:'');
-      calculate();
-    });
+    $('applyPaste').addEventListener('click',()=>applyHeights(false));
+    $('pasteHeights').addEventListener('input',()=>{clearTimeout(pasteTimer);pasteTimer=setTimeout(()=>applyHeights(true),350)});
+    $('cbSave').addEventListener('click',saveCustomBeach);
+    $('cbDelete').addEventListener('click',deleteCustomBeach);
+    $('cbHere').addEventListener('click',useMyLocation);
+    if(canSpeak)$('sayCall').addEventListener('click',()=>say(callForSpeech()));
+    else document.querySelectorAll('.speak').forEach(el=>el.style.display='none');
     $('scanRead').addEventListener('click',readSheet);
     $('scanApply').addEventListener('click',applySheet);
     // The photo is only shown next to the text for checking. It is not saved or sent.
@@ -1222,6 +1308,9 @@ function init(){
     calculate();
     if(savedAt&&(getHeightList().length||num($('totalSeconds').value)>0||timerStart||!isBlank($('siteName').value))){const n=$('restoreNotice');n.style.display='';n.innerHTML=`<b>Restored saved entries</b> from ${new Date(savedAt).toLocaleString()}. Use <b>Clear form</b> to start a new observation.`}
     $('jsStatus').className='status ok';$('jsStatus').textContent=storageOk?'App ready · autosave on':'App ready · autosave off';
+    // Offline copy: after one visit with a connection, the app opens with no signal (served from sw.js's cache).
+    if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))
+      navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready).then(()=>{$('jsStatus').textContent+=' · works offline'}).catch(()=>{});
     $('blockedNotice').style.display='none';
   }catch(err){
     $('jsStatus').className='status bad';$('jsStatus').textContent='App error';

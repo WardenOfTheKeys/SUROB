@@ -23,7 +23,8 @@ def check(name, cond, detail=""):
 
 with sync_playwright() as p:
     b = p.chromium.launch()
-    pg = b.new_page(viewport={"width": 1200, "height": 900})
+    # Service workers are blocked here so page.route() sees every request; the offline check at the end allows them.
+    pg = b.new_context(viewport={"width": 1200, "height": 900}, service_workers="block").new_page()
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.on("dialog", lambda d: d.accept())
@@ -103,11 +104,67 @@ with sync_playwright() as p:
     scan(T("callOutput"))
     check("BPT call read back within 0.3 of 4.0", abs(float(T("msiBig")) - 4.0) <= 0.3, T("msiBig"))
 
+    # Voice entry: dictated words become heights. Tapped counts are never overwritten while talking.
+    pg.click("#voiceBox summary")
+    pg.fill("#pasteHeights", "two, two and a half, three point five, half")
+    pg.wait_for_timeout(500)
+    check("voice keeps tapped counts", "already tapped" in T("pasteMsg") and T("totalWavesOut") != "4", T("pasteMsg"))
+    pg.click("#applyPaste")
+    pg.wait_for_timeout(100)
+    hl = pg.evaluate("getHeightList().sort((a, b) => a - b).join(' ')")
+    check("voice words read as heights", hl == "0.5 2 2.5 3.5", hl)
+    pg.fill("#pasteHeights", "two, two and a half, three point five, half, for")
+    pg.wait_for_timeout(500)
+    check("voice updates live after Apply", T("totalWavesOut") == "5", T("pasteMsg"))
+
+    # Spoken readback: every 10th wave while counting, silent on big jumps, call text read in words.
+    said = pg.evaluate("""() => { const out = []; window.say = t => out.push(t); $('sayCount').checked = true;
+      lastSaid = 8; sayCount(9); sayCount(10); lastSaid = 99; sayCount(100); lastSaid = 0; sayCount(100); return out; }""")
+    check("count spoken every 10 waves", said == ["10 waves", "100 waves. Count complete."], str(said))
+    spoken = pg.evaluate("callForSpeech()")
+    check("call read aloud in words", spoken.startswith("ALPHA:") and "feet" in spoken and "DECISION" in spoken, spoken[:60])
+
+    # Custom beach near Fort Story: linked to the nearest packaged buoy, saved on the device, deletable.
+    pg.click("#customBox summary")
+    pg.fill("#cbName", "Test lane")
+    pg.fill("#cbLat", "36.85")
+    pg.fill("#cbLng", "-75.97")
+    pg.fill("#cbFacing", "90")
+    pg.click("#cbSave")
+    pg.wait_for_timeout(200)
+    check("custom beach saved and selected", pg.input_value("#regionId") == "custom" and "Test lane" in T("ovPlace"), T("cbMsg")[:80])
+    check("custom beach linked to nearest buoy", "44099" in T("ovEst") or "44087" in T("ovEst"), T("ovEst")[:60])
+    pg.reload()
+    pg.wait_for_timeout(400)
+    check("custom beach kept after reload", "Test lane" in T("ovPlace"), T("ovPlace"))
+    pg.click("#cbDelete")
+    pg.wait_for_timeout(200)
+    check("custom beach deleted", pg.input_value("#regionId") != "custom" and pg.locator("#regionId option[value=custom]").count() == 0)
+
     pg.set_viewport_size({"width": 390, "height": 844})
     pg.wait_for_timeout(200)
     w = pg.evaluate("document.documentElement.scrollWidth")
     check("no sideways scroll at 390px", w <= 390, f"{w}px")
     check("no page errors", not errs, "; ".join(errs))
+
+    # Offline: one visit with a connection installs the service worker, then the app opens with no network.
+    ctx = b.new_context()
+    off = ctx.new_page()
+    off.goto(base + "/index.html")
+    ready = False
+    for _ in range(30):
+        if "works offline" in off.inner_text("#jsStatus"):
+            ready = True
+            break
+        off.wait_for_timeout(500)
+    check("offline copy installed", ready, off.inner_text("#jsStatus"))
+    ctx.set_offline(True)
+    off.reload()
+    off.wait_for_timeout(800)
+    check("opens with no network", "App ready" in off.inner_text("#jsStatus"), off.inner_text("#jsStatus"))
+    off.click("[data-scenario=A]")
+    off.wait_for_timeout(100)
+    check("offline sample A MSI 4.0", off.inner_text("#msiBig") == "4.0", off.inner_text("#msiBig"))
     b.close()
 
 print(f"\n{len(fails)} failure(s)")

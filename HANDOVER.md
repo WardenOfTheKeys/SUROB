@@ -113,6 +113,13 @@ Expected result: 13 PASS, 0 failures. Known-good values: sample A = 4.0, B = 16.
 - **NWS swell direction:** some offices (AKQ, HFO) fill it with a single 0 lasting days. Values held over 24 h are treated as missing and the latest buoy direction is used.
 - Smoke test: 27 checks. It blocks api.weather.gov so the result does not depend on the network.
 
+## Offline, custom beaches, voice (5 Nov, early)
+
+- **Offline:** `v3/sw.js` caches the app's own files (page, packaged data, manifest, icons). Network first with a 4 s wait, then the saved copy. Esri and api.weather.gov are never cached. Bump `CACHE` in `sw.js` when the file list changes. The status shows "works offline" once it is installed.
+- **Custom beaches:** stored under `surob-msi-v3-beaches` in localStorage. Linked to the nearest packaged buoy and met station within 150 km. Its NWS grid is looked up once (2 km seaward) and remembered. Not read by `tools/refresh-conditions.py`, so no packaged forecast.
+- **Voice:** no speech-recognition API (Chrome's sends audio to Google and fails offline). The Sailor uses the keyboard's own dictation into the heights box; `spokenToDigits()` turns words into heights and the box updates the counts live. It never overwrites tapped counts without Apply. Spoken readback uses `speechSynthesis` (device voices).
+- Smoke test: 39 checks, including opening with no network.
+
 ## Session history (4 Nov evening)
 
 - Chrome flagged his zip as "Virus detected". This was a false positive: the zip holds `open-calculator.bat/.sh`, which only run `python -m http.server 43124`.
