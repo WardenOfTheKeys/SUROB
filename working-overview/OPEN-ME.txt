@@ -1,0 +1,18 @@
+SUROB MSI Calculator
+=====================
+
+This folder is the calculator. It runs in a browser and does not need Node.
+
+Mac or Linux
+  ./open-calculator.sh
+
+Windows
+  Double-click open-calculator.bat
+
+The script opens http://127.0.0.1:43124
+
+The map loads satellite photos from the internet. The Modified Surf Index math works with no connection. Observations stay in this browser.
+
+conditions-week.json is a week of NOAA buoy, wind, and visibility reports packaged with this folder. The calculator uses the newest two hours in that file when it cannot reach the network. Refresh the week from the Next.js app before you package again if you need a newer copy.
+
+Training aid. Beach pins are approximate. Check the result against current command guidance before operational use.

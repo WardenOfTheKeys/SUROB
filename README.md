@@ -47,6 +47,27 @@ Use the web link above. Opening the downloaded .html file in a phone's file prev
 - Claude Code (Anthropic Claude Opus 5.5) to write and review code.
 - No external libraries, APIs, datasets or cloud services at runtime.
 
+## Working overview function (in progress)
+
+The `working-overview/` folder is a separate, in-progress build of the calculator with a map overview and a week of packaged NOAA buoy, wind and visibility data (`conditions-week.json`). It is unpacked byte-for-byte from `surob-msi-calculator(2).zip` (uploaded by H4CK3R-M4N). Nothing in it has been edited, and the original zip is still in the repo.
+
+It does **not** replace Version 2 above. The web link still opens Version 2.
+
+**Run it on your computer** (needs Python 3):
+
+| System | How |
+|---|---|
+| Windows | Open `working-overview`, double-click `open-calculator.bat` |
+| Mac / Linux | `cd working-overview && ./open-calculator.sh` |
+
+The script opens `http://127.0.0.1:43124`. Press Ctrl+C in the window to stop it.
+
+Notes:
+- It does not open from the GitHub Pages link yet. The build points to its files from the site root (`/_next/...`), so it only runs through the script above.
+- The map needs internet for satellite photos. The MSI math works offline.
+- Chrome may warn when you download the zip because it holds a `.bat` file. The scripts only start a local Python web server.
+- Training aid. Beach pins are approximate.
+
 ## Status
 
 Training aid, not validated for operational use. The MSI correction tables still need checking against the official source publication. Validate against current command guidance before any use beyond training.
