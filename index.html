@@ -101,16 +101,16 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid 
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="ver">Version 2 · Fleethacker build</span><div id="jsStatus" class="status bad">App logic not ready</div></div>
   </div>
 </header>
-<div class="banner">UNCLASSIFIED · TRAINING AID · SYNTHETIC DATA ONLY. Do not enter real names, locations, unit data or real observations. The calculator gives advisory limit checks only. A person makes the GO / NO-GO decision.</div>
+<div class="banner">Do not enter names, unit data or operational observations. Limit checks are advisory. A person makes the GO / NO-GO decision.</div>
 <main>
   <noscript><div class="note bad"><b>JavaScript is off.</b> The calculator cannot run until JavaScript is enabled or the file is opened in a browser that supports scripts.</div></noscript>
   <div id="blockedNotice" class="note warn"><b>Loading calculator.</b> If this message stays on screen, the phone preview is blocking the app logic. Open the file in Safari/Chrome or use the home-screen version.</div>
   <div id="restoreNotice" class="note" style="display:none"></div>
 
   <section class="card">
-    <h2>Observation (synthetic data only)</h2>
-    <p class="small">Load a synthetic scenario for demos. Use notional site names and role or callsign only. No real names, locations or observations.</p>
-    <div class="btnrow no-print" style="margin-bottom:10px"><button type="button" class="blue" data-scenario="A">Load synthetic scenario A (moderate)</button><button type="button" class="secondary" data-scenario="B">Load synthetic scenario B (heavy)</button></div>
+    <h2>Observation</h2>
+    <p class="small">Use role or callsign only. No names. Samples load worked examples.</p>
+    <div class="btnrow no-print" style="margin-bottom:10px"><button type="button" class="blue" data-scenario="A">Load sample A (moderate)</button><button type="button" class="secondary" data-scenario="B">Load sample B (heavy)</button></div>
     <input type="hidden" id="scenarioId">
     <div class="grid three">
       <div><label for="siteName">Site (notional)</label><input id="siteName" placeholder="NOTIONAL BEACH ALPHA" autocomplete="off"></div>
@@ -279,7 +279,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid 
       <li>MSI tables were carried over unchanged from the original worksheet version. The team must cite the source worksheet or publication.</li>
     </ul>
   </section>
-  <div class="footer">Unclassified training aid using synthetic data. Validate against current command guidance before any operational use. Entries autosave on this device only.</div>
+  <div class="footer">Check results against current command guidance. Entries are saved on this device only.</div>
 </main>
 
 <div class="livebar no-print"><div class="lbinner">
@@ -304,8 +304,8 @@ const windRows=[{label:'36-40',min:36,max:40,onshore:[2,3,4],offshore:[1.5,2,4]}
 const craftLimits=[{name:'LARC-V',training:6,wartime:9},{name:'OUB / LCM-8',training:6,wartime:9},{name:'LCU',training:6,wartime:12},{name:'INLS CF / WT',training:6,wartime:8},{name:'MPFUB',training:3,wartime:3},{name:'AAV',training:6,wartime:6}];
 const STORE_KEY='surob-msi-v10';
 const SCENARIOS={
-  A:{label:'A - moderate surf (synthetic)',f:{siteName:'NOTIONAL BEACH ALPHA',observer:'OBSERVER 1',h10:15,h15:25,h20:30,h25:20,h30:10,totalSeconds:1100,pCount:20,sCount:70,xCount:10,echoAngle:10,echoFlank:'Right',driftFeet:150,driftMinutes:3,foxtrotFlank:'Left',golfFrom:2,golfTo:4,golfWidth:150,visibility:'Clear / unrestricted',windSpeed:12,windAngle:40,windType:'onshore',windFlank:'Right',visibilityYards:5000}},
-  B:{label:'B - heavy surf (synthetic)',f:{siteName:'NOTIONAL BEACH BRAVO',observer:'OBSERVER 2',h30:10,h35:20,h40:30,h45:25,h50:10,h60:5,totalSeconds:900,pCount:50,sCount:20,xCount:30,echoAngle:20,echoFlank:'Left',driftFeet:300,driftMinutes:2,foxtrotFlank:'Left',golfFrom:4,golfTo:6,golfWidth:300,visibility:'Haze',windSpeed:28,windAngle:70,windType:'onshore',windFlank:'Left',visibilityYards:1500,secondaryHeight:1}}
+  A:{label:'A - moderate surf',f:{siteName:'NOTIONAL BEACH ALPHA',observer:'OBSERVER 1',h10:15,h15:25,h20:30,h25:20,h30:10,totalSeconds:1100,pCount:20,sCount:70,xCount:10,echoAngle:10,echoFlank:'Right',driftFeet:150,driftMinutes:3,foxtrotFlank:'Left',golfFrom:2,golfTo:4,golfWidth:150,visibility:'Clear / unrestricted',windSpeed:12,windAngle:40,windType:'onshore',windFlank:'Right',visibilityYards:5000}},
+  B:{label:'B - heavy surf',f:{siteName:'NOTIONAL BEACH BRAVO',observer:'OBSERVER 2',h30:10,h35:20,h40:30,h45:25,h50:10,h60:5,totalSeconds:900,pCount:50,sCount:20,xCount:30,echoAngle:20,echoFlank:'Left',driftFeet:300,driftMinutes:2,foxtrotFlank:'Left',golfFrom:4,golfTo:6,golfWidth:300,visibility:'Haze',windSpeed:28,windAngle:70,windType:'onshore',windFlank:'Left',visibilityYards:1500,secondaryHeight:1}}
 };
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -548,8 +548,8 @@ function calculate(){
 
   const overall=renderCraft(msi,alphaRaw,bravo,total>0);
   const decisionLine=renderDecision(msi,overall);
-  const head=['EXERCISE - SYNTHETIC DATA - TRAINING AID'];
-  if(!isBlank($('scenarioId').value))head.push(`SCENARIO: ${$('scenarioId').value}`);
+  // The call is what goes over the net: site, time, observer and A-H.
+  const head=[];
   if(!isBlank($('siteName').value))head.push(`SITE: ${$('siteName').value.trim()}`);
   if(!isBlank($('dtg').value))head.push(`DTG: ${$('dtg').value.trim()}`);
   if(!isBlank($('observer').value))head.push(`OBSERVER: ${$('observer').value.trim()}`);
@@ -567,8 +567,6 @@ function calculate(){
     `Secondary wave height: ${fmt(sec,1)} ft`,
     ``,
     `MSI: ${fmt(msi,1)}`,
-    `MSI math: ${formula}`,
-    `ADVISORY LIMIT CHECK (not a decision): ${overall.summary}`,
     `DECISION: ${decisionLine}`
   ].join('\n'));
 
@@ -640,7 +638,7 @@ function resetFields(){
 }
 function loadScenario(k){
   const sc=SCENARIOS[k];if(!sc)return;
-  if((getHeightList().length||num($('totalSeconds').value)>0)&&!confirm(`Replace current entries with synthetic scenario ${sc.label}?`))return;
+  if((getHeightList().length||num($('totalSeconds').value)>0)&&!confirm(`Replace current entries with sample ${sc.label}?`))return;
   resetFields();
   Object.entries(sc.f).forEach(([id,v])=>{const el=$(id);if(el)el.value=v});
   $('scenarioId').value=sc.label;$('dtg').value=nowDTG();
