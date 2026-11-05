@@ -165,3 +165,10 @@ Expected result: 13 PASS, 0 failures. Known-good values: sample A = 4.0, B = 16.
 - **Info:** breaker type and wave height panels on the pad, with drawings made for this app and text summarised from NTTP 3-59.3M / MCRP 2-10.3 Appendix D (Apr 2024). His reference images and PDF were not copied (unknown image source; the PDF's file information has a personal name).
 - **Units** moved into the fields (`data-unit`, wrapped by `initUnits()`).
 - Smoke test: 74 checks, including a stand-in speech engine.
+
+## Recorded waves, one NOAA chart (5 Nov, afternoon)
+
+- **Recorded waves** (section 1): `waveLog` holds one entry per wave tapped or heard (height, type, time). Newest first, Remove on any row, saved with the form. Bulk fills (sample, NOAA, scanned sheet, edited totals) clear it and the list says how many came in as totals. The data sheet's 100-wave table now comes from it.
+- **One NOAA chart:** the separate NOAA conditions card (wave-height sparkline, three fill buttons, Edit by hand) is gone. The Overview's 7-day / 5-day MSI chart carries the two-hour window: slide `#noaaWin` or tap the chart; the band on the chart, the NOAA estimate and **Use in worksheet** all follow it.
+- "Print / save PDF" is now "Print this page" so it is not confused with the data sheet PDF.
+- Smoke test: 83 checks.

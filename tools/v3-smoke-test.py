@@ -69,7 +69,7 @@ with sync_playwright() as p:
 
     pg.select_option("#regionId", "cape-henry")
     pg.select_option("#beachId", "little-creek-north")
-    pg.click("#noaaFill")
+    pg.click("#ovEstUse")
     pg.wait_for_timeout(150)
     check("NOAA fill marked estimate", "NOAA ESTIMATE" in T("ovSource"))
     check("sample fields cleared on NOAA fill", pg.input_value("#driftFeet") == "0")
@@ -77,6 +77,20 @@ with sync_playwright() as p:
     check("NWS wind in knots (KNGU < 20 kts)", wind < 20, f"{wind} kts")
     est = T("ovEst").split("MSI ")[1].split()[0]
     check("estimate matches worksheet after NOAA fill", est == T("msiBig"), f"estimate {est}, worksheet {T('msiBig')}")
+    # One NOAA chart: the slider (or a tap on the chart) picks the window; the estimate and Use in worksheet follow it.
+    check("one NOAA chart, no separate NOAA card", not pg.query_selector("#noaa") and not pg.query_selector("#spark") and pg.query_selector("#picChart #noaaWin") is None and pg.is_visible("#noaaWin"))
+    mx = int(pg.get_attribute("#noaaWin", "max"))
+    pg.eval_on_selector("#noaaWin", "(el, v) => { el.value = v; el.dispatchEvent(new Event('input', {bubbles: true})) }", str(max(0, mx - 24)))
+    pg.wait_for_timeout(150)
+    lbl, band = T("noaaWinLbl"), pg.evaluate("document.querySelectorAll('#picChart rect[fill=\"#c2410c\"]').length")
+    check("slider moves the window on the chart", "newest" not in lbl and band == 1, lbl)
+    pg.click("#ovEstUse")
+    pg.wait_for_timeout(150)
+    sel = pg.evaluate("String(selEnd) === document.getElementById('noaaEnd').value")
+    check("Use in worksheet fills from the picked window", sel and "Worksheet filled from the window ending" in T("noaaStatus"), T("noaaStatus")[-80:])
+    pg.eval_on_selector("#noaaWin", "(el, v) => { el.value = v; el.dispatchEvent(new Event('input', {bubbles: true})) }", str(mx))
+    pg.click("#ovEstUse")
+    pg.wait_for_timeout(150)
 
     pg.select_option("#decRole", "BPTC")
     pg.select_option("#decValue", "GO")

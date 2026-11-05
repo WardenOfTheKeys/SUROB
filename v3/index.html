@@ -115,7 +115,7 @@ main>*,.ovgrid>*,.grid>*{min-width:0}select{max-width:100%;text-overflow:ellipsi
 .pictiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}@media(max-width:620px){.pictiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .picchart{width:100%;height:auto;display:block;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;margin-top:8px}
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px}.legend i{display:inline-block;width:18px;height:0;border-top:3px solid;vertical-align:middle;margin-right:5px}
-.spark{width:100%;height:96px;display:block;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}
+.picchart{cursor:pointer}
 input[type=range]{min-height:auto;padding:0;border:0;background:none}
 .srcnote{font-size:13px;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin-top:10px}
 .tabs{position:sticky;top:0;z-index:15;background:var(--bg);display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
@@ -204,21 +204,14 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <div class="pictiles" id="picTiles"></div>
       <svg class="picchart" id="picChart" viewBox="0 0 640 200" role="img" aria-label="Estimated MSI for the last 7 days and the next 5 days"></svg>
       <div class="legend small" id="picLegend"><span><i style="border-color:#1d4ed8"></i>NOAA buoy estimate</span><span><i style="border-color:#c2410c;border-top-style:dashed"></i>NWS forecast estimate</span><span><i style="border-color:#94a3b8;border-top-style:dotted"></i>Craft limit reference</span><span>● Observed worksheet MSI</span></div>
+      <div class="no-print" id="noaaPick" style="margin-top:8px"><label for="noaaWin">Two-hour window for the estimate (tap the chart or slide)</label><input type="range" id="noaaWin" min="0" max="0" value="0"><div class="small" id="noaaWinLbl"></div></div>
+      <div id="noaaStatus" class="small" style="margin-top:6px"></div>
+      <div id="noaaSrc" class="srcnote" style="display:none"></div>
       <div class="small" id="picSrc" style="margin-top:6px"></div>
+      <input type="hidden" id="entrySource" value="manual"><input type="hidden" id="noaaEnd"><input type="hidden" id="srcNote">
     </div>
   </section>
 
-  <section class="card" id="noaa">
-    <h2>NOAA conditions</h2>
-    <p class="small">Fills the worksheet from the two hours of NOAA wave, wind and visibility reports ending at the marker. The 100-wave count is <b>estimated</b> from significant wave height so the highest 33 match it. It is not a surf-zone count. Breaker type, littoral current, surf-zone width and secondary wave are not in these reports, so you enter them.</p>
-    <div class="btnrow no-print"><button type="button" class="blue" id="noaaFill">Fill from newest 2 hours</button><button type="button" class="secondary" id="noaaFillSel">Fill from selected window</button><button type="button" class="ghost" id="noaaManual">Edit by hand</button></div>
-    <div id="noaaStatus" class="small" style="margin-top:8px"></div>
-    <div id="noaaChartWrap" style="margin-top:8px"><div class="small" style="display:flex;justify-content:space-between"><span>Last 7 days, significant height (ft)</span><span id="sparkMax"></span></div><svg class="spark" id="spark" viewBox="0 0 640 84" preserveAspectRatio="none" role="img" aria-label="Seven days of significant wave height. Tap to choose the end of the two-hour window."></svg><input type="range" id="noaaWin" min="0" max="0" value="0" aria-label="End of the two-hour window"><div class="small" id="noaaWinLbl"></div></div>
-    <div id="noaaSrc" class="srcnote" style="display:none"></div>
-    <input type="hidden" id="entrySource" value="manual">
-    <input type="hidden" id="noaaEnd">
-    <input type="hidden" id="srcNote">
-  </section>
 
   <section class="card">
     <h2>Observation</h2>
@@ -398,7 +391,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
   <section class="card">
     <h2>5. BPT communicator call</h2>
     <div class="call" id="callOutput"></div>
-    <div class="btnrow no-print" style="margin-top:10px"><button type="button" id="copyCall">Copy call</button><button type="button" class="secondary" id="shareCall" style="display:none">Share</button><button type="button" class="secondary" onclick="window.print()">Print / save PDF</button></div>
+    <div class="btnrow no-print" style="margin-top:10px"><button type="button" id="copyCall">Copy call</button><button type="button" class="secondary" id="shareCall" style="display:none">Share</button><button type="button" class="secondary" onclick="window.print()">Print this page</button></div>
     <h3 class="no-print">SUROB / MSI data sheet (PDF)</h3>
     <p class="small no-print">The 2-page fillable data sheet: MSI calculation, BPT communicator calls, correction tables, 100-wave count, breaker period and highest-33 computation. Download it blank, or filled from this worksheet. Every field stays editable.</p>
     <div class="btnrow no-print"><button type="button" id="sheetFilled">Fill data sheet (PDF)</button><button type="button" class="secondary" id="sheetBlank">Blank data sheet (PDF)</button></div>
@@ -679,12 +672,12 @@ let estCache={};
 function renderEstimate(){
   const el=$('ovEst'),b=beach(),link=LINKS[b.id];
   if(!COND||!link){el.style.display='none';return}
-  if(estCache.id!==b.id){const w=noaaWindow(link,b,null);estCache={id:b.id,w,e:w&&estimateMsi(w.patch)}}
+  if(estCache.id!==b.id||estCache.sel!==selEnd){const w=noaaWindow(link,b,selEnd)||noaaWindow(link,b,null);estCache={id:b.id,sel:selEnd,w,e:w&&estimateMsi(w.patch)}}
   const{w,e}=estCache;if(!w){el.style.display='none';return}
   const ageH=(Date.now()-Date.parse(COND.fetchedAt))/36e5;
   el.style.display='';
   el.innerHTML=`<b>NOAA estimate: MSI ${fmt(e.msi,1)}</b> <span class="pill warn">ESTIMATE</span>`+(ageH>24?` <span class="pill warn">${Math.floor(ageH/24)} day${ageH>=48?'s':''} old</span>`:'')+
-    `<br><span class="small">NDBC ${esc(link.wave.id)}, 2 hours ending ${esc(fmtWhen(w.end))}: A ${fmt(e.alpha,2)} + C ${fmt(e.c,1)} + E ${fmt(e.e,1)} + H ${fmt(e.h,1)}${w.patch.windSpeed==null?' (no wind report)':''}. Breaker type (D), littoral current (F) and secondary wave are not in the reports, so they count as 0 and the observed MSI can be higher or lower. Not a surf-zone count and not used for the limit check.</span>`+
+    `<br><span class="small">NDBC ${esc(link.wave.id)}, 2 hours ending ${esc(fmtWhen(w.end))}: A ${fmt(e.alpha,2)} + C ${fmt(e.c,1)} + E ${fmt(e.e,1)} + H ${fmt(e.h,1)}${w.patch.windSpeed==null?' (no wind report)':''}. Breaker type (D), littoral current (F) and secondary wave are not in the reports, so they count as 0 and the observed MSI can be higher or lower. Not a surf-zone count and not used for the limit check. <b>Use in worksheet</b> fills the 100-wave count, period, angle, wind and visibility from this window; breaker type, littoral current, surf-zone width and secondary wave stay for you to enter.</span>`+
     `<div class="btnrow no-print" style="margin-top:6px"><button type="button" class="secondary" id="ovEstUse">Use in worksheet</button></div>`;
 }
 
@@ -757,6 +750,7 @@ function crossCheck(s){
     :`<div class="note ok"><b>Cross-check:</b> observed MSI, ALPHA and wind are close to NOAA. ${esc(when)}.</div>`;
   return{t:tObs,msi};
 }
+let picX=null;
 function renderPicture(){
   const b=beach(),link=LINKS[b.id],wrap=$('ovPic');
   if(!COND||!link){wrap.style.display='none';$('ovCheck').innerHTML='';return}
@@ -783,6 +777,8 @@ function renderPicture(){
   g+=`<line x1="${L}" x2="${W-R}" y1="${Y(0)}" y2="${Y(0)}" stroke="#cbd5e1"/><line x1="${X(now).toFixed(1)}" x2="${X(now).toFixed(1)}" y1="${T}" y2="${H-B}" stroke="#0f172a" stroke-dasharray="2 3"/><text x="${(X(now)+3).toFixed(1)}" y="${T+9}" font-size="10" fill="#0f172a">now</text>`;
   if(s.hist.length)g+=`<path d="${path(s.hist)}" fill="none" stroke="#1d4ed8" stroke-width="2"/>`;
   if(s.ahead.length)g+=`<path d="${path(s.ahead)}" fill="none" stroke="#c2410c" stroke-width="2" stroke-dasharray="5 3"/>`;
+  if(selEnd&&s.hist.length&&selEnd>=s.hist[0].t){const x1=X(selEnd),x0=Math.max(L,X(selEnd-TWO_H));g+=`<rect x="${x0.toFixed(1)}" y="${T}" width="${Math.max(2,x1-x0).toFixed(1)}" height="${H-T-B}" fill="#c2410c" opacity=".18"/><line x1="${x1.toFixed(1)}" x2="${x1.toFixed(1)}" y1="${T}" y2="${H-B}" stroke="#c2410c" stroke-width="2"/>`}
+  picX={t0,t1,L,R,W};
   if(obs)g+=`<circle cx="${X(obs.t).toFixed(1)}" cy="${Y(obs.msi).toFixed(1)}" r="5" fill="#0f172a" stroke="#fff" stroke-width="2"><title>Observed worksheet MSI ${fmt(obs.msi,1)}</title></circle>`;
   svg.innerHTML=g;
 }
@@ -878,23 +874,18 @@ function applySheet(){
   $('scanMsg').textContent=`Applied. App MSI ${fmt(msi,1)}`+(sheet.msi!=null?`, sheet says ${fmt(sheet.msi,1)}${Math.abs(sheet.msi-msi)>0.05?'. Find the difference on the paper':''}`:'')+'. Check every field against the paper before using it.';
 }
 function renderNoaa(){
-  const b=beach(),link=LINKS[b.id],st=$('noaaStatus');
-  if(!COND||!link){st.textContent='NOAA reports are not loaded. Enter the worksheet by hand.';$('noaaChartWrap').style.display='none';return}
-  const pts=wavePoints(link),fetched=Date.parse(COND.fetchedAt),ageH=(Date.now()-fetched)/36e5;
-  const src=$('entrySource').value,end=num($('noaaEnd').value);
-  st.innerHTML=`Waves: NDBC ${link.wave.id} ${esc(link.wave.name)}, ${kmBetween(b.lat,b.lng,link.wave.lat,link.wave.lng)} km from the pin. Wind: ${esc(link.wind.name)}${link.visibility.id!==link.wind.id?`. Visibility: ${esc(link.visibility.name)}`:''}. Packaged reports saved ${fmtWhen(fetched)}.`+
-    (ageH>24?` <span class="pill warn">${Math.floor(ageH/24)} day${ageH>=48?'s':''} old</span> Check current conditions before relying on them.`:'')+
-    `<br><b>${src==='noaa'&&end?`Worksheet filled from the window ending ${fmtWhen(end)}.`:src==='scan'?'Worksheet values were read from a handwritten sheet.':'Worksheet values are hand entries.'}</b>`;
+  const b=beach(),link=LINKS[b.id],st=$('noaaStatus'),pick=$('noaaPick');
+  if(!COND||!link){st.textContent='NOAA reports are not loaded for this beach. Enter the worksheet by hand.';pick.style.display='none';return}
+  const pts=wavePoints(link),src=$('entrySource').value,end=num($('noaaEnd').value);
+  st.innerHTML=`Waves: NDBC ${link.wave.id} ${esc(link.wave.name)}, ${kmBetween(b.lat,b.lng,link.wave.lat,link.wave.lng)} km from the pin. Wind: ${esc(link.wind.name)}${link.visibility.id!==link.wind.id?`. Visibility: ${esc(link.visibility.name)}`:''}.`+
+    ` <b>${src==='noaa'&&end?`Worksheet filled from the window ending ${fmtWhen(end)}.`:src==='scan'?'Worksheet values were read from a handwritten sheet.':'Worksheet values are hand entries.'}</b>`;
   const sn=$('noaaSrc');if(src==='noaa'&&$('srcNote').value){sn.style.display='';sn.textContent=$('srcNote').value}else sn.style.display='none';
-  const wrap=$('noaaChartWrap');if(pts.length<2){wrap.style.display='none';return}wrap.style.display='';
-  const t0=pts[0].t,t1=pts[pts.length-1].t,hs=pts.map(p=>p.hsM*M_TO_FT),mx=Math.max(...hs,1);
-  const X=t=>(t-t0)/(t1-t0)*640,Y=h=>68-h/mx*56;
+  if(pts.length<2){pick.style.display='none';return}pick.style.display='';
+  const t0=pts[0].t,t1=pts[pts.length-1].t;
   if(selEnd==null||selEnd<t0||selEnd>t1)selEnd=src==='noaa'&&end?end:t1;
-  const idx=pts.reduce((bi,p,i)=>Math.abs(p.t-selEnd)<Math.abs(pts[bi].t-selEnd)?i:bi,0),mxX=X(pts[idx].t);
-  $('spark').innerHTML=`<path d="${pts.map((p,i)=>`${i?'L':'M'}${X(p.t).toFixed(1)},${Y(hs[i]).toFixed(1)}`).join(' ')}" fill="none" stroke="#1d4ed8" stroke-width="2.5" vector-effect="non-scaling-stroke"/><rect x="${Math.max(0,X(pts[idx].t-TWO_H)).toFixed(1)}" y="8" width="${(mxX-Math.max(0,X(pts[idx].t-TWO_H))).toFixed(1)}" height="62" fill="#c2410c" opacity=".15"/><line x1="${mxX}" x2="${mxX}" y1="8" y2="70" stroke="#c2410c" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
-  setText('sparkMax',`max ${fmt(mx,1)} ft`);
+  const idx=pts.reduce((bi,p,i)=>Math.abs(p.t-selEnd)<Math.abs(pts[bi].t-selEnd)?i:bi,0);selEnd=pts[idx].t;
   const r=$('noaaWin');r.max=pts.length-1;r.value=idx;
-  setText('noaaWinLbl',`Selected window ends ${fmtWhen(pts[idx].t)} (${fmt(hs[idx],1)} ft). Range ${fmtWhen(t0)} to ${fmtWhen(t1)}.`);
+  setText('noaaWinLbl',`Window ends ${fmtWhen(pts[idx].t)} (significant height ${fmt(pts[idx].hsM*M_TO_FT,1)} ft)${idx===pts.length-1?', the newest report':''}.`);
 }
 
 /* ---------- Coordinates: MGRS and deg-min-sec (WGS 84) ---------- */
@@ -1651,7 +1642,7 @@ function flash(btn,txt){const o=btn.dataset.label||btn.textContent;btn.dataset.l
 /* ---------- Init ---------- */
 /* ---------- Overview / Worksheet tabs (?all shows every section, as print does) ---------- */
 const TAB_KEY='surob-msi-v3-tab',ALL_TABS=/[?&]all\b/.test(location.search);
-const tabOf=s=>s.id==='overview'||s.id==='noaa'?'overview':'worksheet';
+const tabOf=s=>s.id==='overview'?'overview':'worksheet';
 function showTab(name){
   if(ALL_TABS)return;
   document.querySelectorAll('main>section.card').forEach(s=>{s.dataset.tab=tabOf(s);s.hidden=s.dataset.tab!==name});
@@ -1709,7 +1700,7 @@ function init(){
       const mc=e.target.closest('[data-mic]');if(mc){startMic(mc.dataset.mic);return}
       const bb=e.target.closest('[data-beach]');if(bb){$('beachId').value=bb.dataset.beach;onBeachChange();return}
       if(e.target.closest('#mapShow')){map.on=true;renderMap();return}
-      if(e.target.closest('#ovEstUse')){selEnd=null;noaaFill(false);return}
+      if(e.target.closest('#ovEstUse')){noaaFill(true);return}
       const bt=e.target.closest('[data-btype]');if(bt){padType=padType===bt.dataset.btype?null:bt.dataset.btype;renderPad(getHeightList().length);return}
       const ph=e.target.closest('[data-padh]');if(ph){padWave(+ph.dataset.padh);return}
       if(e.target.closest('#padMore')){showBigPad($('padMore').getAttribute('aria-expanded')!=='true');return}
@@ -1730,7 +1721,7 @@ function init(){
     });
     const onEdit=e=>{
       const t=e.target;if(!t.matches||!t.matches('input,select'))return;
-      if(t.id==='noaaWin'){const link=LINKS[beach().id],pts=wavePoints(link),p=pts[int(t.value)];if(p){selEnd=p.t;renderNoaa()}return}
+      if(t.id==='noaaWin'){const link=LINKS[beach().id],pts=wavePoints(link),p=pts[int(t.value)];if(p){selEnd=p.t;renderNoaa();renderEstimate();renderPicture()}return}
       if(t.id==='regionId'){if(e.type==='change'){fillBeaches();onBeachChange()}return}
       if(t.id==='beachId'){if(e.type==='change')onBeachChange();return}
       if(t.classList.contains('hcount')||NOAA_FIELDS.includes(t.id))setManual();
@@ -1761,10 +1752,7 @@ function init(){
     $('scanPhotoBtn').addEventListener('click',()=>photo.click());
     photo.addEventListener('change',()=>{const file=photo.files&&photo.files[0];if(!file)return;if(photoUrl)URL.revokeObjectURL(photoUrl);photoUrl=URL.createObjectURL(file);const img=$('scanImg');img.src=photoUrl;img.style.display=''});
     $('clearAll').addEventListener('click',clearForm);
-    $('noaaFill').addEventListener('click',()=>{selEnd=null;noaaFill(false)});
-    $('noaaFillSel').addEventListener('click',()=>noaaFill(true));
-    $('noaaManual').addEventListener('click',()=>{setManual();calculate();openTabFor($('heightCounts'));$('editCounts').open=true;$('heightCounts').scrollIntoView({behavior:'smooth',block:'center'})});
-    $('spark').addEventListener('click',e=>{const link=LINKS[beach().id],pts=wavePoints(link);if(pts.length<2)return;const r=e.currentTarget.getBoundingClientRect(),t=pts[0].t+clamp((e.clientX-r.left)/r.width,0,1)*(pts[pts.length-1].t-pts[0].t);selEnd=pts.reduce((a,p)=>Math.abs(p.t-t)<Math.abs(a.t-t)?p:a).t;renderNoaa()});
+    $('picChart').addEventListener('click',e=>{const link=LINKS[beach().id],pts=wavePoints(link);if(pts.length<2||!picX)return;const r=e.currentTarget.getBoundingClientRect(),vx=(e.clientX-r.left)/r.width*picX.W,t=picX.t0+(vx-picX.L)/(picX.W-picX.L-picX.R)*(picX.t1-picX.t0);if(t>pts[pts.length-1].t+TWO_H)return;selEnd=pts.reduce((a,p)=>Math.abs(p.t-t)<Math.abs(a.t-t)?p:a).t;renderNoaa();renderEstimate();renderPicture()});
     window.addEventListener('resize',()=>{if(map.on)renderMap()});
     $('dtgNow').addEventListener('click',()=>{$('dtg').value=nowDTG();calculate()});
     $('decNow').addEventListener('click',()=>{$('decTime').value=nowClock().slice(0,4);calculate()});
