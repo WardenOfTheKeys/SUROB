@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="SUROB MSI" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#0f172a" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: https://server.arcgisonline.com; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" type="image/svg+xml" href="icon.svg" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<title>SUROB MSI Calculator v3</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#111827;--muted:#5b6472;--line:#d6dce5;--navy:#0f172a;--blue:#1d4ed8;--ok:#166534;--okbg:#ecfdf3;--warn:#92400e;--warnbg:#fff7ed;--bad:#991b1b;--badbg:#fef2f2}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.35;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header{background:linear-gradient(135deg,#0f172a,#27364e);color:#fff;padding:14px 12px;padding-top:calc(14px + env(safe-area-inset-top))}
+header .wrap,main{max-width:1120px;margin:0 auto}
+h1{margin:0;font-size:clamp(22px,5vw,34px);letter-spacing:-.02em}
+header p{margin:5px 0 0;color:#d5dce7;font-size:14px}
+.appbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.status{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:7px 11px;font-size:13px;font-weight:800;background:#334155;color:#e2e8f0}
+.status.ok{background:var(--okbg);color:var(--ok)}.status.bad{background:var(--badbg);color:var(--bad)}
+main{padding:12px;display:grid;gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 5px 18px rgba(15,23,42,.06);scroll-margin-top:10px}
+.card h2{margin:0 0 8px;font-size:20px}.card h3{margin:14px 0 8px;font-size:16px}
+.small{font-size:13px;color:var(--muted)}
+.note{border-radius:12px;padding:10px 12px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;font-size:14px}
+.note.warn{background:var(--warnbg);border-color:#fed7aa;color:#7c2d12}.note.bad{background:var(--badbg);border-color:#fecaca;color:#7f1d1d}.note.ok{background:var(--okbg);border-color:#bbf7d0;color:#14532d}
+.grid{display:grid;gap:10px}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:780px){.two,.three,.four{grid-template-columns:1fr}main{padding:8px}.card{padding:12px;border-radius:14px}.card h2{font-size:18px}.small{font-size:12.8px}header p{display:none}}
+label{font-size:13px;font-weight:800;color:#374151;display:block;margin-bottom:5px}
+input,select,textarea,button{font:inherit}
+input,select,textarea{width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:11px 12px;background:#fff;color:#111827;font-size:16px;min-height:44px}
+textarea{min-height:92px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px}
+input:focus,select:focus,textarea:focus{outline:3px solid #dbeafe;border-color:#60a5fa}
+button{border:0;border-radius:12px;padding:12px 14px;background:var(--navy);color:#fff;font-weight:900;min-height:44px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:active{transform:scale(.97)}
+button.secondary{background:#e5e7eb;color:#111827}button.ghost{background:#fff;color:#111827;border:1px solid #cbd5e1}button.blue{background:var(--blue)}button.danger{background:#b91c1c}
+button:disabled{opacity:.45;cursor:not-allowed}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}.btnrow button{flex:0 1 auto}
+@media(max-width:540px){.btnrow button{flex:1 1 calc(50% - 8px)}}
+.stepper{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;gap:4px}
+.stepper button{padding:0;min-height:44px;font-size:22px;line-height:1}
+.stepper input{text-align:center;padding:6px 2px;font-weight:800}
+.wave-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.wavebox{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:8px}
+.wavebox.has{background:#eff6ff;border-color:#93c5fd}
+.wavebox label{text-align:center}
+@media(max-width:1000px){.wave-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:600px){.wave-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.progress{height:8px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin-top:10px}.progress div{height:100%;width:0;background:var(--blue);transition:width .2s}.progress.full div{background:#16a34a}.progress.over div{background:#d97706}
+.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+@media(max-width:700px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sum{background:#f8fafc;border:1px solid #e2e8f0;border-radius:13px;padding:10px;min-width:0}
+.sum b{font-size:12px;color:#475569;text-transform:uppercase;letter-spacing:.04em;display:block}
+.sum strong{font-size:24px;display:block;margin-top:2px}.sum span{font-size:12px;color:#64748b;overflow-wrap:anywhere}
+.breakdown{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px}
+@media(max-width:1060px){.breakdown{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:620px){.breakdown{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.timerbox{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px;margin-bottom:12px}
+.timer{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:44px;font-weight:900;min-width:150px;font-variant-numeric:tabular-nums}
+.timer.running{color:var(--blue)}
+.timerbox .btnrow{flex:1 1 240px}
+.call{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#0b1220;color:#dbeafe;border-radius:13px;padding:12px;white-space:pre-wrap;overflow:auto;font-size:13px}
+.result{background:#0f172a;color:#fff;border-radius:18px;padding:18px;text-align:center}
+.result .label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#cbd5e1}
+.result .num{font-size:64px;line-height:1;font-weight:950;margin:8px 0}
+.pill{display:inline-flex;gap:6px;align-items:center;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;background:#e5e7eb;color:#111827;text-decoration:none;white-space:nowrap}
+.pill.ok{background:var(--okbg);color:var(--ok)}.pill.warn{background:var(--warnbg);color:var(--warn)}.pill.bad{background:var(--badbg);color:var(--bad)}
+details{border:1px solid #e5e7eb;border-radius:13px;padding:10px;background:#fff}summary{font-weight:900;cursor:pointer}
+.checkgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(max-width:700px){.checkgrid{grid-template-columns:1fr}}
+.check{display:flex;gap:9px;align-items:flex-start;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px;font-size:14px}
+.check input{width:auto;min-height:auto;margin-top:3px}
+.inline{display:flex;gap:6px}.inline input{flex:1}.inline button{flex:0 0 auto;padding:0 12px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align:top}th{background:#f1f5f9}
+.scroll{overflow:auto}
+.footer{font-size:12px;color:#64748b;text-align:center;padding:12px}
+.livebar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;padding-bottom:calc(10px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(15,23,42,.25)}
+.livebar .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;display:block}
+.livebar b{font-size:20px;font-variant-numeric:tabular-nums}
+.livebar .lbinner{max-width:1120px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px}
+@media(max-width:560px){.result .num{font-size:52px}.timer{font-size:38px}}
+.banner{background:#fef3c7;border-bottom:2px solid #f59e0b;color:#78350f;font-size:13px;font-weight:800;text-align:center;padding:8px 12px}
+.ver{font-size:12px;font-weight:800;background:#1e293b;color:#cbd5e1;border-radius:999px;padding:7px 11px}
+.decision{border:2px dashed #94a3b8;border-radius:14px;padding:12px;margin-top:14px;background:#f8fafc}
+.disclose h3{margin-top:12px}.disclose ul{margin:4px 0 0;padding-left:20px;font-size:14px}.disclose li{margin:3px 0}.disclose code{font-size:12px;overflow-wrap:anywhere}
+main>*,.ovgrid>*,.grid>*{min-width:0}select{max-width:100%;text-overflow:ellipsis}
+.ovgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media(max-width:860px){.ovgrid{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.beachbtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.beachbtns button{min-height:40px;padding:8px 12px;font-size:14px}
+.map{position:relative;height:300px;border-radius:14px;overflow:hidden;background:#cbd5e1;border:1px solid var(--line);touch-action:none}
+.map .tiles{position:absolute;left:0;top:0}.map .tiles img{position:absolute;width:256px;height:256px;max-width:none;user-select:none;-webkit-user-drag:none}
+.map svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.map .mapbtns{position:absolute;right:8px;top:8px;display:grid;gap:6px;z-index:2}.map .mapbtns button{width:40px;min-height:40px;padding:0;font-size:22px;background:#fff;color:#111827;border:1px solid #cbd5e1}
+.map .attr{position:absolute;right:0;bottom:0;background:rgba(255,255,255,.85);font-size:10px;padding:2px 6px;color:#334155;z-index:2}
+.mapoff{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:100%;padding:16px;text-align:center;color:#334155;font-size:14px}
+.spark{width:100%;height:96px;display:block;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}
+input[type=range]{min-height:auto;padding:0;border:0;background:none}
+.srcnote{font-size:13px;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin-top:10px}
+/* Zero page margin stops the browser printing its header/footer (file path, URL, date) on PDFs. */
+@page{margin:0}
+@media print{header,.no-print,button,.livebar{display:none!important}body{background:white;padding:12mm}.card,.result{box-shadow:none;break-inside:avoid}.breakdown{grid-template-columns:repeat(8,1fr)}details{display:block}details>*{display:block}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap appbar">
+    <div><h1>SUROB MSI Calculator</h1><p>Field calculator using SUROB worksheet labels A-H, with the final MSI and craft status at the bottom.</p></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="ver">Version 3 · merged build</span><div id="jsStatus" class="status bad">App logic not ready</div></div>
+  </div>
+</header>
+<div class="banner">UNCLASSIFIED · TRAINING AID. Beach pins and NOAA reports are public data. Do not enter names, unit data or operational observations. The calculator gives advisory limit checks only. A person makes the GO / NO-GO decision.</div>
+<main>
+  <noscript><div class="note bad"><b>JavaScript is off.</b> The calculator cannot run until JavaScript is enabled or the file is opened in a browser that supports scripts.</div></noscript>
+  <div id="blockedNotice" class="note warn"><b>Loading calculator.</b> If this message stays on screen, the phone preview is blocking the app logic. Open the file in Safari/Chrome or use the home-screen version.</div>
+  <div id="restoreNotice" class="note" style="display:none"></div>
+
+  <section class="card" id="overview">
+    <h2>Overview</h2>
+    <div class="ovgrid">
+      <div>
+        <div class="result"><div class="label">Modified Surf Index</div><div class="num" id="ovMsi">0.0</div><div id="ovTag" class="pill">No data</div><div class="small" id="ovPlace" style="color:#cbd5e1;margin-top:8px"></div></div>
+        <div id="ovSource" class="small" style="margin-top:8px"></div>
+        <div class="chips" id="ovChips"></div>
+        <p class="small" style="margin-top:8px">Advisory limit check only. Chips show <b>NO DATA</b> until a wave count exists. The decision is recorded by a person in section 8.</p>
+        <div id="ovDecision" class="note" style="margin-top:6px"></div>
+        <div class="btnrow no-print" style="margin-top:10px"><a class="pill" href="#final">Go to final MSI and decision ↓</a></div>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Beach</h3>
+        <div class="grid two">
+          <div><label for="regionId">Region</label><select id="regionId"></select></div>
+          <div><label for="beachId">Beach</label><select id="beachId"></select></div>
+        </div>
+        <div class="beachbtns no-print" id="beachBtns"></div>
+        <p class="small" id="beachNote" style="margin-top:8px"></p>
+        <div class="map no-print" id="map"></div>
+        <p class="small" style="margin-top:6px">Map check: the pin and orange shoreline line should sit on the sand. Pins are approximate public shoreline points, not surveyed lanes.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="noaa">
+    <h2>NOAA conditions</h2>
+    <p class="small">Fills the worksheet from the two hours of NOAA wave, wind and visibility reports ending at the marker. The 100-wave count is <b>estimated</b> from significant wave height so the highest 33 match it. It is not a surf-zone count. Breaker type, littoral current, surf-zone width and secondary wave are not in these reports, so you enter them.</p>
+    <div class="btnrow no-print"><button type="button" class="blue" id="noaaFill">Fill from newest 2 hours</button><button type="button" class="secondary" id="noaaFillSel">Fill from selected window</button><button type="button" class="ghost" id="noaaManual">Edit by hand</button></div>
+    <div id="noaaStatus" class="small" style="margin-top:8px"></div>
+    <div id="noaaChartWrap" style="margin-top:8px"><div class="small" style="display:flex;justify-content:space-between"><span>Last 7 days, significant height (ft)</span><span id="sparkMax"></span></div><svg class="spark" id="spark" viewBox="0 0 640 84" preserveAspectRatio="none" role="img" aria-label="Seven days of significant wave height. Tap to choose the end of the two-hour window."></svg><input type="range" id="noaaWin" min="0" max="0" value="0" aria-label="End of the two-hour window"><div class="small" id="noaaWinLbl"></div></div>
+    <div id="noaaSrc" class="srcnote" style="display:none"></div>
+    <input type="hidden" id="entrySource" value="manual">
+    <input type="hidden" id="noaaEnd">
+    <input type="hidden" id="srcNote">
+  </section>
+
+  <section class="card">
+    <h2>Observation</h2>
+    <p class="small">Use role or callsign only. No names. Samples load worked examples for training.</p>
+    <div class="btnrow no-print" style="margin-bottom:10px"><button type="button" class="blue" data-scenario="A">Load sample A (moderate)</button><button type="button" class="secondary" data-scenario="B">Load sample B (heavy)</button><button type="button" class="secondary" data-scenario="C">Load sample C (MSI 3.2)</button></div>
+    <input type="hidden" id="scenarioId">
+    <div class="grid three">
+      <div><label for="siteName">Site</label><input id="siteName" placeholder="Filled from the beach picker" autocomplete="off"></div>
+      <div><label for="observer">Observer role / callsign</label><input id="observer" placeholder="OBSERVER 1 (no names)" autocomplete="off"></div>
+      <div><label for="dtg">DTG</label><div class="inline"><input id="dtg" placeholder="041430Z NOV 26" autocomplete="off"><button type="button" class="secondary" id="dtgNow">Now</button></div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>1. A / B - Wave count</h2>
+    <p class="small">Tap <b>+</b> for each wave as it breaks, or type the counts. The app calculates A / ALPHA from the highest 33 waves and B / BRAVO from the highest single wave.</p>
+    <div class="btnrow no-print"><button type="button" class="secondary" id="undoTap" disabled>Undo last +</button><button type="button" class="ghost" id="clearAll">Clear form</button></div>
+    <h3>Wave height occurrence count</h3>
+    <div class="wave-grid" id="heightCounts"></div>
+    <details id="bigWaves" style="margin-top:8px"><summary>Larger waves: 5.5 to 10 ft</summary><div class="wave-grid" id="heightCountsBig" style="margin-top:10px"></div></details>
+    <div class="progress" id="waveProgress"><div></div></div>
+    <div class="summary-grid" aria-label="Calculated wave count results">
+      <div class="sum"><b>Total waves counted</b><strong id="totalWavesOut">0</strong><span>target is 100</span></div>
+      <div class="sum"><b>A / ALPHA avg ft</b><strong id="alphaRawOut">0.00</strong><span>enter on MSI calculation sheet</span></div>
+      <div class="sum"><b>ALPHA call round</b><strong id="alphaReportOut">0.0</strong><span>nearest 1/2 ft for BPT call</span></div>
+      <div class="sum"><b>B / BRAVO max ft</b><strong id="bravoOut">0.0</strong><span>highest single breaker</span></div>
+    </div>
+    <details style="margin-top:12px"><summary>Optional: paste 100 wave heights instead</summary><p class="small">Paste heights separated by spaces, commas or new lines. Example: 1 1.5 2 0.5. Values are rounded to the nearest 1/2 ft. This replaces the current counts.</p><textarea id="pasteHeights" placeholder="Paste wave heights here"></textarea><div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="applyPaste">Apply pasted heights</button></div><div id="pasteMsg" class="small" style="margin-top:6px"></div></details>
+  </section>
+
+  <section class="card">
+    <h2>2. C / D - Timing and breaker type</h2>
+    <p class="small">C / CHARLIE is the average wave period. Use the stopwatch, enter start and stop clock times (HHMM or HHMMSS), or enter total seconds directly. Total seconds overrides clock times.</p>
+    <div class="timerbox no-print">
+      <div class="timer" id="timerDisplay">00:00</div>
+      <div class="btnrow"><button type="button" class="blue" id="timerToggle">Start stopwatch</button><button type="button" class="secondary" id="timerReset">Reset timing</button></div>
+    </div>
+    <div class="grid four">
+      <div><label for="startTime">Start time HHMM(SS)</label><input id="startTime" placeholder="0430" inputmode="numeric" autocomplete="off"></div>
+      <div><label for="stopTime">Stop time HHMM(SS)</label><input id="stopTime" placeholder="0443" inputmode="numeric" autocomplete="off"></div>
+      <div><label for="totalSeconds">Or total seconds</label><input id="totalSeconds" placeholder="780" inputmode="decimal" autocomplete="off"></div>
+      <div><label for="wavesTimed">Waves timed</label><input id="wavesTimed" class="count" inputmode="numeric" pattern="[0-9]*" value="100" autocomplete="off"></div>
+    </div>
+    <h3>D / DELTA breaker-type counts</h3>
+    <div class="grid three">
+      <div><label for="pCount">Plunging (P)</label><div class="stepper"><button type="button" class="secondary" data-step="pCount" data-d="-1" aria-label="Remove one plunging">−</button><input id="pCount" class="count" inputmode="numeric" pattern="[0-9]*" value="0" autocomplete="off"><button type="button" data-step="pCount" data-d="1" aria-label="Add one plunging">+</button></div></div>
+      <div><label for="sCount">Spilling (S)</label><div class="stepper"><button type="button" class="secondary" data-step="sCount" data-d="-1" aria-label="Remove one spilling">−</button><input id="sCount" class="count" inputmode="numeric" pattern="[0-9]*" value="0" autocomplete="off"><button type="button" data-step="sCount" data-d="1" aria-label="Add one spilling">+</button></div></div>
+      <div><label for="xCount">Surging (X)</label><div class="stepper"><button type="button" class="secondary" data-step="xCount" data-d="-1" aria-label="Remove one surging">−</button><input id="xCount" class="count" inputmode="numeric" pattern="[0-9]*" value="0" autocomplete="off"><button type="button" data-step="xCount" data-d="1" aria-label="Add one surging">+</button></div></div>
+    </div>
+    <div class="summary-grid">
+      <div class="sum"><b>Elapsed seconds</b><strong id="elapsedOut">0</strong><span id="elapsedSrc">no timing yet</span></div>
+      <div class="sum"><b>C / CHARLIE avg sec</b><strong id="charlieRawOut">0.00</strong><span id="charlieDiv">seconds ÷ 100</span></div>
+      <div class="sum"><b>CHARLIE call round</b><strong id="charlieReportOut">0.0</strong><span>nearest 1/2 sec</span></div>
+      <div class="sum"><b>D / DELTA %</b><strong id="deltaPctOut">0 / 0 / 0</strong><span>P / S / X</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3. E / F / G / H - Conditions</h2>
+    <div class="grid three">
+      <div><label for="echoAngle">E / ECHO breaker angle degrees</label><input id="echoAngle" inputmode="decimal" value="0" autocomplete="off"></div>
+      <div><label for="echoFlank">ECHO flank</label><select id="echoFlank"><option>Right</option><option>Left</option><option>R/L</option></select></div>
+      <div><label for="secondaryHeight">Secondary wave height ft</label><input id="secondaryHeight" inputmode="decimal" value="0" autocomplete="off"></div>
+    </div>
+    <h3>F / FOXTROT littoral current</h3>
+    <p class="small">Example: 223 ft in 3 minutes. The app converts ft/min to knots (ft/min ÷ 100) and uses the lower tenth for the MSI table.</p>
+    <div class="grid four">
+      <div><label for="driftFeet">Drift distance ft</label><input id="driftFeet" inputmode="decimal" value="0" autocomplete="off"></div>
+      <div><label for="driftMinutes">Drift time min</label><input id="driftMinutes" inputmode="decimal" value="1" autocomplete="off"></div>
+      <div><label for="foxtrotFlank">FOXTROT flank</label><select id="foxtrotFlank"><option>Right</option><option>Left</option><option>R/L</option></select></div>
+      <div class="sum"><b>FOXTROT knots</b><strong id="foxtrotKnotsOut">0.00</strong><span>calculated</span></div>
+    </div>
+    <h3>G / GOLF and H / HOTEL</h3>
+    <div class="grid four">
+      <div><label for="golfFrom">GOLF lines from</label><input id="golfFrom" placeholder="0" inputmode="numeric" autocomplete="off"></div>
+      <div><label for="golfTo">GOLF lines to</label><input id="golfTo" placeholder="0" inputmode="numeric" autocomplete="off"></div>
+      <div><label for="golfWidth">Surf zone width ft</label><input id="golfWidth" placeholder="0" inputmode="decimal" autocomplete="off"></div>
+      <div><label for="visibility">Visibility / weather</label><input id="visibility" placeholder="clear / unrestricted" autocomplete="off"></div>
+    </div>
+    <div class="grid four" style="margin-top:10px">
+      <div><label for="windSpeed">H / HOTEL wind speed kts</label><input id="windSpeed" inputmode="decimal" value="0" autocomplete="off"></div>
+      <div><label for="windAngle">H / HOTEL wind angle degrees</label><input id="windAngle" inputmode="decimal" placeholder="0-90" autocomplete="off"></div>
+      <div><label for="windType">H / HOTEL wind type</label><select id="windType"><option value="onshore">Onshore</option><option value="offshore">Offshore</option></select></div>
+      <div><label for="windFlank">H / HOTEL wind flank</label><select id="windFlank"><option>Right</option><option>Left</option><option>R/L</option></select></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>4. MSI worksheet breakdown</h2>
+    <div class="breakdown">
+      <div class="sum"><b>A / ALPHA</b><strong id="aVal">0.00</strong><span>highest 33 avg</span></div>
+      <div class="sum"><b>C table</b><strong id="cVal">0.0</strong><span id="cNote">period table</span></div>
+      <div class="sum"><b>D table</b><strong id="dVal">0.0</strong><span id="dNote">breaker type</span></div>
+      <div class="sum"><b>E table</b><strong id="eVal">0.0</strong><span id="eNote">wave angle</span></div>
+      <div class="sum"><b>F table</b><strong id="fVal">0.0</strong><span id="fNote">littoral</span></div>
+      <div class="sum"><b>Use E or F</b><strong id="efVal">0.0</strong><span>larger value</span></div>
+      <div class="sum"><b>H / HOTEL</b><strong id="hVal">0.0</strong><span id="hNote">wind table</span></div>
+      <div class="sum"><b>Secondary</b><strong id="secVal">0.0</strong><span>wave height</span></div>
+    </div>
+    <div id="warnings" style="margin-top:12px;display:grid;gap:8px"></div>
+  </section>
+
+  <section class="card">
+    <h2>5. BPT communicator call</h2>
+    <div class="call" id="callOutput"></div>
+    <div class="btnrow no-print" style="margin-top:10px"><button type="button" id="copyCall">Copy call</button><button type="button" class="secondary" id="shareCall" style="display:none">Share</button><button type="button" class="secondary" onclick="window.print()">Print / save PDF</button></div>
+  </section>
+
+  <section class="card">
+    <h2>6. Workflow verification</h2>
+    <p class="small">Use this block to cross-check the paper worksheet. It shows each calculation step and the table row and column used.</p>
+    <div class="call" id="auditOutput"></div>
+  </section>
+
+  <section class="card">
+    <h2>7. Craft limit-check inputs</h2>
+    <p class="small">Displacement craft are checked against MSI limits. LCAC is checked against its listed NO-GO criteria. LARC-V uses its MSI limit plus the listed operating-condition checks, if entered. These checks are advisory. A person records the decision in section 8.</p>
+    <div class="grid four">
+      <div><label for="operationMode">Operation basis</label><select id="operationMode"><option value="training">Training / Operations</option><option value="wartime">Wartime</option></select></div>
+      <div><label for="visibilityYards">Visibility yards (LCAC)</label><input id="visibilityYards" inputmode="numeric" placeholder="blank = not observed" autocomplete="off"></div>
+      <div><label for="lcacLoad">LCAC load reference</label><select id="lcacLoad"><option value="auto">Auto from ALPHA</option><option value="75">75 tons overload</option><option value="60">60 tons normal</option><option value="45">45 tons reduced</option></select></div>
+      <div><label for="lcacCraftmaster">Craftmaster / SRM status</label><select id="lcacCraftmaster"><option value="go">No directed NO-GO</option><option value="nogo">Directed NO-GO</option></select></div>
+    </div>
+    <div class="checkgrid" style="margin-top:10px">
+      <label class="check"><input id="lcacCommsOk" type="checkbox" checked><span>LCAC communications are available</span></label>
+      <label class="check"><input id="lcacMarkersVisible" type="checkbox" checked><span>CLZ markers visible to craftmaster</span></label>
+      <label class="check"><input id="lcacLaneClear" type="checkbox" checked><span>Approach lane and CLZ are clear</span></label>
+      <label class="check"><input id="lcacNoUnmovableFod" type="checkbox" checked><span>No unmovable FOD in CLZ</span></label>
+    </div>
+    <details style="margin-top:12px"><summary>LARC-V operating condition checks</summary><p class="small">Leave blank if not observed. If entered, these limits are applied in addition to the MSI limit.</p><div class="grid three" style="margin-top:10px"><div><label for="larcOceanCurrent">Ocean current kts</label><input id="larcOceanCurrent" inputmode="decimal" autocomplete="off"></div><div><label for="larcSwell">Swell height ft</label><input id="larcSwell" inputmode="decimal" autocomplete="off"></div><div><label for="larcChop">Chop height ft</label><input id="larcChop" inputmode="decimal" autocomplete="off"></div></div></details>
+  </section>
+
+  <section class="card" id="final">
+    <h2>8. Final MSI, advisory limit check and human decision</h2>
+    <div class="result"><div class="label">Final Modified Surf Index</div><div class="num" id="msiBig">0.0</div><div id="statusPill" class="pill">Ready</div></div>
+    <div class="call" id="msiMathOutput" style="margin-top:10px"></div>
+    <h3>Advisory limit check (not a decision)</h3>
+    <div id="craftOverall" style="font-weight:900;margin:8px 0 12px">Waiting for inputs</div>
+    <div class="scroll"><table><thead><tr><th>Craft</th><th>Basis</th><th>Limit / criterion</th><th>Check result</th><th>Notes</th></tr></thead><tbody id="craftStatusBody"></tbody></table></div>
+    <div class="decision" id="decisionBox">
+      <h3 style="margin-top:0">Human decision (required)</h3>
+      <p class="small">The calculator only compares entered values with listed limits. It never makes, recommends or sends a GO / NO-GO decision. The responsible person records the decision here. If any input changes afterwards, the decision is flagged for re-confirmation.</p>
+      <div class="grid four">
+        <div><label for="decRole">Decision authority</label><select id="decRole"><option value="">Select...</option><option>Craftmaster</option><option>Surf zone / SRM</option><option>BMU OIC</option><option>Other designated authority</option></select></div>
+        <div><label for="decValue">Decision</label><select id="decValue"><option value="">PENDING</option><option>GO</option><option>GO with restrictions</option><option>NO-GO</option></select></div>
+        <div><label for="decInitials">Initials / callsign</label><input id="decInitials" maxlength="10" autocomplete="off"></div>
+        <div><label for="decTime">Time</label><div class="inline"><input id="decTime" inputmode="numeric" autocomplete="off" placeholder="HHMM"><button type="button" class="secondary" id="decNow">Now</button></div></div>
+      </div>
+      <div style="margin-top:10px"><label for="decRemarks">Remarks / restrictions</label><input id="decRemarks" autocomplete="off"></div>
+      <input type="hidden" id="decMsi">
+      <div id="decStatus" class="note" style="margin-top:10px"></div>
+      <div class="btnrow no-print" style="margin-top:8px"><button type="button" class="secondary" id="decConfirm">Re-confirm decision for current inputs</button></div>
+    </div>
+  </section>
+
+  <section class="card disclose" id="about">
+    <h2>9. Human control and tools used</h2>
+    <h3>Human control</h3>
+    <ul>
+      <li><b>Approval point:</b> only a named decision authority records GO, GO with restrictions or NO-GO in section 8. The app starts every observation as PENDING.</li>
+      <li><b>Prohibited actions (enforced in code):</b> the app does not choose a decision or send data. A Content-Security-Policy allows only the app's own files and, when you tap <b>Show satellite map</b>, map pictures from Esri (server.arcgisonline.com). Nothing typed into the app is ever sent. It asks for no names or other PII.</li>
+      <li><b>NOAA fill:</b> wave, wind and visibility values come from a packaged week of public NOAA reports. The 100-wave count built from them is an estimate, marked in the call and the verification block. An observed surf-zone count replaces it.</li>
+      <li><b>Monitoring:</b> input warnings, the workflow verification block, and a re-confirm flag whenever inputs change after a decision.</li>
+      <li><b>Escalation:</b> any red warning, any at-limit or exceeded craft, or any mismatch with the paper worksheet goes to the BMU OIC. The paper worksheet is the reference.</li>
+      <li><b>Shutdown:</b> close the tab. Clear form erases the data saved on this device. There are no background services, accounts or servers.</li>
+    </ul>
+    <h3>Tools and resources used</h3>
+    <ul>
+      <li>Claude Code desktop app with the Anthropic Claude Opus 5.5 model, used to write and review code.</li>
+      <li>A command-line shell for file checks, and the Claude Code built-in browser preview for testing.</li>
+      <li>No external libraries or cloud services. Data: a packaged week of NOAA NDBC buoy, CO-OPS station and NWS airfield reports (conditions-data.js). Map pictures: Esri World Imagery, only when the map is opened.</li>
+      <li>Beach list, buoy matching and the NOAA-to-worksheet method come from the team's working overview build. Version 3 converts NWS airfield wind from km/h to knots.</li>
+      <li>MSI tables were carried over unchanged from the original worksheet version. The team must cite the source worksheet or publication.</li>
+    </ul>
+  </section>
+  <div class="footer">Unclassified training aid. Beach pins are approximate. Validate against current command guidance before any operational use. Entries autosave on this device only.</div>
+</main>
+
+<div class="livebar no-print"><div class="lbinner">
+  <div><span class="k">Waves</span><b id="lbWaves">0/100</b></div>
+  <div><span class="k">Timer</span><b id="lbTimer">--:--</b></div>
+  <div><span class="k">MSI</span><b id="lbMsi">0.0</b></div>
+  <a href="#final" id="lbStatus" class="pill">No data</a>
+</div></div>
+
+<script src="conditions-data.js"></script>
+<script>
+'use strict';
+/* ---------- Worksheet tables (unchanged from original worksheet) ---------- */
+const TABLE_COLS=[0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5];
+const MAX_TABLE_ALPHA=5;
+const MAX_HEIGHT=10;
+const HEIGHTS=[];for(let i=0;i<=MAX_HEIGHT*2;i++)HEIGHTS.push(i/2);
+const breakerPeriod={17:[0,0,0,-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.8,-1.0],16:[0,0,0,-0.1,-0.1,-0.2,-0.3,-0.3,-0.4,-0.5,-0.7],15:[0,0,0,0,-0.1,-0.1,-0.2,-0.2,-0.2,-0.3,-0.3],14:[0,0,0,0,0,0,0,0,0,0,0],13:[0,0,0,0,0.1,0.1,0.1,0.2,0.2,0.3,0.3],12:[0,0,0,0.1,0.1,0.2,0.2,0.3,0.4,0.5,0.7],11:[0,0,0,0.1,0.2,0.3,0.4,0.5,0.6,0.8,1.0],10:[0,0,0.1,0.1,0.2,0.3,0.5,0.7,0.9,1.1,1.3],9:[0,0,0.1,0.1,0.3,0.3,0.6,0.8,1.1,1.3,1.7],8:[0,0,0.1,0.2,0.3,0.5,0.7,1.0,1.3,1.5,2.0]};
+const spilling={100:[0,-0.1,-0.2,-0.5,-0.8,-1.3,-1.8,-2.5,-3.2,-4.1,-5.0],90:[0,0,-0.2,-0.4,-0.7,-1.1,-1.6,-2.2,-2.9,-3.6,-4.5],80:[0,0,-0.2,-0.4,-0.6,-1.0,-1.4,-2.0,-2.6,-3.2,-4.0],70:[0,0,-0.1,-0.3,-0.6,-0.9,-1.3,-1.7,-2.2,-2.8,-3.5],60:[0,0,-0.1,-0.3,-0.5,-0.8,-1.1,-1.5,-1.9,-2.4,-3.0],50:[0,0,-0.1,-0.2,-0.4,-0.7,-0.9,-1.2,-1.6,-2.0,-2.5],40:[0,0,-0.1,-0.2,-0.3,-0.6,-0.7,-1.0,-1.3,-1.6,-2.0],30:[0,0,-0.1,-0.1,-0.2,-0.4,-0.5,-0.7,-1.0,-1.2,-1.5],20:[0,0,0,-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.8,-1.0],10:[0,0,0,0,-0.1,-0.1,-0.2,-0.2,-0.3,-0.4,-0.5],0:[0,0,0,0,0,0,0,0,0,0,0]};
+const surging={100:[0,0.1,0.2,0.5,0.8,1.3,1.8,2.5,3.2,4.1,5.0],90:[0,0,0.2,0.4,0.8,1.2,1.7,2.3,3.0,3.8,4.7],80:[0,0,0.2,0.4,0.7,1.1,1.6,2.2,2.9,3.6,4.5],70:[0,0,0.2,0.4,0.6,1.0,1.5,2.0,2.7,3.4,4.2],60:[0,0,0.2,0.3,0.6,1.0,1.4,1.9,2.5,3.1,3.9],50:[0,0,0.1,0.3,0.6,0.9,1.3,1.7,2.3,2.9,3.5],40:[0,0,0.1,0.3,0.5,0.8,1.1,1.5,2.0,2.6,3.2],30:[0,0,0.1,0.2,0.4,0.7,1.0,1.3,1.8,2.2,2.7],20:[0,0,0.1,0.2,0.4,0.6,0.8,1.1,1.4,1.8,2.2],10:[0,0,0.1,0.1,0.3,0.4,0.6,0.7,1.0,1.3,1.6],0:[0,0,0,0,0,0,0,0,0,0,0]};
+const waveAngle={40:[0,0.1,0.3,0.7,1.3,2.0,2.9,3.9,5.1,6.5,8.0],35:[0,0.1,0.3,0.6,1.1,1.8,2.5,3.4,4.5,5.7,7.0],30:[0,0.1,0.2,0.5,1.0,1.5,2.2,2.9,3.8,4.9,6.0],25:[0,0.1,0.2,0.5,0.8,1.3,1.8,2.5,3.2,4.1,5.0],20:[0,0,0.2,0.4,0.6,1.0,1.4,2.0,2.6,3.2,4.0],15:[0,0,0.1,0.3,0.5,0.8,1.1,1.5,1.9,2.4,3.0],10:[0,0,0.1,0.2,0.3,0.5,0.7,1.0,1.3,1.6,2.0],5:[0,0,0,0.1,0.2,0.3,0.4,0.5,0.6,0.8,1.0],0:[0,0,0,0,0,0,0,0,0,0,0]};
+const windRows=[{label:'36-40',min:36,max:40,onshore:[2,3,4],offshore:[1.5,2,4]},{label:'31-35',min:31,max:35,onshore:[1.5,2,3],offshore:[1,1.5,3]},{label:'26-30',min:26,max:30,onshore:[1,1.5,2],offshore:[0.5,1,2]},{label:'21-25',min:21,max:25,onshore:[0.5,1,1.5],offshore:[0,0.5,1.5]},{label:'16-20',min:16,max:20,onshore:[0,0.5,1],offshore:[0,0.5,1]},{label:'11-15',min:11,max:15,onshore:[0,0.5,1],offshore:[0,0.5,1]},{label:'5-10',min:5,max:10,onshore:[0,0,0.5],offshore:[0,0,0.5]},{label:'0-5',min:0,max:5,onshore:[0,0,0],offshore:[0,0,0]}];
+const craftLimits=[{name:'LARC-V',training:6,wartime:9},{name:'OUB / LCM-8',training:6,wartime:9},{name:'LCU',training:6,wartime:12},{name:'INLS CF / WT',training:6,wartime:8},{name:'MPFUB',training:3,wartime:3},{name:'AAV',training:6,wartime:6}];
+const STORE_KEY='surob-msi-v3';
+const SCENARIOS={
+  C:{label:'C - working overview sample, MSI 3.2',f:{observer:'OBSERVER 1',h10:67,h25:33,startTime:'0800',stopTime:'0820',pCount:10,sCount:80,xCount:10,echoAngle:10,echoFlank:'Right',secondaryHeight:1,driftFeet:0,driftMinutes:1,foxtrotFlank:'Right',golfFrom:4,golfTo:8,golfWidth:150,visibility:'clear / unrestricted',windSpeed:12,windAngle:20,windType:'onshore',windFlank:'Right',visibilityYards:9999}},
+  A:{label:'A - moderate surf (synthetic)',f:{observer:'OBSERVER 1',h10:15,h15:25,h20:30,h25:20,h30:10,totalSeconds:1100,pCount:20,sCount:70,xCount:10,echoAngle:10,echoFlank:'Right',driftFeet:150,driftMinutes:3,foxtrotFlank:'Left',golfFrom:2,golfTo:4,golfWidth:150,visibility:'Clear / unrestricted',windSpeed:12,windAngle:40,windType:'onshore',windFlank:'Right',visibilityYards:5000}},
+  B:{label:'B - heavy surf (synthetic)',f:{observer:'OBSERVER 2',h30:10,h35:20,h40:30,h45:25,h50:10,h60:5,totalSeconds:900,pCount:50,sCount:20,xCount:30,echoAngle:20,echoFlank:'Left',driftFeet:300,driftMinutes:2,foxtrotFlank:'Left',golfFrom:4,golfTo:6,golfWidth:300,visibility:'Haze',windSpeed:28,windAngle:70,windType:'onshore',windFlank:'Left',visibilityYards:1500,secondaryHeight:1}}
+};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- Helpers ---------- */
+const $=id=>document.getElementById(id);
+const num=v=>{const n=parseFloat(String(v??'').replace(/[^0-9.\-]/g,''));return Number.isFinite(n)?n:0};
+const int=v=>Math.max(0,Math.floor(num(v)));
+const isBlank=v=>String(v??'').trim()==='';
+const fmt=(n,d=1)=>(Number.isFinite(n)?n:0).toFixed(d);
+const clamp=(n,lo,hi)=>Math.min(hi,Math.max(lo,n));
+const EPS=1e-9;
+function setText(id,v){const el=$(id);if(el)el.textContent=v}
+function roundHalf(n){return Math.round(num(n)*2)/2}
+function roundTenth(n){return Math.round((n+EPS)*10)/10}
+function floorTenth(n){return Math.floor((num(n)+EPS)*10)/10}
+// Round percent UP to next 10% row; epsilon stops 30.0000000004 jumping to 40.
+function roundUpPct(n){if(n<=EPS)return 0;return Math.min(100,Math.ceil(n/10-EPS)*10)}
+function nearestAngleRow(n){return Math.round(clamp(Math.abs(num(n)),0,40)/5)*5}
+function colIndex(alpha){return TABLE_COLS.indexOf(clamp(roundHalf(alpha),0,MAX_TABLE_ALPHA))}
+function lookup(table,row,alpha){const r=table[row],ci=colIndex(alpha);return r&&r[ci]!=null?r[ci]:0}
+function hId(h){return 'h'+Math.round(h*10)}
+function pad2(n){return String(n).padStart(2,'0')}
+// Accepts HHMM, HHMMSS, HH:MM, HH:MM:SS. Returns seconds since midnight or null.
+function clockToSeconds(t){let d=String(t||'').replace(/\D/g,'');if(d.length<3||d.length>6)return null;d=d.length<=4?d.padStart(4,'0')+'00':d.padStart(6,'0');const h=+d.slice(0,2),m=+d.slice(2,4),s=+d.slice(4,6);if(h>23||m>59||s>59)return null;return h*3600+m*60+s}
+function elapsedFromClock(a,b){const x=clockToSeconds(a),y=clockToSeconds(b);if(x==null||y==null)return null;let d=y-x;if(d<0)d+=86400;return d}
+function nowClock(){const d=new Date();return pad2(d.getHours())+pad2(d.getMinutes())+pad2(d.getSeconds())}
+function nowDTG(){const d=new Date(),M=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];return `${pad2(d.getUTCDate())}${pad2(d.getUTCHours())}${pad2(d.getUTCMinutes())}Z ${M[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(2)}`}
+function fmtDur(s){s=Math.max(0,Math.floor(s));return `${pad2(Math.floor(s/60))}:${pad2(s%60)}`}
+
+// Wind: fractional speeds round UP into the next band (10.5 -> 11-15). Above 40 kts uses the top row.
+function windLookup(speed,angle,type){
+  const s=Math.max(0,num(speed)),sr=Math.ceil(s-EPS);
+  const row=s>40?windRows[0]:(windRows.find(r=>sr>=r.min&&sr<=r.max)||windRows[windRows.length-1]);
+  const a=clamp(Math.abs(num(angle)),0,90);
+  const idx=a<=30?0:a<=60?1:2;
+  return{value:row[type][idx],row:row.label,angleBand:['0-30°','30-60°','60-90°'][idx],speed:s,angle:a};
+}
+
+/* ---------- Beaches and NOAA stations (from the working overview build) ---------- */
+// seaward = compass bearing pointing out to sea from the beach. alongshore = bearing of the shoreline.
+const REGIONS=[
+ {id:'cape-henry',name:'Cape Henry and Little Creek',coast:'Virginia',beaches:[
+  {id:'fort-story-atlantic',name:'Fort Story Atlantic beach',lat:36.92035,lng:-75.9953,alongshore:155,halfLengthM:250,facing:'East, open Atlantic',note:'Ocean beach on the east side of Cape Henry.'},
+  {id:'fort-story-bay',name:'Fort Story Chesapeake shore',lat:36.929809,lng:-76.01092,alongshore:80,halfLengthM:200,facing:'North, Chesapeake Bay',note:'Bay beach on the north side of Fort Story, inside the cape.'},
+  {id:'little-creek-north',name:'Little Creek north shore',lat:36.926752,lng:-76.1594,alongshore:95,halfLengthM:220,facing:'North, Chesapeake Bay',note:'Chesapeake beach just north of the Little Creek harbor. The harbor itself is sheltered water, not this beach.'}]},
+ {id:'onslow',name:'Onslow Beach',coast:'Camp Lejeune, North Carolina',beaches:[
+  {id:'onslow-north',name:'Onslow Beach north',lat:34.586902,lng:-77.242215,alongshore:50,halfLengthM:350,facing:'Southeast, open Atlantic',note:'Northern reach of the barrier-island ocean beach.'},
+  {id:'onslow-central',name:'Onslow Beach central',lat:34.578286,lng:-77.257017,alongshore:52,halfLengthM:350,facing:'Southeast, open Atlantic',note:'Middle of the ocean beach, sand between the dunes and the surf.'},
+  {id:'onslow-south',name:'Onslow Beach south',lat:34.562384,lng:-77.281393,alongshore:48,halfLengthM:350,facing:'Southeast, open Atlantic',note:'Southern reach of the same beach, near the developed shore.'}]},
+ {id:'pendleton',name:'Camp Pendleton coast',coast:'Southern California',beaches:[
+  {id:'san-onofre',name:'San Onofre State Beach',lat:33.37858,lng:-117.571684,alongshore:145,halfLengthM:280,facing:'Southwest, open Pacific',note:'Public beach between the coast highway and the surf at the north end of this shoreline.'},
+  {id:'red-beach',name:'Red Beach',lat:33.286664,lng:-117.461901,alongshore:150,halfLengthM:320,facing:'Southwest, open Pacific',note:'Sand directly seaward of the former Red Beach airfield.'},
+  {id:'del-mar',name:'Del Mar Beach',lat:33.226504,lng:-117.413028,alongshore:155,halfLengthM:300,facing:'Southwest, open Pacific',note:'Ocean beach west of the Del Mar basin, at the south end of the base.'}]},
+ {id:'silver-strand',name:'Silver Strand and Coronado',coast:'Southern California',beaches:[
+  {id:'coronado-strand',name:'Coronado Strand ocean beach',lat:32.668232,lng:-117.166177,alongshore:140,halfLengthM:280,facing:'Southwest, open Pacific',note:'Built-up ocean beach on the strand, with hotels along the sand. North of Silver Strand State Beach.'},
+  {id:'silver-strand-state',name:'Silver Strand State Beach',lat:32.63656,lng:-117.143949,alongshore:168,halfLengthM:320,facing:'West, open Pacific',note:'Wide public beach and parking lot on the ocean side of the strand.'},
+  {id:'sstc-north',name:'SSTC north ocean beach',lat:32.604971,lng:-117.133387,alongshore:175,halfLengthM:260,facing:'West, open Pacific',note:'North stretch of open beach in front of the Silver Strand Training Complex.'},
+  {id:'sstc-south',name:'SSTC south ocean beach',lat:32.591594,lng:-117.132604,alongshore:175,halfLengthM:260,facing:'West, open Pacific',note:'South stretch of that same beach, closer to Imperial Beach. These pins are the north and south shoreline, not surveyed lanes.'}]},
+ {id:'oahu',name:'Windward Oahu',coast:'Hawaii',beaches:[
+  {id:'pyramid-rock',name:'Pyramid Rock Beach',lat:21.459872,lng:-157.762011,alongshore:70,halfLengthM:180,facing:'North, open Pacific',note:'Crescent beach on the north side of Mokapu Peninsula.'},
+  {id:'fort-hase',name:'Fort Hase Beach',lat:21.4436,lng:-157.734938,alongshore:10,halfLengthM:180,facing:'East, open Pacific',note:'East-facing sand on the Mokapu shoreline.'},
+  {id:'bellows',name:'Bellows Beach',lat:21.359221,lng:-157.708279,alongshore:165,halfLengthM:280,facing:'Northeast, Waimanalo Bay',note:'Ocean beach at Bellows, along Waimanalo Bay.'}]}
+];
+const ST={
+ B46277:{id:'46277',name:'Green Beach Offshore',lat:33.336,lng:-117.659},B46275:{id:'46275',name:'Red Beach Nearshore',lat:33.291,lng:-117.501},B46224:{id:'46224',name:'Oceanside Offshore',lat:33.178,lng:-117.472},
+ B46254:{id:'46254',name:'Scripps Nearshore',lat:32.868,lng:-117.267},B46232:{id:'46232',name:'Point Loma South',lat:32.517,lng:-117.425},B41159:{id:'41159',name:'Onslow Bay Outer',lat:34.211,lng:-76.949},
+ B51202:{id:'51202',name:'Mokapu Point',lat:21.414,lng:-157.681},B44099:{id:'44099',name:'Cape Henry',lat:36.915,lng:-75.722},B44087:{id:'44087',name:'Thimble Shoal',lat:37.043,lng:-76.129},
+ KNFG:{id:'KNFG',name:'Camp Pendleton airfield',lat:33.3047,lng:-117.3539,kind:'nws'},KNZY:{id:'KNZY',name:'North Island airfield',lat:32.6908,lng:-117.2089,kind:'nws'},
+ KNCA:{id:'KNCA',name:'New River airfield',lat:34.7063,lng:-77.4407,kind:'nws'},PHNG:{id:'PHNG',name:'Kaneohe airfield',lat:21.4539,lng:-157.7656,kind:'nws'},
+ KNTU:{id:'KNTU',name:'Oceana airfield',lat:36.8211,lng:-76.0283,kind:'nws'},KNGU:{id:'KNGU',name:'Norfolk Naval Station airfield',lat:36.9336,lng:-76.2958,kind:'nws'},
+ C1612480:{id:'1612480',name:'Mokuoloe',lat:21.433,lng:-157.79,kind:'coops'},C8638999:{id:'8638999',name:'Cape Henry',lat:36.926,lng:-76.007,kind:'coops'}
+};
+const L=(seaward,wave,wind,vis,caveat)=>({seaward,wave:ST[wave],wind:ST[wind],visibility:ST[vis],caveat});
+const LINKS={
+ 'san-onofre':L(235,'B46277','KNFG','KNFG','The buoy is offshore of this beach, not in the surf zone.'),
+ 'red-beach':L(240,'B46275','KNFG','KNFG','The buoy is a few kilometers off the beach, not in the surf zone.'),
+ 'del-mar':L(245,'B46224','KNFG','KNFG','The buoy is offshore of the Del Mar basin beach, not in the surf zone.'),
+ 'coronado-strand':L(230,'B46254','KNZY','KNZY','The nearest reporting wave buoy is north of the strand, well outside the surf.'),
+ 'silver-strand-state':L(258,'B46232','KNZY','KNZY','The nearest reporting wave buoy is offshore of Point Loma, not on the strand.'),
+ 'sstc-north':L(265,'B46232','KNZY','KNZY','The nearest reporting wave buoy is offshore of Point Loma, not on this beach.'),
+ 'sstc-south':L(265,'B46232','KNZY','KNZY','The nearest reporting wave buoy is offshore of Point Loma, not on this beach.'),
+ 'onslow-north':L(140,'B41159','KNCA','KNCA','The nearest wave buoy is about 50 km offshore. Surf on the beach can differ.'),
+ 'onslow-central':L(142,'B41159','KNCA','KNCA','The nearest wave buoy is about 50 km offshore. Surf on the beach can differ.'),
+ 'onslow-south':L(138,'B41159','KNCA','KNCA','The nearest wave buoy is about 50 km offshore. Surf on the beach can differ.'),
+ 'pyramid-rock':L(0,'B51202','C1612480','PHNG','The wave buoy is on the windward side of Mokapu, not on the north-shore sand.'),
+ 'fort-hase':L(100,'B51202','C1612480','PHNG','The wave buoy is a few kilometers off Mokapu Point.'),
+ 'bellows':L(75,'B51202','C1612480','PHNG','Wind is from Kaneohe Bay and waves are from Mokapu Point, not a buoy at Bellows.'),
+ 'fort-story-atlantic':L(90,'B44099','C8638999','KNTU','The wave buoy is offshore of the cape, not on the beach.'),
+ 'fort-story-bay':L(10,'B44087','C8638999','KNTU','Wave height is from inside the bay. It is not the Atlantic surf on the other side of the cape.'),
+ 'little-creek-north':L(5,'B44087','KNGU','KNGU','Wave height is from Thimble Shoal in the bay, not a gauge on this beach.')
+};
+const COND=window.SUROB_CONDITIONS||null;
+const NOAA_FIELDS=['totalSeconds','startTime','stopTime','wavesTimed','echoAngle','echoFlank','windSpeed','windAngle','windType','windFlank','visibility','visibilityYards'];
+const M_TO_FT=3.280839895,MS_TO_KT=1.943844,KMH_TO_KT=0.5399568,TWO_H=72e5,TWELVE_H=432e5;
+function region(){return REGIONS.find(r=>r.id===$('regionId').value)||REGIONS[0]}
+function beach(){const r=region();return r.beaches.find(b=>b.id===$('beachId').value)||r.beaches[0]}
+function fmtWhen(t){return new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(new Date(t))}
+function kmBetween(a,b,c,d){const x=(b-d)*111*Math.cos((a+c)/2*Math.PI/180);return Math.round(Math.hypot((a-c)*111,x))}
+function mean(a){return a.length?a.reduce((s,v)=>s+v,0)/a.length:null}
+function signedDiff(dir,seaward){return((dir-seaward)%360+540)%360-180}
+function flankOf(t){const a=Math.abs(t);return a<15||a>165?'R/L':t>0?'Right':'Left'}
+function breakerAngle(t){const a=Math.abs(t);return a<=90?a:180-a}
+// NWS airfield reports are in km/h. NDBC and CO-OPS are in m/s. The working overview build treated all as m/s.
+function windKts(v,station){return station&&station.kind==='nws'?v*KMH_TO_KT:v*MS_TO_KT}
+// Builds 100 counts on the half-foot rows so the highest 33 average the significant height (method from the working overview build).
+function binsFromHs(hs){
+  const c={},add=(h,n)=>{if(!n)return;const k=clamp(roundHalf(h),0,MAX_HEIGHT);c[k]=(c[k]||0)+n};
+  if(!(hs>0)){add(0,100);return c}
+  let top=Math.round(2*Math.min(MAX_HEIGHT,1.5*hs))/2,rest=(33*hs-top)/32;
+  if(rest>top||rest<0){top=Math.round(2*Math.min(MAX_HEIGHT,hs))/2;rest=Math.min(top,hs)}
+  const lo=Math.floor(2*rest)/2,hi=Math.min(MAX_HEIGHT,lo+.5);let nHi=0;
+  if(hi>lo)nHi=clamp(Math.round((rest-lo)/(hi-lo)*32),0,32);
+  add(top,1);add(hi,nHi);add(lo,32-nHi);add(Math.max(0,lo-.5),67);return c;
+}
+function wavePoints(link){return COND&&link?(COND.waves[link.wave.id]||[]).filter(r=>r.hsM!=null):[]}
+function noaaWindow(link,b,end){
+  const W=COND.waves[link.wave.id]||[],Mw=COND.met[link.wind.id]||[],Mv=COND.met[link.visibility.id]||[];
+  const pts=W.filter(r=>r.hsM!=null);if(!pts.length)return null;
+  if(end==null)end=pts[pts.length-1].t;
+  const win=W.filter(r=>r.t<=end&&r.t>=end-TWO_H),hs=win.map(r=>r.hsM).filter(v=>v!=null);if(!hs.length)return null;
+  const hsFt=mean(hs)*M_TO_FT,period=mean(win.map(r=>r.dpd??r.apd).filter(v=>v!=null&&v>0));
+  let sx=0,sy=0,nd=0;win.forEach(r=>{if(r.mwd!=null){const a=r.mwd*Math.PI/180;sx+=Math.cos(a);sy+=Math.sin(a);nd++}});
+  const dir=nd&&Math.hypot(sx,sy)>1e-6?(Math.atan2(sy,sx)*180/Math.PI+360)%360:null;
+  const wind=Mw.filter(r=>r.t<=end&&r.t>=end-TWELVE_H&&r.windMs!=null&&(r.windMs<.5||r.windDir!=null)).sort((a,b)=>a.t-b.t).pop();
+  const vis=Mv.filter(r=>r.t<=end&&r.t>=end-TWELVE_H&&(r.visM!=null||r.weather)).sort((a,b)=>a.t-b.t).pop();
+  const p={};const bins=binsFromHs(hsFt);HEIGHTS.forEach(h=>p[hId(h)]=bins[h]||0);
+  p.startTime='';p.stopTime='';p.totalSeconds=period?String(Math.round(100*period)):'';p.wavesTimed='100';
+  const notes=[];
+  if(dir!=null){const t=signedDiff(dir,link.seaward);p.echoAngle=String(Math.round(breakerAngle(t)));p.echoFlank=flankOf(t)}else{p.echoAngle='0';p.echoFlank='R/L';notes.push('Wave direction was missing, so ECHO is 0.')}
+  if(wind&&wind.windMs<.5){p.windSpeed='0';p.windAngle='0';p.windType='onshore';p.windFlank='R/L';notes.push(`Wind ${fmtWhen(wind.t)} is calm.`)}
+  else if(wind){const t=signedDiff(wind.windDir,link.seaward);p.windSpeed=String(Math.round(windKts(wind.windMs,link.wind)*10)/10);p.windAngle=String(Math.round(breakerAngle(t)));p.windType=Math.abs(t)<=90?'onshore':'offshore';p.windFlank=flankOf(t);notes.push(`Wind report ${fmtWhen(wind.t)}${end-wind.t>TWO_H?', earlier than the wave window':''}.`)}
+  else notes.push('No wind report in the 12 hours before this window. HOTEL left as entered.');
+  if(vis&&vis.visM!=null)p.visibilityYards=String(Math.round(vis.visM/.9144));
+  const vt=[vis&&vis.weather,vis&&vis.visM!=null?`${(vis.visM/1609.344).toFixed(0)} mi`:''].filter(Boolean).join(' · ');if(vt)p.visibility=vt;
+  const kmW=kmBetween(b.lat,b.lng,link.wave.lat,link.wave.lng),kmV=kmBetween(b.lat,b.lng,link.wind.lat,link.wind.lng);
+  const note=`NOAA ${link.wave.id} ${link.wave.name}, ${kmW} km from the pin: significant height ${fmt(hsFt,1)} ft${period?`, period ${fmt(period,1)} s`:''}, ${win.length} reports from ${fmtWhen(end-TWO_H)} to ${fmtWhen(end)}. Wind from ${link.wind.name}, ${kmV} km away. ${notes.join(' ')} ${link.caveat}`;
+  return{patch:p,end,hsFt,note};
+}
+let selEnd=null;
+function noaaFill(useSel){
+  const b=beach(),link=LINKS[b.id];
+  if(!COND||!link){$('noaaStatus').textContent='No NOAA reports are packaged for this beach.';return}
+  const w=noaaWindow(link,b,useSel?selEnd:null);
+  if(!w){$('noaaStatus').textContent='No wave reports in that two-hour window. Pick another time.';return}
+  const hasCount=getHeightList().length>0&&$('entrySource').value!=='noaa',fromSample=!isBlank($('scenarioId').value);
+  if(hasCount&&!confirm(fromSample?'Replace the sample with the NOAA estimate? The sample\'s breaker types, current, surf zone and secondary wave are cleared too.':'Replace the current wave count and conditions with the NOAA estimate? Breaker type, littoral current, surf-zone width and secondary wave stay as you entered them.'))return;
+  // Sample values are not observations, so they must not ride along with a NOAA fill.
+  if(fromSample)['pCount','sCount','xCount','driftFeet','driftMinutes','foxtrotFlank','golfFrom','golfTo','golfWidth','secondaryHeight','scenarioId'].forEach(id=>{const el=$(id);if(el.tagName==='SELECT')el.selectedIndex=0;else el.value=el.defaultValue});
+  Object.entries(w.patch).forEach(([id,v])=>{const el=$(id);if(el)el.value=v});
+  $('entrySource').value='noaa';$('noaaEnd').value=String(w.end);$('srcNote').value=w.note;selEnd=w.end;
+  tapHistory=[];$('undoTap').disabled=true;openBigIfUsed();calculate();
+}
+function setManual(){if($('entrySource').value==='noaa'){$('entrySource').value='manual';$('noaaEnd').value=''}}
+function renderNoaa(){
+  const b=beach(),link=LINKS[b.id],st=$('noaaStatus');
+  if(!COND||!link){st.textContent='NOAA reports are not loaded. Enter the worksheet by hand.';$('noaaChartWrap').style.display='none';return}
+  const pts=wavePoints(link),fetched=Date.parse(COND.fetchedAt),ageH=(Date.now()-fetched)/36e5;
+  const src=$('entrySource').value,end=num($('noaaEnd').value);
+  st.innerHTML=`Waves: NDBC ${link.wave.id} ${esc(link.wave.name)}, ${kmBetween(b.lat,b.lng,link.wave.lat,link.wave.lng)} km from the pin. Wind: ${esc(link.wind.name)}${link.visibility.id!==link.wind.id?`. Visibility: ${esc(link.visibility.name)}`:''}. Packaged reports saved ${fmtWhen(fetched)}.`+
+    (ageH>24?` <span class="pill warn">${Math.floor(ageH/24)} day${ageH>=48?'s':''} old</span> Check current conditions before relying on them.`:'')+
+    `<br><b>${src==='noaa'&&end?`Worksheet filled from the window ending ${fmtWhen(end)}.`:'Worksheet values are hand entries.'}</b>`;
+  const sn=$('noaaSrc');if(src==='noaa'&&$('srcNote').value){sn.style.display='';sn.textContent=$('srcNote').value}else sn.style.display='none';
+  const wrap=$('noaaChartWrap');if(pts.length<2){wrap.style.display='none';return}wrap.style.display='';
+  const t0=pts[0].t,t1=pts[pts.length-1].t,hs=pts.map(p=>p.hsM*M_TO_FT),mx=Math.max(...hs,1);
+  const X=t=>(t-t0)/(t1-t0)*640,Y=h=>68-h/mx*56;
+  if(selEnd==null||selEnd<t0||selEnd>t1)selEnd=src==='noaa'&&end?end:t1;
+  const idx=pts.reduce((bi,p,i)=>Math.abs(p.t-selEnd)<Math.abs(pts[bi].t-selEnd)?i:bi,0),mxX=X(pts[idx].t);
+  $('spark').innerHTML=`<path d="${pts.map((p,i)=>`${i?'L':'M'}${X(p.t).toFixed(1)},${Y(hs[i]).toFixed(1)}`).join(' ')}" fill="none" stroke="#1d4ed8" stroke-width="2.5" vector-effect="non-scaling-stroke"/><rect x="${Math.max(0,X(pts[idx].t-TWO_H)).toFixed(1)}" y="8" width="${(mxX-Math.max(0,X(pts[idx].t-TWO_H))).toFixed(1)}" height="62" fill="#c2410c" opacity=".15"/><line x1="${mxX}" x2="${mxX}" y1="8" y2="70" stroke="#c2410c" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
+  setText('sparkMax',`max ${fmt(mx,1)} ft`);
+  const r=$('noaaWin');r.max=pts.length-1;r.value=idx;
+  setText('noaaWinLbl',`Selected window ends ${fmtWhen(pts[idx].t)} (${fmt(hs[idx],1)} ft). Range ${fmtWhen(t0)} to ${fmtWhen(t1)}.`);
+}
+
+/* ---------- Beach picker and satellite map (no library; Esri tiles only after Show map) ---------- */
+function fillRegions(){$('regionId').innerHTML=REGIONS.map(r=>`<option value="${r.id}">${esc(r.name)} — ${esc(r.coast)}</option>`).join('')}
+function fillBeaches(keep){const r=region(),el=$('beachId');el.innerHTML=r.beaches.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('');el.value=r.beaches.some(b=>b.id===keep)?keep:r.beaches[0].id}
+function renderBeach(){
+  const r=region(),b=beach();
+  $('beachBtns').innerHTML=r.beaches.map(x=>`<button type="button" class="${x.id===b.id?'':'ghost'}" data-beach="${x.id}">${esc(x.name)}</button>`).join('');
+  $('beachNote').innerHTML=`${esc(b.note)}<br>${esc(b.facing)}. ${Math.abs(b.lat).toFixed(5)}° ${b.lat>=0?'N':'S'}, ${Math.abs(b.lng).toFixed(5)}° ${b.lng>=0?'E':'W'}`;
+}
+let lastBeachName='';
+function onBeachChange(){
+  const b=beach(),s=$('siteName');
+  if(isBlank(s.value)||s.value===lastBeachName)s.value=b.name;lastBeachName=b.name;
+  selEnd=null;map.center=null;renderBeach();renderMap();
+  if($('entrySource').value==='noaa')noaaFill(false);else calculate();
+}
+const TILE_URL='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/';
+const map={on:false,z:16,center:null,drag:null};
+function ll2px(lat,lng,z){const s=256*2**z,r=lat*Math.PI/180;return[(lng+180)/360*s,(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*s]}
+function px2ll(x,y,z){const s=256*2**z,n=Math.PI-2*Math.PI*y/s;return[180/Math.PI*Math.atan(Math.sinh(n)),x/s*360-180]}
+function offsetLL(lat,lng,bearing,m){const b=bearing*Math.PI/180;return[lat+m*Math.cos(b)/111320,lng+m*Math.sin(b)/(111320*Math.cos(lat*Math.PI/180))]}
+function renderMap(){
+  const el=$('map'),b=beach();
+  if(!map.on){el.innerHTML='<div class="mapoff"><div>The satellite map is off. Opening it loads map pictures from Esri. Nothing you enter is sent.</div><button type="button" class="blue" id="mapShow">Show satellite map</button></div>';return}
+  if(!map.center)map.center=[b.lat,b.lng];
+  const w=el.clientWidth||300,h=el.clientHeight||300,z=map.z,n=2**z,[cx,cy]=ll2px(map.center[0],map.center[1],z),x0=cx-w/2,y0=cy-h/2;
+  let imgs='';
+  for(let ty=Math.floor(y0/256);ty<=Math.floor((y0+h)/256);ty++){if(ty<0||ty>=n)continue;
+    for(let tx=Math.floor(x0/256);tx<=Math.floor((x0+w)/256);tx++){const wx=((tx%n)+n)%n;imgs+=`<img alt="" draggable="false" src="${TILE_URL}${z}/${ty}/${wx}" style="left:${Math.round(tx*256-x0)}px;top:${Math.round(ty*256-y0)}px">`}}
+  const P=(lat,lng)=>{const[x,y]=ll2px(lat,lng,z);return[(x-x0).toFixed(1),(y-y0).toFixed(1)]};
+  let svg='';
+  region().beaches.forEach(x=>{const a=offsetLL(x.lat,x.lng,x.alongshore,-x.halfLengthM),c=offsetLL(x.lat,x.lng,x.alongshore,x.halfLengthM),pa=P(...a),pc=P(...c),pp=P(x.lat,x.lng),sel=x.id===b.id;
+    svg+=`<line x1="${pa[0]}" y1="${pa[1]}" x2="${pc[0]}" y2="${pc[1]}" stroke="${sel?'#f97316':'#e2e8f0'}" stroke-width="${sel?5:3}" stroke-linecap="round" opacity="${sel?1:.7}"/><circle cx="${pp[0]}" cy="${pp[1]}" r="${sel?8:5}" fill="${sel?'#1d4ed8':'#64748b'}" stroke="#fff" stroke-width="2.5"/>`});
+  el.innerHTML=`<div class="tiles">${imgs}</div><svg>${svg}</svg><div class="mapbtns"><button type="button" data-map="in" aria-label="Zoom in">+</button><button type="button" data-map="out" aria-label="Zoom out">−</button><button type="button" data-map="re" aria-label="Recenter on beach">⌖</button></div><div class="attr">Imagery © Esri, Maxar, Earthstar Geographics</div>`;
+}
+function mapClick(a){if(a==='in')map.z=Math.min(19,map.z+1);else if(a==='out')map.z=Math.max(5,map.z-1);else{map.center=null;map.z=16}renderMap()}
+function initMapDrag(){
+  const el=$('map');
+  el.addEventListener('pointerdown',e=>{if(!map.on||e.target.closest('button'))return;map.drag={x:e.clientX,y:e.clientY,c:ll2px(map.center[0],map.center[1],map.z)};el.setPointerCapture(e.pointerId)});
+  el.addEventListener('pointermove',e=>{if(!map.drag)return;const d=map.drag;map.center=px2ll(d.c[0]-(e.clientX-d.x),d.c[1]-(e.clientY-d.y),map.z);renderMap()});
+  const end=()=>{map.drag=null};el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+  el.addEventListener('wheel',e=>{if(!map.on)return;e.preventDefault();mapClick(e.deltaY<0?'in':'out')},{passive:false});
+}
+
+/* ---------- Wave grid ---------- */
+function buildWaveGrid(){
+  const small=$('heightCounts'),big=$('heightCountsBig');
+  HEIGHTS.forEach(h=>{
+    const id=hId(h),lbl=h.toFixed(1)+' ft';
+    const box=document.createElement('div');
+    box.className='wavebox';box.id='box_'+id;
+    box.innerHTML=`<label for="${id}">${lbl}</label><div class="stepper"><button type="button" class="secondary" data-step="${id}" data-d="-1" aria-label="Remove one ${lbl} wave">−</button><input id="${id}" class="hcount count" data-h="${h}" inputmode="numeric" pattern="[0-9]*" value="0" autocomplete="off"><button type="button" data-step="${id}" data-d="1" aria-label="Add one ${lbl} wave">+</button></div>`;
+    (h<=5?small:big).appendChild(box);
+  });
+}
+function getHeightList(){
+  const list=[];
+  document.querySelectorAll('.hcount').forEach(inp=>{
+    const h=num(inp.dataset.h),c=int(inp.value);
+    $('box_'+inp.id).classList.toggle('has',c>0);
+    for(let i=0;i<c;i++)list.push(h);
+  });
+  return list;
+}
+function setCountsFromList(list){
+  const counts={};
+  list.forEach(v=>{const h=clamp(roundHalf(v),0,MAX_HEIGHT);counts[h]=(counts[h]||0)+1});
+  document.querySelectorAll('.hcount').forEach(inp=>{inp.value=counts[num(inp.dataset.h)]||0});
+  openBigIfUsed();
+}
+function openBigIfUsed(){if([...document.querySelectorAll('#heightCountsBig .hcount')].some(i=>int(i.value)>0))$('bigWaves').open=true}
+
+/* ---------- Craft ---------- */
+function craftStateFromLimit(msi,limit){
+  if(msi>limit+EPS)return{state:'EXCEEDS LIMIT',cls:'bad',note:`MSI ${fmt(msi,1)} exceeds limit ${limit}`};
+  if(Math.abs(msi-limit)<EPS)return{state:'AT LIMIT',cls:'warn',note:`MSI equals listed limit ${limit}`};
+  return{state:'WITHIN LIMIT',cls:'ok',note:`MSI ${fmt(msi,1)} is below limit ${limit}`};
+}
+function lcacLoadNote(alpha){
+  if(alpha<=4)return'Load reference: 75 tons overload range, 0-4 ft significant breaker height.';
+  if(alpha<=8)return'Load reference: 60 tons normal range, 4-8 ft significant breaker height.';
+  if(alpha<=12)return'Load reference: 45 tons reduced range, 8-12 ft significant breaker height.';
+  return'Load reference: significant breaker height exceeds 12 ft table range.';
+}
+function addCraftRow(rows,name,basis,limit,status,cls,notes){rows.push(`<tr><td><b>${name}</b></td><td>${basis}</td><td>${limit}</td><td><span class="pill ${cls}">${status}</span></td><td>${notes}</td></tr>`)}
+function larcReasons(windSpeed){
+  const r=[],oc=$('larcOceanCurrent').value,sw=$('larcSwell').value,ch=$('larcChop').value;
+  if(windSpeed>25)r.push('wind speed over 25 kts');
+  if(!isBlank(oc)&&num(oc)>4)r.push('ocean current over 4 kts');
+  if(!isBlank(sw)&&num(sw)>6)r.push('swell over 6 ft');
+  if(!isBlank(ch)&&num(ch)>4)r.push('chop over 4 ft');
+  return r;
+}
+function renderCraft(msi,alphaRaw,bravo,hasData){
+  const rows=[],chips=[],mode=$('operationMode').value,modeLabel=mode==='wartime'?'Wartime':'Training / Operations',noGo=[],atLimit=[];
+  const windSpeed=num($('windSpeed').value),lr=larcReasons(windSpeed);
+  craftLimits.forEach(c=>{
+    const limit=c[mode];let{state,cls,note}=craftStateFromLimit(msi,limit);
+    if(c.name==='LARC-V'){if(lr.length){state='EXCEEDS LIMIT';cls='bad';note+='; LARC-V operating check: '+lr.join('; ')}else note+='; LARC-V operating checks clear or not entered'}
+    if(!hasData){state='NO DATA';cls='';note='No wave count yet. Nothing is checked until waves are counted or filled from NOAA.'}
+    addCraftRow(rows,c.name,modeLabel,`MSI ≤ ${limit}`,state,cls,note);chips.push({name:c.name,state,cls});
+    if(state==='EXCEEDS LIMIT')noGo.push(c.name);else if(state==='AT LIMIT')atLimit.push(c.name);
+  });
+  const lc=[];let visNote='';
+  if(!$('lcacCommsOk').checked)lc.push('loss of LCAC communications');
+  const vis=$('visibilityYards').value;
+  if(isBlank(vis))visNote=' Visibility not entered.';else if(num(vis)<2000)lc.push('visibility less than 2000 yd');
+  if(!$('lcacMarkersVisible').checked)lc.push('CLZ markers not visible');
+  if(!$('lcacLaneClear').checked)lc.push('fouled approach lane or CLZ');
+  if(windSpeed>30)lc.push('winds greater than 30 kts');
+  if(!$('lcacNoUnmovableFod').checked)lc.push('unmovable FOD');
+  if(alphaRaw>6.9)lc.push('significant breaker height greater than 6.9 ft');
+  if(bravo>8)lc.push('maximum breaker height greater than 8 ft');
+  const load=$('lcacLoad').value;
+  if(load==='75'&&alphaRaw>4)lc.push('selected 75-ton load exceeds 0-4 ft reference range');
+  if(load==='60'&&alphaRaw>8)lc.push('selected 60-ton load exceeds 4-8 ft reference range');
+  if(load==='45'&&alphaRaw>12)lc.push('selected 45-ton load exceeds 8-12 ft reference range');
+  if($('lcacCraftmaster').value==='nogo')lc.push('craftmaster/SRM directed NO-GO');
+  // With no wave count, only the non-wave LCAC items (comms, markers, lane, FOD, wind, craftmaster) can trigger.
+  const lcState=lc.length?'CRITERION TRIGGERED':hasData?'NONE TRIGGERED':'NO DATA',lcCls=lc.length?'bad':hasData?'ok':'';
+  addCraftRow(rows,'LCAC','LCAC NO-GO criteria','Not MSI based',lcState,lcCls,(lc.length?lc.join('; '):hasData?'No LCAC NO-GO item triggered from entered data.':'No wave count yet.')+visNote+(hasData?' '+lcacLoadNote(alphaRaw):''));
+  chips.push({name:'LCAC',state:lcState,cls:lcCls});
+  if(lc.length)noGo.push('LCAC');
+  $('craftStatusBody').innerHTML=rows.join('');
+  let summary,cls,short,tag;
+  if(!hasData){summary='No wave data entered.'+(lc.length?` LCAC criterion triggered: ${lc.join('; ')}.`:'');cls=lc.length?'bad':'';short='No data';tag='NO DATA'}
+  else if(!noGo.length&&!atLimit.length){summary='All listed craft within entered limits and criteria.';cls='ok';short='Within limits';tag='WITHIN LIMITS'}
+  else if(!noGo.length){summary=`At listed limit: ${atLimit.join(', ')}.`;cls='warn';short='At limit';tag='AT LIMIT'}
+  else{summary=`Limit exceeded or criterion triggered: ${noGo.join(', ')}.`+(atLimit.length?` At limit: ${atLimit.join(', ')}.`:'');cls='bad';short=`Exceeds ×${noGo.length}`;tag='LIMIT EXCEEDED'}
+  $('craftOverall').innerHTML=`<span class="pill ${cls}">${tag}</span> ${esc(summary)} <span class="small">Advisory only. The decision belongs to the decision authority in the box below.</span>`;
+  return{cls,short,summary,tag,chips};
+}
+function renderDecision(msi,overall){
+  const val=$('decValue').value,role=$('decRole').value,ini=$('decInitials').value.trim(),time=$('decTime').value.trim(),rem=$('decRemarks').value.trim(),st=$('decStatus');
+  // Fingerprint of every observation input (not the decision fields), so any change flags the decision.
+  let h=5381;document.querySelectorAll('input[id],select[id]').forEach(el=>{if(/^dec|^noaaWin$/.test(el.id))return;const s=el.id+'='+(el.type==='checkbox'?el.checked:el.value)+';';for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0});
+  const sig=`MSI ${fmt(msi,1)} / ${overall.short} #${(h>>>0).toString(16)}`;
+  $('decConfirm').style.display=val?'':'none';
+  if(!val){$('decMsi').value='';st.className='note warn';st.innerHTML='<b>Decision PENDING.</b> Waiting for the decision authority. The limit check above is advisory only.';return'PENDING - awaiting decision authority'}
+  if(!$('decMsi').value)$('decMsi').value=sig;
+  const rec=$('decMsi').value;
+  if(rec!==sig){st.className='note bad';st.innerHTML=`<b>Re-confirm required.</b> Inputs changed after the decision was recorded (recorded at ${esc(rec)}, now ${esc(sig)}). The decision authority must review it and re-confirm.`;return`RE-CONFIRM REQUIRED (${val} recorded at ${rec}; now ${sig})`}
+  if(!role||!ini){st.className='note warn';st.innerHTML='<b>Incomplete.</b> Record the decision authority and initials or callsign.';return`${val} - INCOMPLETE (authority/initials missing)`}
+  const line=`${val} by ${role} (${ini})${time?' at '+time:''}${rem?' - '+rem:''}`;
+  st.className='note ok';st.textContent='Decision recorded by a person: '+line+'.';
+  return line;
+}
+
+/* ---------- Main calculation ---------- */
+function calculate(){
+  const W=[],warn=(type,text)=>W.push({type,text});
+
+  // A / B
+  const heights=getHeightList().sort((a,b)=>b-a),total=heights.length;
+  const top33=heights.slice(0,33),top33Sum=top33.reduce((a,b)=>a+b,0);
+  const alphaRaw=top33.length?top33Sum/33:0,alphaReport=roundHalf(alphaRaw);
+  const tableAlpha=clamp(alphaReport,0,MAX_TABLE_ALPHA),bravo=heights[0]||0;
+  if(total===0)warn('warn','No waves entered yet.');
+  else if(total<33)warn('bad',`Only ${total} waves entered. ALPHA needs at least 33 (normally 100).`);
+  else if(total!==100)warn('warn',`Wave count total is ${total}, not 100. SUROB should normally use 100 waves.`);
+  if(alphaReport>MAX_TABLE_ALPHA)warn('warn',`ALPHA ${fmt(alphaReport,1)} ft is above the 5 ft table range. C, D and E lookups use the 5 ft column.`);
+
+  // C
+  const clockSec=elapsedFromClock($('startTime').value,$('stopTime').value);
+  const manualSec=num($('totalSeconds').value);
+  if((!isBlank($('startTime').value)||!isBlank($('stopTime').value))&&clockSec==null&&!(manualSec>0)&&!timerStart)warn('warn','Start/stop time not readable. Use HHMM or HHMMSS (e.g. 0430 or 043015).');
+  const elapsed=manualSec>0?manualSec:(clockSec||0);
+  const elapsedSrc=manualSec>0?'from total seconds':(clockSec?'from start/stop times':(timerStart?'stopwatch running':'no timing yet'));
+  if(manualSec>0&&clockSec&&Math.abs(manualSec-clockSec)>60)warn('warn',`Total seconds (${fmt(manualSec,0)}) and start/stop times (${clockSec} s) disagree by more than a minute. Using total seconds.`);
+  const wavesTimed=int($('wavesTimed').value)||100;
+  const charlieRaw=elapsed>0?elapsed/wavesTimed:0,charlieReport=roundHalf(charlieRaw);
+  let cRow=null,cVal=0;
+  if(charlieRaw>0){
+    const rawRow=Math.ceil(charlieRaw-EPS);
+    cRow=clamp(rawRow,8,17);
+    if(rawRow<8)warn('warn','CHARLIE is below table minimum. Using 8 sec row for period table.');
+    if(rawRow>17)warn('warn','CHARLIE is above table maximum. Using 17 sec row for period table.');
+    cVal=lookup(breakerPeriod,cRow,tableAlpha);
+  }else if(total>0)warn('warn',timerStart?'Stopwatch running. C / CHARLIE correction is 0 until timing is stopped.':'C / CHARLIE timing not entered. Period correction is 0 until timing is entered.');
+
+  // D
+  const p=int($('pCount').value),s=int($('sCount').value),x=int($('xCount').value),typeTotal=p+s+x;
+  const pPct=typeTotal?p/typeTotal*100:0,sPct=typeTotal?s/typeTotal*100:0,xPct=typeTotal?x/typeTotal*100:0;
+  let dType='spilling',dPct=sPct;if(xPct>sPct){dType='surging';dPct=xPct}
+  const dPctRow=roundUpPct(dPct),dVal=typeTotal?lookup(dType==='spilling'?spilling:surging,dPctRow,tableAlpha):0;
+  if(typeTotal===0&&total>0)warn('warn','D / DELTA breaker types not entered. Breaker-type correction is 0.');
+  else if(typeTotal>0&&total>0&&typeTotal!==total)warn('warn',`Breaker-type counts total ${typeTotal}, but ${total} waves were counted.`);
+  if(typeTotal&&pPct>sPct&&pPct>xPct)warn('warn','Plunging is dominant. The worksheet has no plunging table (no correction), so the larger of spilling/surging % is applied. Confirm against the paper sheet.');
+
+  // E
+  const echoAngle=num($('echoAngle').value),eRow=nearestAngleRow(echoAngle);
+  if(Math.abs(echoAngle)>40)warn('warn','ECHO is above 40°. Table lookup uses the 40° row.');
+  const eVal=lookup(waveAngle,eRow,tableAlpha);
+
+  // F
+  const driftFeet=num($('driftFeet').value),driftMinRaw=num($('driftMinutes').value);
+  if(driftFeet>0&&driftMinRaw<=0)warn('warn','FOXTROT drift time is blank or 0. Using 1 minute.');
+  const driftMinutes=driftMinRaw>0?driftMinRaw:1,ftPerMin=driftFeet/driftMinutes,fKnots=ftPerMin/100;
+  const fRow=clamp(floorTenth(fKnots),0,3);
+  if(fKnots>3)warn('warn','FOXTROT exceeds 3.0 kts. Littoral table is capped at 3.0 kts.');
+  const fVal=roundTenth(fRow*3),efVal=Math.max(eVal,fVal);
+
+  // H
+  const wind=windLookup($('windSpeed').value,$('windAngle').value,$('windType').value);
+  if(wind.speed>40)warn('warn',`Wind ${fmt(wind.speed,0)} kts is above the 40 kt table. Using the 36-40 kt row.`);
+  if(wind.speed>0&&isBlank($('windAngle').value))warn('warn','H / HOTEL wind speed is entered, but wind angle is blank. Blank angle is treated as 0°.');
+  if(num($('windAngle').value)>90)warn('warn','Wind angle above 90° is treated as 90°.');
+
+  // Secondary
+  const sec=Math.max(0,roundHalf($('secondaryHeight').value));
+
+  const msiRaw=alphaRaw+cVal+dVal+efVal+wind.value+sec;
+  const msi=roundTenth(msiRaw);
+
+  // Outputs
+  setText('totalWavesOut',String(total));setText('alphaRawOut',fmt(alphaRaw,2));setText('alphaReportOut',fmt(alphaReport,1));setText('bravoOut',fmt(bravo,1));
+  const prog=$('waveProgress');prog.firstElementChild.style.width=Math.min(100,total)+'%';prog.classList.toggle('full',total===100);prog.classList.toggle('over',total>100);
+  setText('elapsedOut',elapsed?fmt(elapsed,0):'0');setText('elapsedSrc',elapsedSrc);setText('charlieRawOut',fmt(charlieRaw,2));setText('charlieDiv',`seconds ÷ ${wavesTimed}`);setText('charlieReportOut',fmt(charlieReport,1));
+  setText('deltaPctOut',`${fmt(pPct,0)} / ${fmt(sPct,0)} / ${fmt(xPct,0)}`);setText('foxtrotKnotsOut',fmt(fKnots,2));
+  setText('aVal',fmt(alphaRaw,2));setText('cVal',fmt(cVal,1));setText('dVal',fmt(dVal,1));setText('eVal',fmt(eVal,1));setText('fVal',fmt(fVal,1));setText('efVal',fmt(efVal,1));setText('hVal',fmt(wind.value,1));setText('secVal',fmt(sec,1));
+  setText('msiBig',fmt(msi,1));
+  setText('cNote',cRow?`${cRow} sec row / ${fmt(tableAlpha,1)} ft col`:'no timing');
+  setText('dNote',typeTotal?`${dType}, ${fmt(dPct,0)}% → ${dPctRow}% row`:'no breaker types');
+  setText('eNote',`${fmt(echoAngle,0)}° → ${eRow}° row`);
+  setText('fNote',`${fmt(fKnots,2)} kts → ${fmt(fRow,1)} row`);
+  setText('hNote',`${wind.row} kts, ${wind.angleBand}, ${$('windType').value}`);
+
+  const warnBox=$('warnings');warnBox.innerHTML='';
+  if(!W.length){const d=document.createElement('div');d.className='note ok';d.textContent='No input warnings.';warnBox.appendChild(d)}
+  W.forEach(w=>{const d=document.createElement('div');d.className='note '+(w.type==='bad'?'bad':'warn');d.textContent=w.text;warnBox.appendChild(d)});
+  const hasBad=W.some(w=>w.type==='bad'),pill=$('statusPill');
+  pill.className='pill '+(hasBad?'bad':W.length?'warn':'ok');
+  pill.textContent=hasBad?'Check inputs':W.length?`Review ${W.length} warning${W.length>1?'s':''}`:'Inputs look clean';
+
+  const formula=`A ${fmt(alphaRaw,2)} + C ${fmt(cVal,1)} + D ${fmt(dVal,1)} + max(E ${fmt(eVal,1)}, F ${fmt(fVal,1)}) ${fmt(efVal,1)} + H ${fmt(wind.value,1)} + Secondary ${fmt(sec,1)} = MSI ${fmt(msi,1)}`;
+  setText('msiMathOutput',formula);
+
+  const fromNoaa=$('entrySource').value==='noaa',b=beach();
+  const srcLine=fromNoaa?`SOURCE: NOAA ESTIMATE (NDBC ${LINKS[b.id]?LINKS[b.id].wave.id:'?'}, 2-hr window ending ${fmtWhen(num($('noaaEnd').value))}). Not a surf-zone count.`:'SOURCE: hand entries / observed count';
+  setText('auditOutput',[
+    srcLine,
+    `A / ALPHA: ${total} waves ${fromNoaa?'estimated from significant height':'counted'}. Highest ${top33.length} total ${fmt(top33Sum,1)} ft / 33 = ${fmt(alphaRaw,2)} ft. BPT call round: ${fmt(alphaReport,1)} ft. Table column: ${fmt(tableAlpha,1)} ft.`,
+    `B / BRAVO: highest single breaker = ${fmt(bravo,1)} ft.`,
+    `C / CHARLIE: ${elapsed?fmt(elapsed,0):'0'} s (${elapsedSrc}) / ${wavesTimed} waves = ${fmt(charlieRaw,2)} sec. BPT call round: ${fmt(charlieReport,1)} sec. ${cRow?`Period row ${cRow} sec (rounded up) = ${fmt(cVal,1)}.`:'No timing: 0.0.'}`,
+    `D / DELTA: P ${p} (${fmt(pPct,0)}%), S ${s} (${fmt(sPct,0)}%), X ${x} (${fmt(xPct,0)}%). ${typeTotal?`${dType} table, ${dPctRow}% row (rounded up to next 10%) = ${fmt(dVal,1)}.`:'No breaker types: 0.0.'}`,
+    `E / ECHO: ${fmt(echoAngle,0)}° → ${eRow}° row = ${fmt(eVal,1)}.`,
+    `F / FOXTROT: ${fmt(driftFeet,1)} ft / ${fmt(driftMinutes,2)} min = ${fmt(ftPerMin,1)} ft/min ÷ 100 = ${fmt(fKnots,2)} kts. Lower tenth ${fmt(fRow,1)} × 3 = ${fmt(fVal,1)}.`,
+    `Use larger of E or F: max(${fmt(eVal,1)}, ${fmt(fVal,1)}) = ${fmt(efVal,1)}.`,
+    `H / HOTEL: ${fmt(wind.speed,1)} kts → ${wind.row} kt row, ${fmt(wind.angle,0)}° → ${wind.angleBand}, ${$('windType').value} = ${fmt(wind.value,1)}.`,
+    `Secondary wave height (nearest 1/2 ft) = ${fmt(sec,1)}.`,
+    `FINAL MSI: ${fmt(msiRaw,2)} → ${fmt(msi,1)}. Craft decisions use ${fmt(msi,1)}.`
+  ].join('\n'));
+
+  const overall=renderCraft(msi,alphaRaw,bravo,total>0);
+  const decisionLine=renderDecision(msi,overall);
+  const head=['EXERCISE - TRAINING AID'];
+  if(!isBlank($('scenarioId').value))head.push(`SAMPLE: ${$('scenarioId').value}`);
+  if(!isBlank($('siteName').value))head.push(`SITE: ${$('siteName').value.trim()}`);
+  head.push(srcLine);
+  if(!isBlank($('dtg').value))head.push(`DTG: ${$('dtg').value.trim()}`);
+  if(!isBlank($('observer').value))head.push(`OBSERVER: ${$('observer').value.trim()}`);
+  const v=id=>$(id).value.trim();
+  setText('callOutput',(head.length?head.join('\n')+'\n\n':'')+[
+    `ALPHA: ${fmt(alphaReport,1)} ft`,
+    `BRAVO: ${fmt(bravo,1)} ft`,
+    `CHARLIE: ${fmt(charlieReport,1)} sec`,
+    `DELTA: ${fmt(pPct,0)}% Plunging; ${fmt(sPct,0)}% Spilling; ${fmt(xPct,0)}% Surging`,
+    `ECHO: ${fmt(echoAngle,0)} degrees toward ${v('echoFlank')} flank`,
+    `FOXTROT: ${fmt(fKnots,2)} kts toward ${v('foxtrotFlank')} flank`,
+    `GOLF: ${v('golfFrom')||'__'} to ${v('golfTo')||'__'} lines in a ${v('golfWidth')||'__'} ft surf zone`,
+    `HOTEL: ${fmt(wind.speed,0)} kts at ${v('windAngle')||0} degrees ${v('windType').toUpperCase()} toward ${v('windFlank')} flank`,
+    `Visibility/Weather: ${v('visibility')||'__'}`,
+    `Secondary wave height: ${fmt(sec,1)} ft`,
+    ``,
+    `MSI: ${fmt(msi,1)}`,
+    `MSI math: ${formula}`,
+    `ADVISORY LIMIT CHECK (not a decision): ${overall.summary}`,
+    `DECISION: ${decisionLine}`
+  ].join('\n'));
+
+  setText('lbWaves',`${total}/100`);setText('lbMsi',fmt(msi,1));
+  const lb=$('lbStatus');lb.className='pill '+overall.cls;lb.textContent=overall.short;
+
+  // Overview
+  setText('ovMsi',total?fmt(msi,1):'—');
+  const ot=$('ovTag');ot.className='pill '+overall.cls;ot.textContent=overall.tag;
+  setText('ovPlace',`${b.name} · ${region().name}`);
+  $('ovSource').innerHTML=fromNoaa?'<span class="pill warn">NOAA ESTIMATE</span> Built from buoy reports, not a surf-zone count.':total?'<span class="pill">HAND ENTRY</span> Observed or typed count.':'';
+  $('ovChips').innerHTML=overall.chips.map(c=>`<span class="pill ${c.cls}">${esc(c.name)} · ${esc(c.state)}</span>`).join('');
+  const od=$('ovDecision'),dv=$('decValue').value;
+  od.className='note '+(!dv?'warn':/RE-CONFIRM|INCOMPLETE/.test(decisionLine)?'bad':'ok');
+  od.innerHTML=`<b>Human decision:</b> ${esc(decisionLine)}`;
+  renderNoaa();
+  save();
+}
+
+/* ---------- Stopwatch ---------- */
+let timerStart=null,ticker=null;
+function tick(){
+  let secs;
+  if(timerStart)secs=(Date.now()-timerStart)/1000;
+  else{const m=num($('totalSeconds').value);secs=m>0?m:(elapsedFromClock($('startTime').value,$('stopTime').value)||0)}
+  const t=fmtDur(secs);setText('timerDisplay',t);setText('lbTimer',timerStart||secs?t:'--:--');
+}
+function updateTimerUI(){
+  const b=$('timerToggle');b.textContent=timerStart?'Stop stopwatch':'Start stopwatch';b.className=timerStart?'danger':'blue';
+  $('timerDisplay').classList.toggle('running',!!timerStart);
+}
+function startTicker(){clearInterval(ticker);ticker=setInterval(tick,250);tick();updateTimerUI()}
+function toggleTimer(){
+  setManual();
+  if(!timerStart){
+    if(num($('totalSeconds').value)>0&&!confirm('Replace the existing timing with a new stopwatch run?'))return;
+    timerStart=Date.now();$('startTime').value=nowClock();$('stopTime').value='';$('totalSeconds').value='';startTicker();
+  }else{
+    const s=Math.round((Date.now()-timerStart)/1000);timerStart=null;clearInterval(ticker);
+    $('stopTime').value=nowClock();$('totalSeconds').value=s;tick();updateTimerUI();
+  }
+  calculate();
+}
+function resetTimer(){setManual();timerStart=null;clearInterval(ticker);['startTime','stopTime','totalSeconds'].forEach(id=>$(id).value='');tick();updateTimerUI();calculate()}
+
+/* ---------- Persistence ---------- */
+let restoring=false,storageOk=true;
+function save(){
+  if(restoring)return;
+  try{
+    const f={};
+    document.querySelectorAll('input[id],select[id],textarea[id]').forEach(el=>{f[el.id]=el.type==='checkbox'?el.checked:el.value});
+    localStorage.setItem(STORE_KEY,JSON.stringify({v:9,f,timerStart,savedAt:Date.now()}));
+  }catch(e){storageOk=false}
+}
+function restore(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY);if(!raw)return null;
+    const s=JSON.parse(raw);restoring=true;
+    Object.entries(s.f||{}).forEach(([id,v])=>{const el=$(id);if(!el)return;if(el.type==='checkbox')el.checked=!!v;else el.value=v});
+    if(s.timerStart)timerStart=s.timerStart;
+    if(s.f&&s.f.regionId&&REGIONS.some(r=>r.id===s.f.regionId)){$('regionId').value=s.f.regionId;fillBeaches(s.f.beachId)}
+    restoring=false;openBigIfUsed();return s.savedAt||Date.now();
+  }catch(e){restoring=false;return null}
+}
+
+/* ---------- Clear / copy ---------- */
+let tapHistory=[];
+function clearForm(){
+  if(!confirm('Clear all entries on this form?'))return;
+  resetFields();calculate();window.scrollTo({top:0});
+}
+function resetFields(){
+  const keepR=$('regionId').value,keepB=$('beachId').value;
+  document.querySelectorAll('input,select,textarea').forEach(el=>{
+    if(el.id==='regionId'||el.id==='beachId')return;
+    if(el.type==='checkbox')el.checked=el.defaultChecked;
+    else if(el.tagName==='SELECT'){const i=[...el.options].findIndex(o=>o.defaultSelected);el.selectedIndex=i<0?0:i}
+    else el.value=el.defaultValue;
+  });
+  timerStart=null;clearInterval(ticker);tapHistory=[];$('undoTap').disabled=true;
+  $('restoreNotice').style.display='none';$('pasteMsg').textContent='';$('bigWaves').open=false;
+  $('regionId').value=keepR;fillBeaches(keepB);$('siteName').value=beach().name;lastBeachName=beach().name;selEnd=null;
+  tick();updateTimerUI();
+}
+function loadScenario(k){
+  const sc=SCENARIOS[k];if(!sc)return;
+  if((getHeightList().length||num($('totalSeconds').value)>0)&&!confirm(`Replace current entries with sample ${sc.label}?`))return;
+  resetFields();
+  Object.entries(sc.f).forEach(([id,v])=>{const el=$(id);if(el)el.value=v});
+  $('scenarioId').value=sc.label;$('dtg').value=nowDTG();
+  openBigIfUsed();calculate();
+}
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);return true}
+  catch(e){try{const ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok}catch(e2){return false}}
+}
+function flash(btn,txt){const o=btn.dataset.label||btn.textContent;btn.dataset.label=o;btn.textContent=txt;setTimeout(()=>btn.textContent=o,1200)}
+
+/* ---------- Init ---------- */
+function init(){
+  try{
+    buildWaveGrid();
+    fillRegions();fillBeaches();
+    const savedAt=restore();
+    if(isBlank($('siteName').value))$('siteName').value=beach().name;
+    lastBeachName=$('siteName').value===beach().name?beach().name:'';
+    renderBeach();renderMap();initMapDrag();
+
+    document.addEventListener('click',e=>{
+      const sb=e.target.closest('[data-scenario]');if(sb){loadScenario(sb.dataset.scenario);return}
+      const bb=e.target.closest('[data-beach]');if(bb){$('beachId').value=bb.dataset.beach;onBeachChange();return}
+      if(e.target.closest('#mapShow')){map.on=true;renderMap();return}
+      const mb=e.target.closest('[data-map]');if(mb){mapClick(mb.dataset.map);return}
+      const b=e.target.closest('[data-step]');if(!b)return;
+      const inp=$(b.dataset.step),d=+b.dataset.d,cur=int(inp.value),nv=Math.max(0,cur+d);
+      if(nv===cur)return;
+      if(inp.classList.contains('hcount'))setManual();
+      inp.value=nv;
+      if(d>0){tapHistory.push(inp.id);$('undoTap').disabled=false}
+      if(navigator.vibrate)try{navigator.vibrate(8)}catch(_){}
+      calculate();
+    });
+    $('undoTap').addEventListener('click',()=>{
+      const id=tapHistory.pop();if(id){const i=$(id);i.value=Math.max(0,int(i.value)-1);calculate()}
+      $('undoTap').disabled=!tapHistory.length;
+    });
+    const onEdit=e=>{
+      const t=e.target;if(!t.matches||!t.matches('input,select'))return;
+      if(t.id==='noaaWin'){const link=LINKS[beach().id],pts=wavePoints(link),p=pts[int(t.value)];if(p){selEnd=p.t;renderNoaa()}return}
+      if(t.id==='regionId'){if(e.type==='change'){fillBeaches();onBeachChange()}return}
+      if(t.id==='beachId'){if(e.type==='change')onBeachChange();return}
+      if(t.classList.contains('hcount')||NOAA_FIELDS.includes(t.id))setManual();
+      if(e.type==='change'&&t.classList.contains('count'))t.value=t.id==='wavesTimed'&&isBlank(t.value)?'100':int(t.value);
+      if(['startTime','stopTime','totalSeconds'].includes(t.id))tick();
+      if(t.id==='decValue')$('decMsi').value='';
+      calculate();
+    };
+    document.addEventListener('input',onEdit);document.addEventListener('change',onEdit);
+    document.addEventListener('focusin',e=>{if(e.target.classList&&e.target.classList.contains('count')&&e.target.value==='0')e.target.select()});
+
+    $('applyPaste').addEventListener('click',()=>{
+      const tokens=$('pasteHeights').value.split(/[\s,;]+/).filter(t=>t!=='');
+      const vals=tokens.map(Number).filter(Number.isFinite).filter(n=>n>=0);
+      const bad=tokens.length-vals.length,over=vals.filter(n=>n>MAX_HEIGHT).length;
+      if(!vals.length){$('pasteMsg').textContent='No valid heights found.';return}
+      if(getHeightList().length&&!confirm('Replace the current wave counts with the pasted heights?'))return;
+      setManual();setCountsFromList(vals);tapHistory=[];$('undoTap').disabled=true;
+      $('pasteMsg').textContent=`Applied ${vals.length} heights.`+(bad?` Skipped ${bad} unreadable value${bad>1?'s':''}.`:'')+(over?` ${over} value${over>1?'s':''} above ${MAX_HEIGHT} ft counted as ${MAX_HEIGHT} ft.`:'');
+      calculate();
+    });
+    $('clearAll').addEventListener('click',clearForm);
+    $('noaaFill').addEventListener('click',()=>{selEnd=null;noaaFill(false)});
+    $('noaaFillSel').addEventListener('click',()=>noaaFill(true));
+    $('noaaManual').addEventListener('click',()=>{setManual();calculate();$('heightCounts').scrollIntoView({behavior:'smooth',block:'center'})});
+    $('spark').addEventListener('click',e=>{const link=LINKS[beach().id],pts=wavePoints(link);if(pts.length<2)return;const r=e.currentTarget.getBoundingClientRect(),t=pts[0].t+clamp((e.clientX-r.left)/r.width,0,1)*(pts[pts.length-1].t-pts[0].t);selEnd=pts.reduce((a,p)=>Math.abs(p.t-t)<Math.abs(a.t-t)?p:a).t;renderNoaa()});
+    window.addEventListener('resize',()=>{if(map.on)renderMap()});
+    $('dtgNow').addEventListener('click',()=>{$('dtg').value=nowDTG();calculate()});
+    $('decNow').addEventListener('click',()=>{$('decTime').value=nowClock().slice(0,4);calculate()});
+    $('decConfirm').addEventListener('click',()=>{if(confirm('Confirm the recorded decision still applies to the current inputs?')){$('decMsi').value='';calculate()}});
+    $('timerToggle').addEventListener('click',toggleTimer);
+    $('timerReset').addEventListener('click',()=>{if(timerStart||num($('totalSeconds').value)>0||!isBlank($('startTime').value)){if(!confirm('Clear the timing entries?'))return}resetTimer()});
+    $('copyCall').addEventListener('click',async()=>{flash($('copyCall'),await copyText($('callOutput').textContent)?'Copied':'Copy failed - select text manually')});
+    if(navigator.share){$('shareCall').style.display='';$('shareCall').addEventListener('click',()=>navigator.share({title:'SUROB call',text:$('callOutput').textContent}).catch(()=>{}))}
+
+    if(timerStart)startTicker();else{tick();updateTimerUI()}
+    calculate();
+    if(savedAt&&(getHeightList().length||num($('totalSeconds').value)>0||timerStart||!isBlank($('siteName').value))){const n=$('restoreNotice');n.style.display='';n.innerHTML=`<b>Restored saved entries</b> from ${new Date(savedAt).toLocaleString()}. Use <b>Clear form</b> to start a new observation.`}
+    $('jsStatus').className='status ok';$('jsStatus').textContent=storageOk?'App ready · autosave on':'App ready · autosave off';
+    $('blockedNotice').style.display='none';
+  }catch(err){
+    $('jsStatus').className='status bad';$('jsStatus').textContent='App error';
+    $('blockedNotice').className='note bad';$('blockedNotice').innerHTML='<b>App error.</b> '+String(err&&err.message||err).replace(/</g,'&lt;');
+  }
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+</script>
+</body>
+</html>
