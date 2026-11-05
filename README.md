@@ -1,62 +1,87 @@
 # SUROB MSI Calculator
 
-Phone and laptop calculator for the SUROB worksheet (A–H). It gives the Modified Surf Index, an advisory craft limit check and a record of the decision a person makes.
+**Open the app:** https://wardenofthekeys.github.io/SUROB/v3/
 
-## Get it
+A SUROB is a surf observation. Before boats and landing craft come to a beach, a Sailor watches 100 waves and writes down how big they are and how they break. Those numbers make the **MSI** (Modified Surf Index). The MSI tells the team which craft can land safely.
+
+This app does that worksheet on a phone or laptop. It does the math, checks each craft's limit, and fills in the paperwork. It works with no signal.
+
+**The app never decides GO or NO-GO.** A person does: the BPTC (Beach Party Team Commander) or the SRM (Senior Ramp Marshal).
+
+Do not type names, unit information or real operation details into the app.
+
+## How to get it
+
+| Where | What to do |
+|---|---|
+| **Any phone, tablet or computer** | Open the link above in a web browser. |
+| **Phone with no signal later** | Open the link once while you have signal. Then add it to your home screen: on iPhone tap Share, then **Add to Home Screen**. On Android tap ⋮, then **Install app**. After that it opens with no signal. |
+| **Ship's computer or USB stick** | In the app, tap **Download offline copy (.zip)**. Unzip it and open `index.html`. No install, no account, no internet. |
+
+## How to use it
+
+The app has two tabs at the top.
+
+### Overview tab: the quick picture
+
+- **Pick the beach.** A map shows the beach with an alligator marker, so you can check it is the right spot. You can switch between satellite, hybrid and regular map.
+- **See an estimate right away.** The app uses NOAA buoy reports to guess the MSI before anyone counts a wave.
+- **See the trend.** One chart shows the estimated MSI for the last 7 days and the next 5 days, with lines for the craft limits. Slide the bar under the chart (or tap the chart) to pick a time. Tap **Use in worksheet** to start the worksheet from that time.
+- **Add your own beach.** Type its MGRS grid or its latitude and longitude, or tap **Use my location**. It is saved on your phone only.
+
+### Worksheet tab: the real count
+
+1. **Count each wave.** Tap how it broke (spilling, plunging or surging), then tap its height. The type stays picked, so most waves take one tap.
+   - Tap **Info** to see pictures of each breaker type and how to judge wave height.
+   - **Recorded waves** shows every wave as you add it, newest on top, with the time. Tap **Remove** to take one out, or **Undo** for the last one.
+2. **Or say it.** Tap **Mic**, then tap the microphone on your phone's keyboard and talk: "two spilling, three plunging" or "spilling two, three, plunging four". The count goes up as you talk. It still works if the phone writes "spelling" or "surgery".
+3. **Time the waves** with the stopwatch, or type the start and stop times.
+4. **Fill in the rest** (angle, current, surf zone, wind). The units (ft, kts, °) are inside each box.
+5. **Read the result.** The app shows every step of the math so you can check it against paper.
+6. **Send and save.**
+   - Copy the **BPT communicator call** (the radio report).
+   - Tap **Fill data sheet (PDF)** to get the 2-page SUROB data sheet already filled in, or **Blank data sheet (PDF)** to fill it by hand.
+7. **The BPTC or SRM records the decision.** If anything changes after that, the app asks them to confirm again.
+
+**Already have a paper sheet or a spoken report?** Use **Speak, scan or paste a report**. Read the report out loud, or use the phone's camera text scanner on the paper. You check every number before it goes in.
+
+## Safety checks
+
+- The NOAA numbers are only an **estimate**. Buoys sit offshore, not in the surf. The real count always wins.
+- If your count is very different from NOAA for the same time, the app shows a **CHECK** note so someone looks again. It never changes your numbers.
+- Craft limit results are advice only. Until 33 waves are counted, they say **NO DATA**.
+
+## Who is in control
 
 | | |
 |---|---|
-| **Open it** | https://wardenofthekeys.github.io/SUROB/v3/ in any current browser |
-| **Phone or tablet** | Open the link once while connected, then Share → **Add to Home Screen** (iPhone) or ⋮ → **Install app** (Android). It opens with no signal from then on. |
-| **Laptop, ship's computer or USB stick** | On the page, tap **Download offline copy (.zip)**. Unzip it and open `index.html`. No install, no account, no internet. Pass the zip around like any file. |
+| **Who decides** | Only the BPTC or SRM records GO, GO with restrictions or NO-GO. |
+| **What the app will not do** | It does not decide, and it does not send what you type anywhere. It only loads its own files, map pictures (after you open the map) and the weather forecast. |
+| **What to watch** | Warnings, the step-by-step math, CHECK notes and the "confirm again" flag. |
+| **When to ask** | Any red warning, CHECK note, craft at or over its limit, or a number that does not match the paper goes to the BPTC or SRM. |
+| **How to stop** | Close the tab. **Clear form** erases what is saved on the phone. |
 
-The calculator never makes the GO / NO-GO call. The BPTC or SRM does. Do not enter names, unit data or operational observations.
+## Where the data comes from
 
-## What it does
-
-| | |
+| Source | What it gives |
 |---|---|
-| **Count** | One pad for each wave: pick how it broke (spilling, plunging, surging; it stays picked), then tap its height. One tap records both. Or tap **Mic** and say them into the keyboard's dictation ("two spilling, three plunging"); the counts fill in as you talk. **Info** shows how to judge breaker type and height. Optional spoken count every 10 waves. |
-| **Speak or scan a report** | Say the whole report ("Alpha three and a half, Bravo five, …"), or scan a handwritten sheet with the phone's text recognition. You check every value before it goes in. |
-| **Worksheet** | ALPHA to HOTEL, step-by-step verification, the BPT communicator call ready to copy, print or PDF. |
-| **Data sheet (PDF)** | The 2-page fillable SUROB / MSI data sheet, blank or filled from the worksheet: MSI calculation, BPT calls, 100-wave table (in tap order, with breaker type), breaker period and highest-33 computation. Every field stays editable. Works offline. |
-| **Overview** | Its own tab: MSI, a check result per craft, the decision status, beach picker and a map check (satellite, hybrid or regular) with the beach marked by an alligator. |
-| **NOAA picture** | Estimated MSI for the last 7 days (buoys) and the next 5 days (NWS forecast) at the selected beach. |
-| **Cross-check** | Flags an observed count that is far off NOAA for the same time (MSI 1.5, ALPHA 50 %, wind 10 kts). It never changes a value. |
-| **Any beach** | Add a beach by MGRS or latitude / longitude (deg-min-sec or decimal), or **Use my location**. It links to the nearest NOAA buoy within 150 km. Saved on the device only. |
-| **No signal** | The app, the packaged NOAA week and the forecast open offline, from the home screen or from the downloaded copy. The newest version and data load by themselves when connected. |
+| NOAA buoys (NDBC) | Wave height, timing and direction for the last 7 days |
+| NOAA and National Weather Service stations | Wind and how far you can see |
+| National Weather Service forecast | Waves and wind for the next 5 days |
+| Esri | Map pictures, only when you open the map |
+| Your phone's keyboard dictation and camera text scanner (Apple or Google) | Turning speech or a paper sheet into text. The app only gets the text. |
+| Claude Code (Anthropic) | Helped write and check the code |
 
-NOAA estimates count breaker type, littoral current and secondary wave as 0, and buoys are offshore. They show the trend and catch a count that looks wrong. They do not replace the surf observation.
-
-## Human control
-
-- **Approval point:** only the BPTC (Beach Party Team Commander) or SRM (Senior Ramp Marshal) records GO, GO with restrictions or NO-GO. Any input change after that flags it for re-confirmation.
-- **Prohibited actions:** the app does not decide or send what you type. Its security policy allows only its own files, Esri map pictures after **Show map**, and the NWS forecast.
-- **Monitoring:** input warnings, the verification block, the NOAA cross-check and the re-confirm flag.
-- **Escalation:** red warnings, a CHECK note, at-limit or exceeded craft, or any mismatch with the paper worksheet go to the BPTC or SRM.
-- **Shutdown:** close the tab. **Clear form** erases what is saved on the device.
-
-## Data and tools
-
-| Source | Used for |
-|---|---|
-| NOAA NDBC buoys | Wave height, period and direction (7-day history) |
-| NWS station observations, NOAA CO-OPS | Wind and visibility (7-day history) |
-| NWS gridpoint forecast (api.weather.gov) | 5-day wave and wind forecast |
-| Esri World Imagery | Satellite map, only when opened |
-| The phone's own dictation and text recognition (Apple, Google) | Speaking or scanning a report. The app receives only the text. |
-| Claude Code (Anthropic Claude Opus 5.5) | Writing and reviewing the code |
-
-All data is public. No AI runs inside the app. The NOAA data is packaged with the app so it works offline, and refreshed every 3 hours.
+All data is public. No AI runs inside the app. The NOAA data is saved inside the app so it works offline, and it updates itself every 3 hours.
 
 ## Versions
 
 | | |
 |---|---|
-| [Version 3](https://wardenofthekeys.github.io/SUROB/v3/) | Current |
-| [Version 2](https://wardenofthekeys.github.io/SUROB/) | Earlier worksheet-only calculator |
-| Overview prototype (`working-overview/`) | The team's first overview build: beach picker, map, NOAA week, 7-day chart and sample C. Version 3 grew out of it. |
+| [Version 3](https://wardenofthekeys.github.io/SUROB/v3/) | The current app. Use this one. |
+| [Version 2](https://wardenofthekeys.github.io/SUROB/) | The earlier worksheet-only calculator. |
+| Overview builds (`working-overview/` and the `surob-msi-calculator` zip files) | The team's overview app: beach picker, map, NOAA week, wave log and breaker pictures. Version 3 grew out of it. |
 
-## Status
+## Still to do
 
-The MSI correction tables still need checking against the official source publication. Check results against current command guidance.
+The correction tables match the team's SUROB data sheet. They still need a check against the official publication. Always check results against current command guidance.
