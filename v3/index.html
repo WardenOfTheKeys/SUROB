@@ -118,9 +118,28 @@ main>*,.ovgrid>*,.grid>*{min-width:0}select{max-width:100%;text-overflow:ellipsi
 .spark{width:100%;height:96px;display:block;cursor:pointer;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}
 input[type=range]{min-height:auto;padding:0;border:0;background:none}
 .srcnote{font-size:13px;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin-top:10px}
+.tabs{position:sticky;top:0;z-index:15;background:var(--bg);display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.tabs button{background:#fff;color:#334155;border:1px solid #cbd5e1;min-height:46px;font-size:16px}
+.tabs button[aria-selected=true]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tabs .tabsin{max-width:1120px;margin:0 auto;width:100%;display:contents}
+[data-tab][hidden]{display:none!important}
+.unitbox{position:relative;display:block}
+.unitbox input{padding-right:46px}
+.unitbox::after{content:attr(data-unit);position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:800;color:#64748b;pointer-events:none}
+.stepper .unitbox input{padding-right:30px}.stepper .unitbox::after{right:6px;font-size:12px}
+.infobtn{min-height:32px;padding:4px 10px;font-size:13px;background:#fff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:999px;font-weight:800}
+.infobtn[aria-expanded=true]{background:#eff6ff}
+.padhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:2px 0 8px}
+.padhead b{font-size:13px;color:#374151}
+.info{background:#fff;border:1px solid #bfdbfe;border-radius:12px;padding:10px;margin:0 0 10px;font-size:14px}
+.info svg{width:100%;height:auto;display:block;background:#f0f9ff;border-radius:10px}
+.info ul{margin:8px 0 0;padding-left:18px}.info li{margin:3px 0}
+.micbtn{background:#fff;color:#111827;border:1px solid #cbd5e1}
+.micbtn[aria-pressed=true]{background:#b91c1c;color:#fff;border-color:#b91c1c}
+.miclive{font-size:13px;color:#334155;margin-top:6px;min-height:18px}
 /* Zero page margin stops the browser printing its header/footer (file path, URL, date) on PDFs. */
 @page{margin:0}
-@media print{header,.no-print,button,.livebar{display:none!important}body{background:white;padding:12mm}.card,.result{box-shadow:none;break-inside:avoid}.breakdown{grid-template-columns:repeat(8,1fr)}details{display:block}details>*{display:block}}
+@media print{header,.no-print,button,.livebar,.tabs{display:none!important}[data-tab][hidden]{display:block!important}body{background:white;padding:12mm}.card,.result{box-shadow:none;break-inside:avoid}.breakdown{grid-template-columns:repeat(8,1fr)}details{display:block}details>*{display:block}}
 </style>
 </head>
 <body>
@@ -131,6 +150,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
   </div>
 </header>
 <div class="banner">Do not enter names, unit data or operational observations. Limit checks are advisory. A person makes the GO / NO-GO decision.</div>
+<nav class="tabs no-print" role="tablist" aria-label="Views"><button type="button" role="tab" id="tabOverview" data-tabbtn="overview" aria-selected="true">Overview</button><button type="button" role="tab" id="tabWorksheet" data-tabbtn="worksheet" aria-selected="false">Worksheet</button></nav>
 <main>
   <noscript><div class="note bad"><b>JavaScript is off.</b> The calculator cannot run until JavaScript is enabled or the file is opened in a browser that supports scripts.</div></noscript>
   <div id="blockedNotice" class="note warn"><b>Loading calculator.</b> If this message stays on screen, the phone preview is blocking the app logic. Open the file in Safari/Chrome or use the home-screen version.</div>
@@ -147,7 +167,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
         <div class="chips" id="ovChips"></div>
         <p class="small" style="margin-top:8px">Advisory limit check only. Chips show <b>NO DATA</b> until at least 33 waves are counted. The decision is recorded by a person in section 8.</p>
         <div id="ovDecision" class="note" style="margin-top:6px"></div>
-        <div class="btnrow no-print" style="margin-top:10px"><a class="pill" href="#final">Go to final MSI and decision ↓</a></div>
+        <div class="btnrow no-print" style="margin-top:10px"><button type="button" class="secondary" data-tabbtn="worksheet">Open worksheet</button><a class="pill" href="#final">Go to final MSI and decision ↓</a></div>
       </div>
       <div>
         <h3 style="margin-top:0">Beach</h3>
@@ -206,11 +226,12 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
 
   <section class="card" id="scan">
     <h2>Speak, scan or paste a report</h2>
-    <p class="small"><b>Speak it:</b> tap the box, tap the microphone on the phone keyboard and say the report: "Alpha three and a half, Bravo five, Charlie nine seconds, Delta twenty percent plunging seventy percent spilling ten percent surging, Echo ten right, Foxtrot point five knots left, Golf two to four lines one hundred fifty feet, Hotel twelve knots at forty onshore right." Then tap <b>Read report</b>.</p>
+    <p class="small"><b>Speak it:</b> tap <b>Mic</b>, or tap the box and the microphone on the phone keyboard, and say the report: "Alpha three and a half, Bravo five, Charlie nine seconds, Delta twenty percent plunging seventy percent spilling ten percent surging, Echo ten right, Foxtrot point five knots left, Golf two to four lines one hundred fifty feet, Hotel twelve knots at forty onshore right." Then tap <b>Read report</b>.</p>
     <p class="small"><b>Scan it:</b> on iPhone, tap the box and choose <b>Scan Text</b>. On Android, use Google Lens <b>Copy text</b> on the sheet and paste here.</p>
-    <p class="small">Works for a finished report (ALPHA to HOTEL) or a raw worksheet (wave tally such as <b>1.5 ft: 12</b>, start/stop or total seconds, P/S/X counts, drift). You check every value in the table before it goes into the worksheet. The phone's own dictation and text recognition do the listening and reading; this app sends nothing. The GO / NO-GO entry and names are never imported.</p>
+    <p class="small">Works for a finished report (ALPHA to HOTEL) or a raw worksheet (wave tally such as <b>1.5 ft: 12</b>, start/stop or total seconds, P/S/X counts, drift). You check every value in the table before it goes into the worksheet. The phone's own dictation and text recognition, or the browser's voice input behind <b>Mic</b>, do the listening and reading; the app itself sends nothing. The GO / NO-GO entry and names are never imported.</p>
     <textarea id="scanText" placeholder="ALPHA 3.5 ft&#10;BRAVO 5 ft&#10;CHARLIE 9 sec&#10;DELTA 20% P 70% S 10% X&#10;ECHO 10 Right&#10;FOXTROT 0.5 kts Left&#10;GOLF 2 to 4 lines 150 ft&#10;HOTEL 12 kts at 40 onshore Right"></textarea>
-    <div class="btnrow no-print" style="margin-top:8px"><button type="button" class="blue" id="scanRead">Read report</button><button type="button" id="scanApply" disabled>Apply to worksheet</button><button type="button" class="secondary" id="scanPhotoBtn">Show photo to compare</button><input type="file" accept="image/*" data-role="scanPhoto" hidden></div>
+    <div class="miclive" data-miclive="scanText"></div>
+    <div class="btnrow no-print" style="margin-top:8px"><button type="button" class="micbtn" data-mic="scanText" aria-pressed="false">Mic</button><button type="button" class="blue" id="scanRead">Read report</button><button type="button" id="scanApply" disabled>Apply to worksheet</button><button type="button" class="secondary" id="scanPhotoBtn">Show photo to compare</button><input type="file" accept="image/*" data-role="scanPhoto" hidden></div>
     <div id="scanOut" style="margin-top:8px"></div>
     <div id="scanMsg" class="small" style="margin-top:6px"></div>
     <img id="scanImg" alt="Photo of the sheet, shown here only for checking" style="display:none;max-width:100%;margin-top:8px;border-radius:8px">
@@ -220,13 +241,63 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
     <h2>1. A / B / D - Count each wave</h2>
     <p class="small">For each wave as it breaks: pick how it broke, then tap its height. The breaker type stays picked, so most waves take one tap. The app works out ALPHA (highest 33 average), BRAVO (highest wave) and DELTA (breaker percentages).</p>
     <div class="pad no-print">
+      <div class="padhead"><b>Breaker type</b><button type="button" class="infobtn" data-info="infoBreaker" aria-expanded="false" aria-controls="infoBreaker">Info</button></div>
+      <div class="info" id="infoBreaker" hidden>
+        <svg viewBox="0 0 600 330" role="img" aria-label="Three beach profiles. Spilling: foam slides down the front of a gentle wave on a flat beach. Plunging: the crest curls over and crashes into the trough on a moderate beach. Surging: the wave runs up a steep beach without breaking offshore.">
+          <g font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#0f172a">
+            <text x="12" y="22">Spilling</text><text x="12" y="132">Plunging</text><text x="12" y="242">Surging</text>
+          </g>
+          <g font-family="system-ui,sans-serif" font-size="12" fill="#475569">
+            <text x="12" y="40">Flat or gentle beach. Foam slides down the face.</text>
+            <text x="12" y="150">Moderate to steep beach. Crest curls into the trough.</text>
+            <text x="12" y="260">Steep beach. Runs up the sand without breaking offshore.</text>
+          </g>
+          <path d="M0 95 C80 95 140 70 200 62 C240 58 262 74 300 86 L600 104 L600 110 L0 110Z" fill="#0e7490" opacity=".85"/>
+          <path d="M196 62 C220 60 250 66 280 84 C262 80 238 76 214 76 C204 72 198 68 196 62Z" fill="#fff"/>
+          <path d="M0 110 L600 104 L600 112 L0 112Z" fill="#d6b16c"/>
+          <path d="M0 205 C90 205 170 190 230 160 C258 147 286 150 300 168 C286 160 268 162 258 176 C250 190 262 204 300 208 L600 214 L600 220 L0 220Z" fill="#0e7490" opacity=".85"/>
+          <path d="M232 158 C258 146 288 150 300 168 C292 162 280 160 270 164Z" fill="#fff"/>
+          <path d="M0 220 L420 214 L600 196 L600 222 L0 222Z" fill="#d6b16c"/>
+          <path d="M0 310 C100 310 200 300 280 290 C330 284 370 290 420 300 L470 310 L600 270 L600 330 L0 330Z" fill="#0e7490" opacity=".85"/>
+          <path d="M380 292 C410 296 440 304 470 310 L520 294 C486 298 440 292 380 292Z" fill="#fff" opacity=".9"/>
+          <path d="M0 330 L470 316 L600 268 L600 330Z" fill="#d6b16c"/>
+        </svg>
+        <ul>
+          <li><b>Spilling (S):</b> least dangerous to small boats and landing craft. Preferred for landings.</li>
+          <li><b>Plunging (P):</b> sudden, concentrated break. Less preferred; long swell and offshore wind make it worse.</li>
+          <li><b>Surging (X):</b> least common and most violent. It keeps its energy and runs far up the beach.</li>
+        </ul>
+        <p class="small" style="margin:6px 0 0">From NTTP 3-59.3M / MCRP 2-10.3, Appendix D (Surf Zone Features and the Formation of Breakers), Apr 2024. Drawing made for this app.</p>
+      </div>
       <div class="padtypes" role="group" aria-label="Breaker type">
         <button type="button" data-btype="sCount" aria-pressed="false">Spilling <span id="padS">0</span></button>
         <button type="button" data-btype="pCount" aria-pressed="false">Plunging <span id="padP">0</span></button>
         <button type="button" data-btype="xCount" aria-pressed="false">Surging <span id="padX">0</span></button>
       </div>
+      <div class="padhead" style="margin-top:12px"><b>Wave height (ft)</b><button type="button" class="infobtn" data-info="infoHeight" aria-expanded="false" aria-controls="infoHeight">Info</button></div>
+      <div class="info" id="infoHeight" hidden>
+        <svg viewBox="0 0 600 220" role="img" aria-label="Wave diagram. Wave height is the vertical distance from the trough to the crest. Wavelength is the distance from one crest to the next.">
+          <path d="M0 120 C50 120 70 70 120 70 C170 70 190 160 270 160 C350 160 370 70 420 70 C470 70 490 160 600 160 L600 220 L0 220Z" fill="#0e7490" opacity=".85"/>
+          <line x1="0" y1="115" x2="600" y2="115" stroke="#0f172a" stroke-width="2" stroke-dasharray="8 6"/>
+          <line x1="120" y1="46" x2="420" y2="46" stroke="#1d4ed8" stroke-width="2.5"/><path d="M120 46 l12 -6 v12z M420 46 l-12 -6 v12z" fill="#1d4ed8"/>
+          <line x1="270" y1="70" x2="420" y2="70" stroke="#c2410c" stroke-width="2" stroke-dasharray="5 4"/>
+          <line x1="285" y1="72" x2="285" y2="158" stroke="#c2410c" stroke-width="3"/><path d="M285 70 l-6 12 h12z M285 160 l-6 -12 h12z" fill="#c2410c"/>
+          <g font-family="system-ui,sans-serif" font-size="14" font-weight="800">
+            <text x="230" y="38" fill="#1d4ed8">Wavelength (crest to crest)</text>
+            <text x="296" y="122" fill="#c2410c">Wave height</text><text x="296" y="140" fill="#c2410c" font-weight="600" font-size="12">trough to crest</text>
+            <text x="98" y="62" fill="#0f172a">Crest</text><text x="248" y="186" fill="#fff">Trough</text>
+            <text x="8" y="108" fill="#0f172a" font-size="12" font-weight="600">Still water level</text>
+          </g>
+        </svg>
+        <ul>
+          <li>Judge each breaker at the moment it breaks, from the trough in front of it to the crest.</li>
+          <li>Record to the nearest 1/2 ft. ALPHA is the average of the highest 33 of 100 waves; BRAVO is the single highest.</li>
+          <li>Swell and chop measured offshore are not breaker heights. NOAA buoy heights are offshore too.</li>
+        </ul>
+      </div>
       <div class="padheights" id="padHeights"></div>
-      <div class="padbar"><span id="padLast" class="small"><b>Pick a breaker type, then tap the height.</b></span><button type="button" class="secondary" id="undoTap" disabled>Undo last wave</button></div>
+      <div class="padbar"><span id="padLast" class="small"><b>Pick a breaker type, then tap the height.</b></span><div class="btnrow"><button type="button" class="micbtn" data-mic="pasteHeights" aria-pressed="false">Mic</button><button type="button" class="secondary" id="undoTap" disabled>Undo last wave</button></div></div>
+      <div class="miclive" data-miclive="pasteHeights"></div>
     </div>
     <div class="progress" id="waveProgress"><div></div></div>
     <div class="summary-grid" aria-label="Calculated wave count results">
@@ -236,7 +307,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <div class="sum"><b>D / DELTA %</b><strong id="deltaPctOut">0 / 0 / 0</strong><span>P / S / X</span></div>
     </div>
     <div class="btnrow no-print" style="margin-top:10px"><button type="button" class="ghost" id="clearAll">Clear form</button><label class="check speak" style="margin:0"><input id="sayCount" type="checkbox"><span>Say the count every 10 waves</span></label></div>
-    <details style="margin-top:12px" id="voiceBox"><summary>Say or paste the waves instead</summary><p class="small"><b>Hands-free:</b> tap the box, tap the microphone on the phone keyboard, and say each wave as it breaks, height then type: "two spilling, two and a half plunging, three surging". A wave with no type counts the height only. The counts update as you talk, so your eyes stay on the surf. iPhone dictation and Gboard voice typing can run without a connection when the language is downloaded on the phone. You can also paste heights separated by spaces, commas or new lines. Heights are rounded to the nearest 1/2 ft.</p><textarea id="pasteHeights" placeholder="Say or paste the waves here"></textarea><div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="applyPaste">Apply</button></div><div id="pasteMsg" class="small" style="margin-top:6px"></div></details>
+    <details style="margin-top:12px" id="voiceBox"><summary>Say or paste the waves instead</summary><p class="small"><b>Hands-free:</b> tap <b>Mic</b> under the pad (Chrome or Safari, needs a connection in Chrome), or tap the box and the microphone on the phone keyboard, and say each wave as it breaks, height then type: "two spilling, two and a half plunging, three surging". A wave with no type counts the height only. The counts update as you talk, so your eyes stay on the surf. iPhone dictation and Gboard voice typing can run without a connection when the language is downloaded on the phone. You can also paste heights separated by spaces, commas or new lines. Heights are rounded to the nearest 1/2 ft.</p><textarea id="pasteHeights" placeholder="Say or paste the waves here"></textarea><div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="applyPaste">Apply</button></div><div id="pasteMsg" class="small" style="margin-top:6px"></div></details>
     <details style="margin-top:8px" id="editCounts"><summary>Check or edit the totals</summary>
       <h3>Waves by height</h3>
       <div class="wave-grid" id="heightCounts"></div>
@@ -260,7 +331,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
     <div class="grid four">
       <div><label for="startTime">Start time HHMM(SS)</label><input id="startTime" placeholder="0430" inputmode="numeric" autocomplete="off"></div>
       <div><label for="stopTime">Stop time HHMM(SS)</label><input id="stopTime" placeholder="0443" inputmode="numeric" autocomplete="off"></div>
-      <div><label for="totalSeconds">Or total seconds</label><input id="totalSeconds" placeholder="780" inputmode="decimal" autocomplete="off"></div>
+      <div><label for="totalSeconds">Or total time</label><input id="totalSeconds" data-unit="sec" placeholder="780" inputmode="decimal" autocomplete="off"></div>
       <div><label for="wavesTimed">Waves timed</label><input id="wavesTimed" class="count" inputmode="numeric" pattern="[0-9]*" value="100" autocomplete="off"></div>
     </div>
     <div class="summary-grid">
@@ -273,15 +344,15 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
   <section class="card">
     <h2>3. E / F / G / H - Conditions</h2>
     <div class="grid three">
-      <div><label for="echoAngle">E / ECHO breaker angle degrees</label><input id="echoAngle" inputmode="decimal" value="0" autocomplete="off"></div>
+      <div><label for="echoAngle">E / ECHO breaker angle</label><input id="echoAngle" data-unit="°" inputmode="decimal" value="0" autocomplete="off"></div>
       <div><label for="echoFlank">ECHO flank</label><select id="echoFlank"><option>Right</option><option>Left</option><option>R/L</option></select></div>
-      <div><label for="secondaryHeight">Secondary wave height ft</label><input id="secondaryHeight" inputmode="decimal" value="0" autocomplete="off"></div>
+      <div><label for="secondaryHeight">Secondary wave height</label><input id="secondaryHeight" data-unit="ft" inputmode="decimal" value="0" autocomplete="off"></div>
     </div>
     <h3>F / FOXTROT littoral current</h3>
     <p class="small">Example: 223 ft in 3 minutes. The app converts ft/min to knots (ft/min ÷ 100) and uses the lower tenth for the MSI table.</p>
     <div class="grid four">
-      <div><label for="driftFeet">Drift distance ft</label><input id="driftFeet" inputmode="decimal" value="0" autocomplete="off"></div>
-      <div><label for="driftMinutes">Drift time min</label><input id="driftMinutes" inputmode="decimal" value="1" autocomplete="off"></div>
+      <div><label for="driftFeet">Drift distance</label><input id="driftFeet" data-unit="ft" inputmode="decimal" value="0" autocomplete="off"></div>
+      <div><label for="driftMinutes">Drift time</label><input id="driftMinutes" data-unit="min" inputmode="decimal" value="1" autocomplete="off"></div>
       <div><label for="foxtrotFlank">FOXTROT flank</label><select id="foxtrotFlank"><option>Right</option><option>Left</option><option>R/L</option></select></div>
       <div class="sum"><b>FOXTROT knots</b><strong id="foxtrotKnotsOut">0.00</strong><span>calculated</span></div>
     </div>
@@ -289,12 +360,12 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
     <div class="grid four">
       <div><label for="golfFrom">GOLF lines from</label><input id="golfFrom" placeholder="0" inputmode="numeric" autocomplete="off"></div>
       <div><label for="golfTo">GOLF lines to</label><input id="golfTo" placeholder="0" inputmode="numeric" autocomplete="off"></div>
-      <div><label for="golfWidth">Surf zone width ft</label><input id="golfWidth" placeholder="0" inputmode="decimal" autocomplete="off"></div>
+      <div><label for="golfWidth">Surf zone width</label><input id="golfWidth" data-unit="ft" placeholder="0" inputmode="decimal" autocomplete="off"></div>
       <div><label for="visibility">Visibility / weather</label><input id="visibility" placeholder="clear / unrestricted" autocomplete="off"></div>
     </div>
     <div class="grid four" style="margin-top:10px">
-      <div><label for="windSpeed">H / HOTEL wind speed kts</label><input id="windSpeed" inputmode="decimal" value="0" autocomplete="off"></div>
-      <div><label for="windAngle">H / HOTEL wind angle degrees</label><input id="windAngle" inputmode="decimal" placeholder="0-90" autocomplete="off"></div>
+      <div><label for="windSpeed">H / HOTEL wind speed</label><input id="windSpeed" data-unit="kts" inputmode="decimal" value="0" autocomplete="off"></div>
+      <div><label for="windAngle">H / HOTEL wind angle</label><input id="windAngle" data-unit="°" inputmode="decimal" placeholder="0-90" autocomplete="off"></div>
       <div><label for="windType">H / HOTEL wind type</label><select id="windType"><option value="onshore">Onshore</option><option value="offshore">Offshore</option></select></div>
       <div><label for="windFlank">H / HOTEL wind flank</label><select id="windFlank"><option>Right</option><option>Left</option><option>R/L</option></select></div>
     </div>
@@ -336,7 +407,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
     <p class="small">Displacement craft are checked against MSI limits. LCAC is checked against its listed NO-GO criteria. LARC-V uses its MSI limit plus the listed operating-condition checks, if entered. These checks are advisory. A person records the decision in section 8.</p>
     <div class="grid four">
       <div><label for="operationMode">Operation basis</label><select id="operationMode"><option value="training">Training / Operations</option><option value="wartime">Wartime</option></select></div>
-      <div><label for="visibilityYards">Visibility yards (LCAC)</label><input id="visibilityYards" inputmode="numeric" placeholder="blank = not observed" autocomplete="off"></div>
+      <div><label for="visibilityYards">Visibility (LCAC)</label><input id="visibilityYards" data-unit="yd" inputmode="numeric" placeholder="blank = not observed" autocomplete="off"></div>
       <div><label for="lcacLoad">LCAC load reference</label><select id="lcacLoad"><option value="auto">Auto from ALPHA</option><option value="75">75 tons overload</option><option value="60">60 tons normal</option><option value="45">45 tons reduced</option></select></div>
       <div><label for="lcacCraftmaster">Craftmaster / SRM status</label><select id="lcacCraftmaster"><option value="go">No directed NO-GO</option><option value="nogo">Directed NO-GO</option></select></div>
     </div>
@@ -346,7 +417,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <label class="check"><input id="lcacLaneClear" type="checkbox" checked><span>Approach lane and CLZ are clear</span></label>
       <label class="check"><input id="lcacNoUnmovableFod" type="checkbox" checked><span>No unmovable FOD in CLZ</span></label>
     </div>
-    <details style="margin-top:12px"><summary>LARC-V operating condition checks</summary><p class="small">Leave blank if not observed. If entered, these limits are applied in addition to the MSI limit.</p><div class="grid three" style="margin-top:10px"><div><label for="larcOceanCurrent">Ocean current kts</label><input id="larcOceanCurrent" inputmode="decimal" autocomplete="off"></div><div><label for="larcSwell">Swell height ft</label><input id="larcSwell" inputmode="decimal" autocomplete="off"></div><div><label for="larcChop">Chop height ft</label><input id="larcChop" inputmode="decimal" autocomplete="off"></div></div></details>
+    <details style="margin-top:12px"><summary>LARC-V operating condition checks</summary><p class="small">Leave blank if not observed. If entered, these limits are applied in addition to the MSI limit.</p><div class="grid three" style="margin-top:10px"><div><label for="larcOceanCurrent">Ocean current</label><input id="larcOceanCurrent" data-unit="kts" inputmode="decimal" autocomplete="off"></div><div><label for="larcSwell">Swell height</label><input id="larcSwell" data-unit="ft" inputmode="decimal" autocomplete="off"></div><div><label for="larcChop">Chop height</label><input id="larcChop" data-unit="ft" inputmode="decimal" autocomplete="off"></div></div></details>
   </section>
 
   <section class="card" id="final">
@@ -398,7 +469,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <li>Claude Code desktop app with the Anthropic Claude Opus 5.5 model, used to write and review code.</li>
       <li>A command-line shell for file checks, and the Claude Code built-in browser preview for testing.</li>
       <li>No external libraries and no AI inside the app. Data: NOAA NDBC buoy, CO-OPS station and NWS airfield reports (7 days) and the NWS gridpoint forecast (5 days), packaged in conditions-data.js and refreshed every 3 hours. Map pictures: Esri, only when the map is opened.</li>
-      <li>Speaking and scanning use the phone's own dictation and text recognition (Apple, Google). The app receives only the text.</li>
+      <li>Speaking and scanning use the phone's own dictation and text recognition (Apple, Google). <b>Mic</b> uses the browser's built-in speech recognition: Chrome and Edge send the audio to Google and need a connection; Safari uses Apple's speech service. The app receives only the text and stores no audio.</li>
       <li>MSI tables were carried over unchanged from the original worksheet version. The team must cite the source worksheet or publication.</li>
     </ul>
   </section>
@@ -1528,17 +1599,81 @@ async function copyText(t){
 function flash(btn,txt){const o=btn.dataset.label||btn.textContent;btn.dataset.label=o;btn.textContent=txt;setTimeout(()=>btn.textContent=o,1200)}
 
 /* ---------- Init ---------- */
+/* ---------- Overview / Worksheet tabs (?all shows every section, as print does) ---------- */
+const TAB_KEY='surob-msi-v3-tab',ALL_TABS=/[?&]all\b/.test(location.search);
+const tabOf=s=>s.id==='overview'||s.id==='noaa'?'overview':'worksheet';
+function showTab(name){
+  if(ALL_TABS)return;
+  document.querySelectorAll('main>section.card').forEach(s=>{s.dataset.tab=tabOf(s);s.hidden=s.dataset.tab!==name});
+  document.querySelectorAll('.tabs [data-tabbtn]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tabbtn===name)));
+  try{localStorage.setItem(TAB_KEY,name)}catch(e){}
+  if(name==='overview'&&map.on)renderMap();
+}
+function initTabs(){
+  if(ALL_TABS){document.querySelector('.tabs').style.display='none';return}
+  let t='overview';try{t=localStorage.getItem(TAB_KEY)==='worksheet'?'worksheet':'overview'}catch(e){}
+  showTab(t);
+  document.addEventListener('click',e=>{
+    const tb=e.target.closest('[data-tabbtn]');if(tb){showTab(tb.dataset.tabbtn);window.scrollTo(0,0);return}
+    // A link to a section on the other tab opens that tab first, then the browser scrolls to it.
+    const a=e.target.closest('a[href^="#"]');if(a){const el=document.querySelector(a.getAttribute('href'));const s=el&&el.closest('main>section.card');if(s&&s.hidden)showTab(tabOf(s))}
+  },true);
+}
+const openTabFor=el=>{const s=el&&el.closest('main>section.card');if(s&&s.hidden)showTab(tabOf(s))};
+
+/* ---------- Units inside the fields, and the Info panels ---------- */
+function initUnits(){document.querySelectorAll('input[data-unit]').forEach(i=>{const w=document.createElement('span');w.className='unitbox';w.dataset.unit=i.dataset.unit;i.parentNode.insertBefore(w,i);w.appendChild(i)})}
+function toggleInfo(b){const p=$(b.dataset.info),open=p.hidden;p.hidden=!open;b.setAttribute('aria-expanded',String(open));b.textContent=open?'Hide info':'Info'}
+
+/* ---------- Mic: the browser's own speech recognition (Chrome, Edge, Safari on iPhone, iPad, Mac and Android) ----------
+   Chrome and Edge send the audio to Google to turn it into text, so they need a connection. Safari uses Apple's
+   speech service (on-device on newer iPhones). The app only receives the text. Where the browser has none
+   (Firefox, some in-app browsers, home-screen apps on some iPhones) the keyboard's microphone key does the same job. */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let mic=null;
+const micMsg=(target,t)=>{const el=document.querySelector(`[data-miclive="${target}"]`);if(el)el.textContent=t};
+function micUI(){document.querySelectorAll('[data-mic]').forEach(b=>{const on=!!(mic&&mic.on&&mic.target===b.dataset.mic);b.setAttribute('aria-pressed',String(on));b.textContent=on?'Stop mic':'Mic'})}
+function stopMic(msg){if(!mic)return;const m=mic;m.on=false;try{m.rec.stop()}catch(e){}micMsg(m.target,msg||'Mic off.');micUI()}
+const MIC_ERR={'not-allowed':'Microphone permission was refused. Allow the microphone for this site in the browser settings, then tap Mic again.',
+  'service-not-allowed':'Voice input is off on this device. On iPhone turn on Settings → General → Keyboard → Enable Dictation, or use the keyboard microphone key.',
+  'network':'Voice input in this browser needs a connection. Use the microphone key on the phone keyboard instead; it can work offline.',
+  'audio-capture':'No microphone was found.','language-not-supported':'English voice input is not available in this browser.'};
+function startMic(target){
+  if(mic&&mic.on){const same=mic.target===target;stopMic();if(same)return}
+  const box=$(target);if(target==='pasteHeights')$('voiceBox').open=true;
+  if(!SR){micMsg(target,'This browser has no built-in voice input. Tap the box and use the microphone key on the phone keyboard instead.');box.focus();return}
+  let rec;try{rec=new SR()}catch(e){micMsg(target,'Voice input could not start here. Use the microphone key on the phone keyboard.');return}
+  rec.lang='en-US';rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;
+  const m={rec,target,on:true,fails:0};mic=m;
+  rec.onresult=e=>{
+    let fin='',part='';
+    for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)fin+=r[0].transcript+' ';else part+=r[0].transcript}
+    if(fin.trim()){m.fails=0;const sep=target==='pasteHeights'?', ':' ';box.value=(box.value.trim()?box.value.replace(/[\s,]*$/,'')+sep:'')+fin.trim();box.dispatchEvent(new Event('input',{bubbles:true}))}
+    micMsg(target,part?'Hearing: '+part:'Listening…');
+  };
+  rec.onerror=e=>{if(MIC_ERR[e.error]){m.on=false;micMsg(target,MIC_ERR[e.error]);micUI()}};
+  // Browsers stop listening after a pause; keep going until the Sailor taps Stop.
+  rec.onend=()=>{if(!m.on||mic!==m)return;if(++m.fails>8){stopMic('Mic stopped after a long pause. Tap Mic to go on.');return}try{rec.start()}catch(e){stopMic()}};
+  try{rec.start();micMsg(target,target==='pasteHeights'?'Listening… say each wave as it breaks: "two spilling, three plunging".':'Listening… say the report, then tap Stop mic and Read report.')}
+  catch(e){m.on=false;micMsg(target,'Could not start the microphone. Use the microphone key on the phone keyboard.')}
+  micUI();
+}
+
 function init(){
   try{
+    initUnits();
     buildWaveGrid();buildPad();
     installCustom();fillRegions();fillBeaches();
     const savedAt=restore();
     if(isBlank($('siteName').value))$('siteName').value=beach().name;
     lastBeachName=$('siteName').value===beach().name?beach().name:'';
+    initTabs();
     renderBeach();renderMap();initMapDrag();
 
     document.addEventListener('click',e=>{
       const sb=e.target.closest('[data-scenario]');if(sb){loadScenario(sb.dataset.scenario);return}
+      const ib=e.target.closest('[data-info]');if(ib){toggleInfo(ib);return}
+      const mc=e.target.closest('[data-mic]');if(mc){startMic(mc.dataset.mic);return}
       const bb=e.target.closest('[data-beach]');if(bb){$('beachId').value=bb.dataset.beach;onBeachChange();return}
       if(e.target.closest('#mapShow')){map.on=true;renderMap();return}
       if(e.target.closest('#ovEstUse')){selEnd=null;noaaFill(false);return}
@@ -1595,7 +1730,7 @@ function init(){
     $('clearAll').addEventListener('click',clearForm);
     $('noaaFill').addEventListener('click',()=>{selEnd=null;noaaFill(false)});
     $('noaaFillSel').addEventListener('click',()=>noaaFill(true));
-    $('noaaManual').addEventListener('click',()=>{setManual();calculate();$('heightCounts').scrollIntoView({behavior:'smooth',block:'center'})});
+    $('noaaManual').addEventListener('click',()=>{setManual();calculate();openTabFor($('heightCounts'));$('editCounts').open=true;$('heightCounts').scrollIntoView({behavior:'smooth',block:'center'})});
     $('spark').addEventListener('click',e=>{const link=LINKS[beach().id],pts=wavePoints(link);if(pts.length<2)return;const r=e.currentTarget.getBoundingClientRect(),t=pts[0].t+clamp((e.clientX-r.left)/r.width,0,1)*(pts[pts.length-1].t-pts[0].t);selEnd=pts.reduce((a,p)=>Math.abs(p.t-t)<Math.abs(a.t-t)?p:a).t;renderNoaa()});
     window.addEventListener('resize',()=>{if(map.on)renderMap()});
     $('dtgNow').addEventListener('click',()=>{$('dtg').value=nowDTG();calculate()});

@@ -157,3 +157,11 @@ Expected result: 13 PASS, 0 failures. Known-good values: sample A = 4.0, B = 16.
 - ALPHA, MSI and the highest-33 rows stay blank below 33 waves. The 100-wave table is filled only when every wave was tapped on the pad (order and breaker type known). Tide table is left blank. Highest-33 rows are filled only when there are 4 or fewer heights.
 - **Tables:** the sheet as received printed correction tables that differed from the app's in 112 cells (surging table shifted one column, spilling 70 % row shifted, spilling 10 % at 3.5 ft printed -2.0, period rows 16/15/12/8, wind rows 26-30, 22-25, 16-20, 11-15, and row labels 22-25 / 6-10). The team chose the app's tables, so the packaged sheet's page 1 was rewritten to match them (incremental update of the page content; fields unchanged). The app's tables still need checking against the official publication.
 - Smoke test: 64 checks (pypdf optional for the field and table checks).
+
+## Tabs, Mic, Info, units (5 Nov, afternoon)
+
+- **Tabs:** Overview (overview + NOAA cards) and Worksheet (everything else). Last tab is remembered (`surob-msi-v3-tab`). A link to a section on the other tab switches first. Print shows every section. `?all` shows every section with no tabs; the smoke test uses it.
+- **Mic** (pad and report box): the browser's `SpeechRecognition` / `webkitSpeechRecognition`, so it works in Chrome, Edge and Safari (iPhone, iPad, Mac, Android). Chrome and Edge send audio to Google and need a connection; Safari uses Apple's service. Final text is appended to the box and the existing word parser does the rest. Restarts after pauses until Stop. With no engine (Firefox, some in-app browsers, some iPhone home-screen apps) it points to the keyboard microphone, which can work offline. Disclosed in section 10 and the README.
+- **Info:** breaker type and wave height panels on the pad, with drawings made for this app and text summarised from NTTP 3-59.3M / MCRP 2-10.3 Appendix D (Apr 2024). His reference images and PDF were not copied (unknown image source; the PDF's file information has a personal name).
+- **Units** moved into the fields (`data-unit`, wrapped by `initUnits()`).
+- Smoke test: 74 checks, including a stand-in speech engine.
