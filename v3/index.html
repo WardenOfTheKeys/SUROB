@@ -137,6 +137,14 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
 .micbtn{background:#fff;color:#111827;border:1px solid #cbd5e1}
 .micbtn[aria-pressed=true]{background:#b91c1c;color:#fff;border-color:#b91c1c}
 .miclive{font-size:13px;color:#334155;margin-top:6px;min-height:18px}
+.wavelog{margin-top:10px;border:1px solid #e2e8f0;border-radius:14px;background:#fff;padding:8px 10px}
+.wlhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px}
+.wavelog ol{list-style:none;margin:0;padding:0;max-height:232px;overflow-y:auto}
+.wavelog li{display:grid;grid-template-columns:34px 58px minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:5px 0;border-top:1px solid #f1f5f9;font-size:14px;font-variant-numeric:tabular-nums}
+.wavelog li:first-child{border-top:0}.wavelog li:first-child:not(.empty){background:#eff6ff;border-radius:8px}
+.wavelog li.empty{display:block;color:#64748b;font-size:13px}
+.wavelog .wn{color:#475569;text-align:right}.wavelog .wh{font-weight:800}.wavelog .wt.none{color:#94a3b8}.wavelog .wc{color:#64748b;font-size:12px}
+.wavelog button{min-height:32px;padding:4px 10px;font-size:12px}
 /* Zero page margin stops the browser printing its header/footer (file path, URL, date) on PDFs. */
 @page{margin:0}
 @media print{header,.no-print,button,.livebar,.tabs{display:none!important}[data-tab][hidden]{display:block!important}body{background:white;padding:12mm}.card,.result{box-shadow:none;break-inside:avoid}.breakdown{grid-template-columns:repeat(8,1fr)}details{display:block}details>*{display:block}}
@@ -300,6 +308,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <div class="miclive" data-miclive="pasteHeights"></div>
     </div>
     <div class="progress" id="waveProgress"><div></div></div>
+    <div class="wavelog no-print"><div class="wlhead"><b>Recorded waves</b><span class="small" id="waveLogHead"></span></div><ol id="waveLog" aria-live="polite"></ol><div class="small" id="waveLogNote"></div></div>
     <div class="summary-grid" aria-label="Calculated wave count results">
       <div class="sum"><b>Waves counted</b><strong id="totalWavesOut">0</strong><span>target is 100</span></div>
       <div class="sum"><b>A / ALPHA avg ft</b><strong id="alphaRawOut">0.00</strong><span>call round <b id="alphaReportOut" style="display:inline;font-size:12px">0.0</b> ft</span></div>
@@ -653,7 +662,7 @@ function noaaFill(useSel){
   if(fromSample)['pCount','sCount','xCount','driftFeet','driftMinutes','foxtrotFlank','golfFrom','golfTo','golfWidth','secondaryHeight','scenarioId'].forEach(id=>{const el=$(id);if(el.tagName==='SELECT')el.selectedIndex=0;else el.value=el.defaultValue});
   Object.entries(w.patch).forEach(([id,v])=>{const el=$(id);if(el)el.value=v});
   $('entrySource').value='noaa';$('noaaEnd').value=String(w.end);$('srcNote').value=w.note;selEnd=w.end;
-  tapHistory=[];$('undoTap').disabled=true;openBigIfUsed();calculate();
+  tapHistory=[];waveLog=[];$('undoTap').disabled=true;openBigIfUsed();calculate();
 }
 function setManual(){if($('entrySource').value==='noaa'){$('entrySource').value='manual';$('noaaEnd').value=''}}
 
@@ -1058,6 +1067,7 @@ function applyHeights(live){
   if(getHeightList().length&&!pasteLive){if(live){$('pasteMsg').textContent='Waves were already tapped. Tap Apply to replace them with these.';return}if(!confirm('Replace the current wave counts with these?'))return}
   setManual();setCountsFromList(vals);tapHistory=[];$('undoTap').disabled=true;pasteLive=true;lastWave='';
   if(typed.length)['pCount','sCount','xCount'].forEach(id=>$(id).value=typed.filter(w=>w.type===id).length);
+  waveLog=waves.map(w=>({h:clamp(roundHalf(w.h),0,MAX_HEIGHT),type:w.type||null,t:null}));
   $('pasteMsg').textContent=`${live?'Heard':'Applied'} ${vals.length} wave${vals.length>1?'s':''}${typed.length?`, ${typed.length} with a breaker type`:''}.`+(bad?` Skipped ${bad} word${bad>1?'s':''} the app could not use.`:'')+(over?` ${over} value${over>1?'s':''} above ${MAX_HEIGHT} ft counted as ${MAX_HEIGHT} ft.`:'');
   calculate();
 }
@@ -1143,8 +1153,7 @@ function sheetValues(){
   const yd=num($('visibilityYards').value);if(yd>0)put('bpt_visibility_mi',yd>=9999?'10+':fmt(yd/1760,1));
   const wx=v('visibility').toLowerCase();[['unrestricted',/unrestrict/],['overcast',/overcast|cloud/],['foggy',/fog/],['hazy',/haz/],['clear',/clear/]].forEach(([k,re])=>{if(re.test(wx))f['bpt_wx_'+k]=true});
   // 100-wave table: only when every wave was tapped on the pad, so the order and breaker type of each wave are known.
-  const taps=tapHistory.filter(Array.isArray);
-  if(taps.length&&taps.length===tapHistory.length&&taps.length===c.total&&c.total<=100)taps.forEach((ids,i)=>{const k='wave_'+String(i+1).padStart(3,'0');put(k+'_ht',n1(num($(ids[0]).dataset.h)));if(ids[1])put(k+'_type',{pCount:'P',sCount:'S',xCount:'X'}[ids[1]])});
+  if(waveLog.length&&waveLog.length===c.total&&c.total<=100)waveLog.forEach((w,i)=>{const k='wave_'+String(i+1).padStart(3,'0');put(k+'_ht',n1(w.h));if(w.type)put(k+'_type',TYPE_LETTER[w.type])});
   // Breaker period computation
   if(c.elapsed>0){put('bpc_start',v('startTime'));put('bpc_stop',v('stopTime'));put('bpc_total_seconds',fmt(c.elapsed,0));put('bpc_charlie',fmt(c.charlieRaw,2))}
   // Highest 33 waves: height x occurrence (4 rows on the sheet)
@@ -1188,7 +1197,7 @@ async function sheetDownload(filled){
     if(!filled){saveBlob(new Blob([binBytes(src)],{type:'application/pdf'}),'SUROB-MSI-data-sheet-blank.pdf');msg.textContent='Saved the blank data sheet. It can be printed or filled in any PDF app.';return}
     const vals=sheetValues(),n=Object.keys(vals).length;
     saveBlob(new Blob([binBytes(fillPdf(src,vals))],{type:'application/pdf'}),sheetName());
-    const c=lastCalc,taps=tapHistory.length&&tapHistory.every(Array.isArray)&&tapHistory.length===c.total;
+    const c=lastCalc,taps=waveLog.length&&waveLog.length===c.total;
     msg.textContent=`Saved with ${n} fields filled from the worksheet. Every field can still be edited in the PDF app.`+(c.total<33?' ALPHA and MSI are left blank until 33 waves are counted.':'')+(c.total&&!taps?' The 100-wave table is filled only when every wave was tapped on the pad.':'')+' Check it against the paper sheet.';
   }catch(e){msg.textContent=`Could not make the data sheet (${e.message||e}). Open the page once with a connection and try again.`}
 }
@@ -1280,6 +1289,7 @@ function getHeightList(){
 }
 function setCountsFromList(list){
   const counts={};
+  waveLog=[];
   list.forEach(v=>{const h=clamp(roundHalf(v),0,MAX_HEIGHT);counts[h]=(counts[h]||0)+1});
   document.querySelectorAll('.hcount').forEach(inp=>{inp.value=counts[num(inp.dataset.h)]||0});
   openBigIfUsed();
@@ -1300,15 +1310,37 @@ function padWave(h){
   const hi=$(hId(h)),ids=[hi.id];hi.value=int(hi.value)+1;
   if(padType){const t=$(padType);t.value=int(t.value)+1;ids.push(padType)}
   setManual();pasteLive=false;tapHistory.push(ids);$('undoTap').disabled=false;
+  waveLog.push({h,type:padType||null,t:Date.now(),ref:ids});
   if(navigator.vibrate)try{navigator.vibrate(8)}catch(_){}
   lastWave=`${fmt(h,1)} ft ${padType?TYPE_NAME[padType]:'(no breaker type)'}`;
   calculate();
 }
+/* ---------- Recorded waves: each wave as it goes in, newest first ---------- */
+// One entry per wave tapped on the pad or heard by voice: height, breaker type id, time. Bulk fills (sample, NOAA,
+// edited totals, a scanned sheet) replace the counts and clear this list.
+let waveLog=[];
+const TYPE_LETTER={sCount:'S',pCount:'P',xCount:'X'};
+function renderWaveLog(total){
+  const box=$('waveLog');if(!box)return;
+  setText('waveLogHead',waveLog.length?`${waveLog.length} of 100 · newest first`:'');
+  const extra=total-waveLog.length;
+  const rows=waveLog.map((w,i)=>({w,i})).reverse().map(({w,i})=>`<li><b class="wn">${i+1}</b><span class="wh">${fmt(w.h,1)} ft</span><span class="wt ${w.type?'':'none'}">${w.type?TYPE_NAME[w.type]:'no type'}</span><span class="wc">${w.t?new Date(w.t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}):'voice'}</span><button type="button" class="ghost" data-rmwave="${i}" aria-label="Remove wave ${i+1}">Remove</button></li>`).join('');
+  box.innerHTML=rows||`<li class="empty">${total?'':'No waves yet. The first one you tap or say shows here as wave 1.'}</li>`;
+  $('waveLogNote').textContent=extra>0?`${extra} wave${extra>1?'s':''} came in as totals (sample, NOAA estimate, scanned sheet or edited totals) and ${extra>1?'are':'is'} not listed one by one.`:'';
+}
+function removeWave(i){
+  const w=waveLog[i];if(!w)return;
+  const hi=$(hId(w.h));hi.value=Math.max(0,int(hi.value)-1);
+  if(w.type){const t=$(w.type);t.value=Math.max(0,int(t.value)-1)}
+  if(w.ref){const k=tapHistory.indexOf(w.ref);if(k>=0)tapHistory.splice(k,1);$('undoTap').disabled=!tapHistory.length}
+  waveLog.splice(i,1);lastWave='';calculate();
+}
 function renderPad(total){
+  renderWaveLog(total);
   HEIGHTS.forEach(h=>{const s=$('pc_'+hId(h));if(s)s.textContent=int($(hId(h)).value)});
   setText('padS',int($('sCount').value));setText('padP',int($('pCount').value));setText('padX',int($('xCount').value));
   document.querySelectorAll('[data-btype]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.btype===padType)));
-  $('padLast').innerHTML=total&&lastWave?`Wave ${total}: <b>${esc(lastWave)}</b>`:total?`${total} waves so far.`:`<b>${padType?'Now tap the height of each wave.':'Pick a breaker type, then tap the height.'}</b>`;
+  $('padLast').innerHTML=total&&lastWave?`Wave ${total}: <b>${esc(lastWave)}</b>`:total?`${total} wave${total>1?'s':''} so far.`:`<b>${padType?'Now tap the height of each wave.':'Pick a breaker type, then tap the height.'}</b>`;
 }
 
 /* ---------- Craft ---------- */
@@ -1568,7 +1600,7 @@ function save(){
   try{
     const f={};
     document.querySelectorAll('input[id],select[id],textarea[id]').forEach(el=>{f[el.id]=el.type==='checkbox'?el.checked:el.value});
-    localStorage.setItem(STORE_KEY,JSON.stringify({v:9,f,timerStart,savedAt:Date.now()}));
+    localStorage.setItem(STORE_KEY,JSON.stringify({v:9,f,timerStart,log:waveLog.map(({h,type,t})=>({h,type,t})),savedAt:Date.now()}));
   }catch(e){storageOk=false}
 }
 function restore(){
@@ -1577,6 +1609,7 @@ function restore(){
     const s=JSON.parse(raw);restoring=true;
     Object.entries(s.f||{}).forEach(([id,v])=>{const el=$(id);if(!el)return;if(el.type==='checkbox')el.checked=!!v;else el.value=v});
     if(s.timerStart)timerStart=s.timerStart;
+    waveLog=Array.isArray(s.log)?s.log.filter(w=>w&&Number.isFinite(w.h)).map(w=>({h:w.h,type:TYPE_NAME[w.type]?w.type:null,t:w.t||null})):[];
     if(s.f&&s.f.regionId&&REGIONS.some(r=>r.id===s.f.regionId)){$('regionId').value=s.f.regionId;fillBeaches(s.f.beachId)}
     restoring=false;openBigIfUsed();return s.savedAt||Date.now();
   }catch(e){restoring=false;return null}
@@ -1596,7 +1629,7 @@ function resetFields(){
     else if(el.tagName==='SELECT'){const i=[...el.options].findIndex(o=>o.defaultSelected);el.selectedIndex=i<0?0:i}
     else el.value=el.defaultValue;
   });
-  timerStart=null;clearInterval(ticker);tapHistory=[];$('undoTap').disabled=true;pasteLive=false;lastWave='';
+  timerStart=null;clearInterval(ticker);tapHistory=[];waveLog=[];$('undoTap').disabled=true;pasteLive=false;lastWave='';
   $('restoreNotice').style.display='none';$('pasteMsg').textContent='';$('bigWaves').open=false;
   $('regionId').value=keepR;fillBeaches(keepB);$('siteName').value=beach().name;lastBeachName=beach().name;selEnd=null;
   tick();updateTimerUI();
@@ -1604,7 +1637,7 @@ function resetFields(){
 function loadScenario(k){
   const sc=SCENARIOS[k];if(!sc)return;
   if((getHeightList().length||num($('totalSeconds').value)>0)&&!confirm(`Replace current entries with sample ${sc.label}?`))return;
-  resetFields();
+  resetFields();waveLog=[];tapHistory=[];$('undoTap').disabled=true;
   Object.entries(sc.f).forEach(([id,v])=>{const el=$(id);if(el)el.value=v});
   $('scenarioId').value=sc.label;$('dtg').value=nowDTG();
   openBigIfUsed();calculate();
@@ -1672,6 +1705,7 @@ function init(){
     document.addEventListener('click',e=>{
       const sb=e.target.closest('[data-scenario]');if(sb){loadScenario(sb.dataset.scenario);return}
       const ib=e.target.closest('[data-info]');if(ib){toggleInfo(ib);return}
+      const rw=e.target.closest('[data-rmwave]');if(rw){removeWave(+rw.dataset.rmwave);return}
       const mc=e.target.closest('[data-mic]');if(mc){startMic(mc.dataset.mic);return}
       const bb=e.target.closest('[data-beach]');if(bb){$('beachId').value=bb.dataset.beach;onBeachChange();return}
       if(e.target.closest('#mapShow')){map.on=true;renderMap();return}
@@ -1691,7 +1725,7 @@ function init(){
       calculate();
     });
     $('undoTap').addEventListener('click',()=>{
-      const id=tapHistory.pop();if(id){[].concat(id).forEach(x=>{const i=$(x);i.value=Math.max(0,int(i.value)-1)});lastWave='';calculate()}
+      const id=tapHistory.pop();if(id){[].concat(id).forEach(x=>{const i=$(x);i.value=Math.max(0,int(i.value)-1)});const k=waveLog.findIndex(w=>w.ref===id);if(k>=0)waveLog.splice(k,1);lastWave='';calculate()}
       $('undoTap').disabled=!tapHistory.length;
     });
     const onEdit=e=>{

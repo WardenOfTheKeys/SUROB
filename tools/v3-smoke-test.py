@@ -54,6 +54,12 @@ with sync_playwright() as p:
     pg.click("#undoTap")
     pad = (T("totalWavesOut"), pg.input_value("#pCount"), pg.input_value("#h30"), T("padS"))
     check("undo takes back height and type", pad == ("3", "0", "0", "3"), str(pad))
+    log = pg.eval_on_selector_all("#waveLog li", "els => els.map(e => e.innerText.replace(/[\s]+/g, ' ').trim())")
+    check("recorded waves list, newest first", len(log) == 3 and log[0].startswith("3 2.0 ft spilling") and log[2].startswith("1 2.0 ft spilling"), str(log))
+    pg.click("[data-rmwave='0']")
+    rm = (T("totalWavesOut"), pg.input_value("#sCount"), pg.input_value("#h20"), len(pg.query_selector_all("#waveLog li")))
+    check("Remove takes one wave out of the counts", rm == ("2", "2", "2", 2), str(rm))
+    pg.click("[data-padh='2']")
 
     for k, want in [("A", "4.0"), ("B", "16.8"), ("C", "3.2")]:
         pg.click(f"[data-scenario={k}]")
