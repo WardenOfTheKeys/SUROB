@@ -16,7 +16,7 @@ The calculator never makes the GO / NO-GO call. The BPTC or SRM does. Do not ent
 
 | | |
 |---|---|
-| **Count** | One pad for each wave: pick how it broke (spilling, plunging, surging; it stays picked), then tap its height. One tap records both. Or tap **Mic** (or use the keyboard's dictation) and say them ("two spilling, three plunging"); the counts fill in as you talk. **Info** shows how to judge breaker type and height. Optional spoken count every 10 waves. |
+| **Count** | One pad for each wave: pick how it broke (spilling, plunging, surging; it stays picked), then tap its height. One tap records both. Or tap **Mic** and say them into the keyboard's dictation ("two spilling, three plunging"); the counts fill in as you talk. **Info** shows how to judge breaker type and height. Optional spoken count every 10 waves. |
 | **Speak or scan a report** | Say the whole report ("Alpha three and a half, Bravo five, …"), or scan a handwritten sheet with the phone's text recognition. You check every value before it goes in. |
 | **Worksheet** | ALPHA to HOTEL, step-by-step verification, the BPT communicator call ready to copy, print or PDF. |
 | **Data sheet (PDF)** | The 2-page fillable SUROB / MSI data sheet, blank or filled from the worksheet: MSI calculation, BPT calls, 100-wave table (in tap order, with breaker type), breaker period and highest-33 computation. Every field stays editable. Works offline. |
@@ -45,7 +45,6 @@ NOAA estimates count breaker type, littoral current and secondary wave as 0, and
 | NWS gridpoint forecast (api.weather.gov) | 5-day wave and wind forecast |
 | Esri World Imagery | Satellite map, only when opened |
 | The phone's own dictation and text recognition (Apple, Google) | Speaking or scanning a report. The app receives only the text. |
-| The browser's speech recognition (Chrome / Edge: Google, needs a connection; Safari: Apple) | The **Mic** button. The app receives only the text and stores no audio. |
 | Claude Code (Anthropic Claude Opus 5.5) | Writing and reviewing the code |
 
 All data is public. No AI runs inside the app. The NOAA data is packaged with the app so it works offline, and refreshed every 3 hours.

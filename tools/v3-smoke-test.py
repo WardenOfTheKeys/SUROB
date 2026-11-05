@@ -279,15 +279,8 @@ with sync_playwright() as p:
     check("no sideways scroll at 390px", w <= 390, f"{w}px")
     check("no page errors", not errs, "; ".join(errs))
 
-    # Tabs, Info, units in fields and the Mic (with a stand-in speech engine that "hears" two waves).
-    fake_sr = """window.SpeechRecognition = class { constructor(){ this.lang=''; }
-      start(){ window.__micStarted = (window.__micStarted||0) + 1; const me=this;
-        if (window.__micStarted > 1) return;
-        setTimeout(() => { const r = [{0:{transcript:'two spilling three'}, isFinal:true, length:1}, {0:{transcript:'plunging'}, isFinal:true, length:1}];
-          r.item = i => r[i]; me.onresult && me.onresult({resultIndex:0, results:r}); }, 50); }
-      stop(){ this.onend && setTimeout(() => this.onend(), 0); } };"""
+    # Tabs, Info, units in fields and the Mic (opens the box for the keyboard's dictation).
     tc = b.new_context(viewport={"width": 390, "height": 844}, service_workers="block")
-    tc.add_init_script(fake_sr)
     tp = tc.new_page()
     terrs = []
     tp.on("pageerror", lambda e: terrs.append(str(e)))
@@ -307,23 +300,21 @@ with sync_playwright() as p:
     unit = tp.evaluate("getComputedStyle(document.getElementById('windSpeed').parentElement,'::after').content")
     check("units sit inside the fields", unit == '"kts"' and "kts" not in tp.inner_text("label[for=windSpeed]"), unit)
     tp.click("[data-mic=pasteHeights]")
+    focused = tp.evaluate("document.activeElement.id")
+    check("Mic opens the box for keyboard dictation", focused == "pasteHeights" and tp.evaluate("document.getElementById('voiceBox').open") and "keyboard" in tp.inner_text("[data-miclive=pasteHeights]"), focused)
+    tp.keyboard.type("two spilling three plunging")
     tp.wait_for_timeout(700)
-    heard = (tp.input_value("#pasteHeights"), tp.inner_text("#totalWavesOut"), tp.input_value("#sCount"), tp.input_value("#pCount"))
-    check("Mic fills the waves as they are heard", heard[1:] == ("2", "1", "1") and tp.get_attribute("[data-mic=pasteHeights]", "aria-pressed") == "true", str(heard))
-    tp.click("[data-mic=pasteHeights]")
-    check("Mic stops", tp.get_attribute("[data-mic=pasteHeights]", "aria-pressed") == "false" and "Mic off" in tp.inner_text("[data-miclive=pasteHeights]"))
-    tp.evaluate("window.SpeechRecognition = undefined; window.webkitSpeechRecognition = undefined")
+    heard = (tp.inner_text("#totalWavesOut"), tp.input_value("#sCount"), tp.input_value("#pCount"))
+    check("dictated waves fill the counts", heard == ("2", "1", "1"), str(heard))
     w = tp.evaluate("document.documentElement.scrollWidth")
     check("tabs: no sideways scroll at 390px", w <= 390 and not terrs, f"{w}px " + "; ".join(terrs))
     tc.close()
-    nc = b.new_context(service_workers="block")
-    nc.add_init_script("delete window.SpeechRecognition; delete window.webkitSpeechRecognition;")
-    np_ = nc.new_page()
-    np_.goto(base + "/index.html?all")
-    np_.wait_for_timeout(300)
-    np_.click("[data-mic=scanText]")
-    check("no voice engine: points to the keyboard mic", "keyboard" in np_.inner_text("[data-miclive=scanText]"), np_.inner_text("[data-miclive=scanText]"))
-    nc.close()
+    rp = b.new_context(service_workers="block").new_page()
+    rp.goto(base + "/index.html?all")
+    rp.wait_for_timeout(300)
+    rp.click("[data-mic=scanText]")
+    check("report Mic opens the report box", rp.evaluate("document.activeElement.id") == "scanText" and "Read report" in rp.inner_text("[data-miclive=scanText]"))
+    rp.context.close()
 
     # Offline: one visit with a connection installs the service worker, then the app opens with no network.
     ctx = b.new_context()

@@ -226,9 +226,9 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
 
   <section class="card" id="scan">
     <h2>Speak, scan or paste a report</h2>
-    <p class="small"><b>Speak it:</b> tap <b>Mic</b>, or tap the box and the microphone on the phone keyboard, and say the report: "Alpha three and a half, Bravo five, Charlie nine seconds, Delta twenty percent plunging seventy percent spilling ten percent surging, Echo ten right, Foxtrot point five knots left, Golf two to four lines one hundred fifty feet, Hotel twelve knots at forty onshore right." Then tap <b>Read report</b>.</p>
+    <p class="small"><b>Speak it:</b> tap <b>Mic</b> (or tap the box), then the microphone on the phone keyboard, and say the report: "Alpha three and a half, Bravo five, Charlie nine seconds, Delta twenty percent plunging seventy percent spilling ten percent surging, Echo ten right, Foxtrot point five knots left, Golf two to four lines one hundred fifty feet, Hotel twelve knots at forty onshore right." Then tap <b>Read report</b>.</p>
     <p class="small"><b>Scan it:</b> on iPhone, tap the box and choose <b>Scan Text</b>. On Android, use Google Lens <b>Copy text</b> on the sheet and paste here.</p>
-    <p class="small">Works for a finished report (ALPHA to HOTEL) or a raw worksheet (wave tally such as <b>1.5 ft: 12</b>, start/stop or total seconds, P/S/X counts, drift). You check every value in the table before it goes into the worksheet. The phone's own dictation and text recognition, or the browser's voice input behind <b>Mic</b>, do the listening and reading; the app itself sends nothing. The GO / NO-GO entry and names are never imported.</p>
+    <p class="small">Works for a finished report (ALPHA to HOTEL) or a raw worksheet (wave tally such as <b>1.5 ft: 12</b>, start/stop or total seconds, P/S/X counts, drift). You check every value in the table before it goes into the worksheet. The phone's own dictation and text recognition do the listening and reading; this app sends nothing. The GO / NO-GO entry and names are never imported.</p>
     <textarea id="scanText" placeholder="ALPHA 3.5 ft&#10;BRAVO 5 ft&#10;CHARLIE 9 sec&#10;DELTA 20% P 70% S 10% X&#10;ECHO 10 Right&#10;FOXTROT 0.5 kts Left&#10;GOLF 2 to 4 lines 150 ft&#10;HOTEL 12 kts at 40 onshore Right"></textarea>
     <div class="miclive" data-miclive="scanText"></div>
     <div class="btnrow no-print" style="margin-top:8px"><button type="button" class="micbtn" data-mic="scanText" aria-pressed="false">Mic</button><button type="button" class="blue" id="scanRead">Read report</button><button type="button" id="scanApply" disabled>Apply to worksheet</button><button type="button" class="secondary" id="scanPhotoBtn">Show photo to compare</button><input type="file" accept="image/*" data-role="scanPhoto" hidden></div>
@@ -307,7 +307,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <div class="sum"><b>D / DELTA %</b><strong id="deltaPctOut">0 / 0 / 0</strong><span>P / S / X</span></div>
     </div>
     <div class="btnrow no-print" style="margin-top:10px"><button type="button" class="ghost" id="clearAll">Clear form</button><label class="check speak" style="margin:0"><input id="sayCount" type="checkbox"><span>Say the count every 10 waves</span></label></div>
-    <details style="margin-top:12px" id="voiceBox"><summary>Say or paste the waves instead</summary><p class="small"><b>Hands-free:</b> tap <b>Mic</b> under the pad (Chrome or Safari, needs a connection in Chrome), or tap the box and the microphone on the phone keyboard, and say each wave as it breaks, height then type: "two spilling, two and a half plunging, three surging". A wave with no type counts the height only. The counts update as you talk, so your eyes stay on the surf. iPhone dictation and Gboard voice typing can run without a connection when the language is downloaded on the phone. You can also paste heights separated by spaces, commas or new lines. Heights are rounded to the nearest 1/2 ft.</p><textarea id="pasteHeights" placeholder="Say or paste the waves here"></textarea><div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="applyPaste">Apply</button></div><div id="pasteMsg" class="small" style="margin-top:6px"></div></details>
+    <details style="margin-top:12px" id="voiceBox"><summary>Say or paste the waves instead</summary><p class="small"><b>Hands-free:</b> tap <b>Mic</b> under the pad (or tap the box), then the microphone on the phone keyboard, and say each wave as it breaks, height then type: "two spilling, two and a half plunging, three surging". A wave with no type counts the height only. The counts update as you talk, so your eyes stay on the surf. iPhone dictation and Gboard voice typing can run without a connection when the language is downloaded on the phone. You can also paste heights separated by spaces, commas or new lines. Heights are rounded to the nearest 1/2 ft.</p><textarea id="pasteHeights" placeholder="Say or paste the waves here"></textarea><div class="btnrow" style="margin-top:8px"><button type="button" class="secondary" id="applyPaste">Apply</button></div><div id="pasteMsg" class="small" style="margin-top:6px"></div></details>
     <details style="margin-top:8px" id="editCounts"><summary>Check or edit the totals</summary>
       <h3>Waves by height</h3>
       <div class="wave-grid" id="heightCounts"></div>
@@ -469,7 +469,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
       <li>Claude Code desktop app with the Anthropic Claude Opus 5.5 model, used to write and review code.</li>
       <li>A command-line shell for file checks, and the Claude Code built-in browser preview for testing.</li>
       <li>No external libraries and no AI inside the app. Data: NOAA NDBC buoy, CO-OPS station and NWS airfield reports (7 days) and the NWS gridpoint forecast (5 days), packaged in conditions-data.js and refreshed every 3 hours. Map pictures: Esri, only when the map is opened.</li>
-      <li>Speaking and scanning use the phone's own dictation and text recognition (Apple, Google). <b>Mic</b> uses the browser's built-in speech recognition: Chrome and Edge send the audio to Google and need a connection; Safari uses Apple's speech service. The app receives only the text and stores no audio.</li>
+      <li>Speaking and scanning use the phone's own dictation and text recognition (Apple, Google). The app receives only the text.</li>
       <li>MSI tables were carried over unchanged from the original worksheet version. The team must cite the source worksheet or publication.</li>
     </ul>
   </section>
@@ -1625,38 +1625,20 @@ const openTabFor=el=>{const s=el&&el.closest('main>section.card');if(s&&s.hidden
 function initUnits(){document.querySelectorAll('input[data-unit]').forEach(i=>{const w=document.createElement('span');w.className='unitbox';w.dataset.unit=i.dataset.unit;i.parentNode.insertBefore(w,i);w.appendChild(i)})}
 function toggleInfo(b){const p=$(b.dataset.info),open=p.hidden;p.hidden=!open;b.setAttribute('aria-expanded',String(open));b.textContent=open?'Hide info':'Info'}
 
-/* ---------- Mic: the browser's own speech recognition (Chrome, Edge, Safari on iPhone, iPad, Mac and Android) ----------
-   Chrome and Edge send the audio to Google to turn it into text, so they need a connection. Safari uses Apple's
-   speech service (on-device on newer iPhones). The app only receives the text. Where the browser has none
-   (Firefox, some in-app browsers, home-screen apps on some iPhones) the keyboard's microphone key does the same job. */
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-let mic=null;
+/* ---------- Mic: opens the box for the phone keyboard's own dictation ----------
+   iPhone dictation and Android voice typing work on every browser, and offline when the language is downloaded.
+   The app only ever receives the typed text. */
 const micMsg=(target,t)=>{const el=document.querySelector(`[data-miclive="${target}"]`);if(el)el.textContent=t};
-function micUI(){document.querySelectorAll('[data-mic]').forEach(b=>{const on=!!(mic&&mic.on&&mic.target===b.dataset.mic);b.setAttribute('aria-pressed',String(on));b.textContent=on?'Stop mic':'Mic'})}
-function stopMic(msg){if(!mic)return;const m=mic;m.on=false;try{m.rec.stop()}catch(e){}micMsg(m.target,msg||'Mic off.');micUI()}
-const MIC_ERR={'not-allowed':'Microphone permission was refused. Allow the microphone for this site in the browser settings, then tap Mic again.',
-  'service-not-allowed':'Voice input is off on this device. On iPhone turn on Settings → General → Keyboard → Enable Dictation, or use the keyboard microphone key.',
-  'network':'Voice input in this browser needs a connection. Use the microphone key on the phone keyboard instead; it can work offline.',
-  'audio-capture':'No microphone was found.','language-not-supported':'English voice input is not available in this browser.'};
 function startMic(target){
-  if(mic&&mic.on){const same=mic.target===target;stopMic();if(same)return}
-  const box=$(target);if(target==='pasteHeights')$('voiceBox').open=true;
-  if(!SR){micMsg(target,'This browser has no built-in voice input. Tap the box and use the microphone key on the phone keyboard instead.');box.focus();return}
-  let rec;try{rec=new SR()}catch(e){micMsg(target,'Voice input could not start here. Use the microphone key on the phone keyboard.');return}
-  rec.lang='en-US';rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;
-  const m={rec,target,on:true,fails:0};mic=m;
-  rec.onresult=e=>{
-    let fin='',part='';
-    for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)fin+=r[0].transcript+' ';else part+=r[0].transcript}
-    if(fin.trim()){m.fails=0;const sep=target==='pasteHeights'?', ':' ';box.value=(box.value.trim()?box.value.replace(/[\s,]*$/,'')+sep:'')+fin.trim();box.dispatchEvent(new Event('input',{bubbles:true}))}
-    micMsg(target,part?'Hearing: '+part:'Listening…');
-  };
-  rec.onerror=e=>{if(MIC_ERR[e.error]){m.on=false;micMsg(target,MIC_ERR[e.error]);micUI()}};
-  // Browsers stop listening after a pause; keep going until the Sailor taps Stop.
-  rec.onend=()=>{if(!m.on||mic!==m)return;if(++m.fails>8){stopMic('Mic stopped after a long pause. Tap Mic to go on.');return}try{rec.start()}catch(e){stopMic()}};
-  try{rec.start();micMsg(target,target==='pasteHeights'?'Listening… say each wave as it breaks: "two spilling, three plunging".':'Listening… say the report, then tap Stop mic and Read report.')}
-  catch(e){m.on=false;micMsg(target,'Could not start the microphone. Use the microphone key on the phone keyboard.')}
-  micUI();
+  const box=$(target);
+  if(target==='pasteHeights'){$('voiceBox').open=true;$('editCounts').open=false}
+  box.focus();
+  try{const n=box.value.length;box.setSelectionRange(n,n)}catch(e){}
+  if(target==='pasteHeights'&&box.value.trim()&&!/[,\s]$/.test(box.value))box.value+=', ';
+  box.scrollIntoView({behavior:'smooth',block:'center'});
+  micMsg(target,target==='pasteHeights'
+    ?'Now tap the microphone on the keyboard (iPhone: bottom right; Android: top right) and say each wave as it breaks: "two spilling, three plunging". The counts update as you talk.'
+    :'Now tap the microphone on the keyboard (iPhone: bottom right; Android: top right) and say the report. Then tap Read report.');
 }
 
 function init(){

@@ -161,7 +161,7 @@ Expected result: 13 PASS, 0 failures. Known-good values: sample A = 4.0, B = 16.
 ## Tabs, Mic, Info, units (5 Nov, afternoon)
 
 - **Tabs:** Overview (overview + NOAA cards) and Worksheet (everything else). Last tab is remembered (`surob-msi-v3-tab`). A link to a section on the other tab switches first. Print shows every section. `?all` shows every section with no tabs; the smoke test uses it.
-- **Mic** (pad and report box): the browser's `SpeechRecognition` / `webkitSpeechRecognition`, so it works in Chrome, Edge and Safari (iPhone, iPad, Mac, Android). Chrome and Edge send audio to Google and need a connection; Safari uses Apple's service. Final text is appended to the box and the existing word parser does the rest. Restarts after pauses until Stop. With no engine (Firefox, some in-app browsers, some iPhone home-screen apps) it points to the keyboard microphone, which can work offline. Disclosed in section 10 and the README.
+- **Mic** (pad and report box): opens and focuses the box so the phone keyboard's own dictation does the listening (works on every browser, offline when the language is downloaded). A first version used the browser's speech recognition; it did not collect on the team's phones, so it was removed.
 - **Info:** breaker type and wave height panels on the pad, with drawings made for this app and text summarised from NTTP 3-59.3M / MCRP 2-10.3 Appendix D (Apr 2024). His reference images and PDF were not copied (unknown image source; the PDF's file information has a personal name).
 - **Units** moved into the fields (`data-unit`, wrapped by `initUnits()`).
 - Smoke test: 74 checks, including a stand-in speech engine.
