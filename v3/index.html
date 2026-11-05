@@ -787,7 +787,7 @@ function sheetNums(s){return(String(s).match(NUM_RE)||[]).map(t=>parseFloat(t.re
 function sheetFlank(s){return/\bR\s*\/\s*L\b/.test(s)?'R/L':/\b(RIGHT|RT)\b/.test(s)?'Right':/\b(LEFT|LT)\b/.test(s)?'Left':null}
 function isHalf(n){return n>=0&&n<=MAX_HEIGHT&&Math.abs(n*2-Math.round(n*2))<EPS}
 function parseSheet(text){
-  const T=wordsToNumbers(text||'').replace(/\s*percent\b/gi,'%').toUpperCase().replace(/[–—]/g,'-').replace(/°/g,' DEG ');
+  const T=wordsToNumbers(fixBreakerWords(text)).replace(/\s*percent\b/gi,'%').toUpperCase().replace(/[–—]/g,'-').replace(/°/g,' DEG ');
   const lines=T.replace(new RegExp(`\\b(${SHEET_KEYS})\\b`,'g'),'\n$1').split(/\n+/).map(l=>l.trim()).filter(Boolean);
   const f={},rep={},tally={},list=[],notes=[];let decision=false;
   const time=s=>{const m=s.match(/\d{1,2}:?\d{2}(?::?\d{2})?/);return m?m[0].replace(/:/g,''):null};
@@ -1026,7 +1026,12 @@ function wordsToNumbers(text,loose){
   // Digits mixed with words: "3 and a half", "2 point 5".
   return s.replace(/(\d+)\s+(?:and\s+)?a\s+half\b/gi,(m,d)=>String(+d+0.5)).replace(/(\d+)\s+point\s+(\d+)/gi,'$1.$2');
 }
-function spokenToDigits(s){return wordsToNumbers(s,true).toLowerCase().replace(/\b(?:feet|foot|ft)\b/g,' ')}
+// Phone dictation often hears the breaker words as everyday words. These never mean anything else in a wave count or report.
+const MISHEARD=[[/\b(?:spelling|spellings|spelled|spieling|spoiling|spilled|spills|spill|spillin|spilin)\b/gi,'spilling'],
+  [/\b(?:plunge|plunges|plunged|plunger|plungers|lunging|plumbing|lunching|plundging)\b/gi,'plunging'],
+  [/\b(?:surgery|surgeries|surgeon|surgeons|surge|surges|surged|serging|surgin|searching|sourcing)\b/gi,'surging']];
+const fixBreakerWords=s=>MISHEARD.reduce((t,[re,w])=>t.replace(re,w),String(s||''));
+function spokenToDigits(s){return wordsToNumbers(fixBreakerWords(s),true).toLowerCase().replace(/\b(?:feet|foot|ft)\b/g,' ')}
 let pasteLive=false,pasteTimer=null;
 // live: called while the Sailor is talking. It never overwrites counts that were tapped; Apply does, after a confirm.
 // A breaker word right after a height belongs to that wave: "two spilling, three plunging" (or S / P / X).
