@@ -18,6 +18,12 @@ Do not type names, unit information or real operation details into the app.
 | **Phone with no signal later** | Open the link once while you have signal. Then add it to your home screen: on iPhone tap Share, then **Add to Home Screen**. On Android tap ⋮, then **Install app**. After that it opens with no signal. |
 | **Ship's computer or USB stick** | In the app, tap **Download offline copy (.zip)**. Unzip it and open `index.html`. No install, no account, no internet. |
 
+### Is my copy the official one?
+
+Anyone can edit a copy of a web page, so check any copy you got from someone else. In the app, go to section 9 and tap **Check this copy**. It compares the copy's files with the official list on the live site and says **matches** or **does NOT match**. A copy that does not match may be old or may have been edited: get a fresh one from the link above. It needs a connection. On an unzipped copy, choose all the files in the folder when it asks.
+
+The official list is `v3/fingerprint.json`. It updates itself when the app changes on `main`. The hourly NOAA data is not part of it.
+
 ## How to use it
 
 The app has two tabs at the top.

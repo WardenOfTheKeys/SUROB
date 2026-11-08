@@ -1,0 +1,15 @@
+{
+  "app": "SUROB MSI Calculator, Version 3",
+  "made": "2026-11-08T15:37:42Z",
+  "commit": "ff946ae",
+  "combined": "8b04b04b652526597b03d1f2706138294aba1cfc815917dc46abb0be3502b158",
+  "files": {
+    "index.html": "d214555e8fcc1aab17f655715658d5ee5a33ce2a9685a69ae28fee906bcea83e",
+    "data-sheet.js": "163b4b8fa37e291705de57f900a3c9524ebf020349d08c16fbd74031fe8ea683",
+    "sw.js": "5152f27f7963fb3513fab698f229e3f06f645e783932e45c55c255f7904fbc7b",
+    "manifest.webmanifest": "329b3c1bc748b21e587c89b8affd76ed144b565c77ffee3cda6409b02766d932",
+    "icon.svg": "b00e18ce86a74be4d0c79cbd4dd4bcba883a3cb9856abeaf891166b9d7603125",
+    "icon-192.png": "2eb6ff15657f5293792cc3b87093eb2daf58b49e8553e5d797a28b3e6e5e4dad",
+    "icon-512.png": "a5f2d7a79a5697cd36ce60a2664f0660f69de210a647f67852f0f711ceda22c0"
+  }
+}
