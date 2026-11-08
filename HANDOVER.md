@@ -174,3 +174,11 @@ Expected result: 13 PASS, 0 failures. Known-good values: sample A = 4.0, B = 16.
 - Smoke test: 83 checks.
 
 - **Refresh NOAA data** (Overview, under the chart): reloads `conditions-data.js?r=…` as a script (no eval, CSP unchanged), swaps `COND`, clears the estimate, picture and live-forecast caches and redraws. Runs by itself on `online` and when the app comes back to the screen with data over 3 h old. `sw.js` (`surob-v3-3`) now saves one copy per path, so `?r=` refreshes update the saved `conditions-data.js`. Smoke test: 86 checks.
+
+## Check this copy (8 Nov)
+
+- **Section 9, Check this copy:** hashes the app's own files (SHA-256, `crypto.subtle`) and compares them with `https://wardenofthekeys.github.io/SUROB/v3/fingerprint.json`. Shows match, does NOT match (which file), or no connection (with the first 12 characters of the index.html hash). An unzipped copy (file://) cannot read its own files, so it asks the person to choose them; sw.js is optional because the offline zip does not include it.
+- `tools/make-fingerprint.py` writes `v3/fingerprint.json` (every app file except `conditions-data.js`, which changes hourly). `.github/workflows/fingerprint.yml` runs it on pushes to `main` that touch `v3/` and shares the NOAA refresh's concurrency group.
+- CSP `connect-src` adds `https://wardenofthekeys.github.io` for the list. OPEN-ME.txt in the offline zip says how to check.
+- Limits: it catches copies changed off GitHub. Anyone with write access to the repo can change the app and the list together, so keep write access to the owner and protect `main`. Someone who edits the copy can also edit out the check, so the person checking should use the official site when in doubt.
+- Smoke test: 92 checks.

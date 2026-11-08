@@ -1,0 +1,41 @@
+# Keeps v3/fingerprint.json in step with the Version 3 app files.
+# The "Check this copy" button compares any copy against this file on the live site.
+# Runs only from main, only when an app file changes (not the hourly NOAA data).
+name: Update app fingerprint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "v3/**"
+      - "!v3/conditions-data.js"
+      - "!v3/fingerprint.json"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-conditions   # same group as the NOAA refresh, so the two never push at once
+  cancel-in-progress: false
+
+jobs:
+  fingerprint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make fingerprint
+        run: python3 tools/make-fingerprint.py
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- v3/fingerprint.json; then
+            echo "No change."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add v3/fingerprint.json
+          git commit -m "Update app fingerprint"
+          git pull --rebase
+          git push

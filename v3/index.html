@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="SUROB MSI" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="theme-color" content="#0f172a" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob: https://server.arcgisonline.com; connect-src 'self' https://api.weather.gov; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob: https://server.arcgisonline.com; connect-src 'self' https://api.weather.gov https://wardenofthekeys.github.io; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" type="image/svg+xml" href="icon.svg" />
 <link rel="apple-touch-icon" href="icon-192.png" />
@@ -454,6 +454,10 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
     </ul>
     <div class="btnrow"><button type="button" id="copyDl">Download offline copy (.zip)</button></div>
     <div id="copyMsg" class="small" style="margin-top:6px"></div>
+    <h3 style="margin-top:14px">Is this the official version?</h3>
+    <p class="small">Anyone can edit a copy of a web page. <b>Check this copy</b> compares this copy's files with the official list on the live site, so a changed copy shows up. It needs a connection. The official site is <b>https://wardenofthekeys.github.io/SUROB/v3/</b>.</p>
+    <div class="btnrow"><button type="button" class="secondary" id="verifyBtn">Check this copy</button><input type="file" id="verifyPick" multiple hidden /></div>
+    <div id="verifyMsg" class="small" style="margin-top:6px"></div>
   </section>
 
   <section class="card disclose" id="about">
@@ -461,7 +465,7 @@ input[type=range]{min-height:auto;padding:0;border:0;background:none}
     <h3>Human control</h3>
     <ul>
       <li><b>Approval point:</b> only the BPTC or SRM records GO, GO with restrictions or NO-GO in section 8. The app starts every observation as PENDING.</li>
-      <li><b>Prohibited actions (enforced in code):</b> the app does not choose a decision or send data. A Content-Security-Policy allows only the app's own files and, when you tap <b>Show map</b>, map pictures from Esri (server.arcgisonline.com), and, when online, the NWS forecast for the selected beach's grid square (api.weather.gov). Without a connection the packaged forecast is used. Nothing typed into the app is ever sent. It asks for no names or other PII.</li>
+      <li><b>Prohibited actions (enforced in code):</b> the app does not choose a decision or send data. A Content-Security-Policy allows only the app's own files and, when you tap <b>Show map</b>, map pictures from Esri (server.arcgisonline.com), and, when online, the NWS forecast for the selected beach's grid square (api.weather.gov) and, when you tap <b>Check this copy</b>, the official file list (wardenofthekeys.github.io). Without a connection the packaged forecast is used. Nothing typed into the app is ever sent. It asks for no names or other PII.</li>
       <li><b>NOAA estimates:</b> wave, wind and visibility values come from public NOAA reports. The 100-wave count built from them is an estimate, marked in the overview and the verification block. An observed surf-zone count replaces it.</li>
       <li><b>Monitoring:</b> input warnings, the workflow verification block, the NOAA cross-check, and a re-confirm flag whenever inputs change after a decision.</li>
       <li><b>Escalation:</b> any red warning, CHECK note, at-limit or exceeded craft, or any mismatch with the paper worksheet goes to the BPTC or SRM. The paper worksheet is the reference.</li>
@@ -1121,6 +1125,7 @@ function openMeText(){
     'It runs with no internet and no install. The map and the live forecast need a connection; everything else works without one.',
     `NOAA reports and forecast in this copy: ${fmtWhen(Date.parse(COND&&COND.fetchedAt||Date.now()))}.`,
     'For newer data, download a new copy from https://wardenofthekeys.github.io/SUROB/v3/','',
+    'To make sure nobody changed this copy: open index.html, go to section 9 and tap Check this copy, then choose all the files in this folder. It needs a connection.','',
     'The calculator never makes the GO / NO-GO call. The BPTC or SRM does.'].join('\r\n');
 }
 async function downloadCopy(){
@@ -1132,6 +1137,52 @@ async function downloadCopy(){
     a.href=url;a.download=`SUROB-MSI-${new Date().toISOString().slice(0,10)}.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
     msg.textContent=`Saved. Unzip it and open index.html. NOAA data in the copy is from ${COND?fmtWhen(Date.parse(COND.fetchedAt)):'(none packaged)'}.`;
   }catch(e){msg.textContent=`Could not build the copy (${e.message||e}). Open the page once with a connection and try again.`}
+}
+
+/* ---------- Check this copy: compare this copy's files with the official fingerprint on the live site ---------- */
+// fingerprint.json is made by tools/make-fingerprint.py from main. conditions-data.js is not in it (the NOAA data changes hourly).
+const OFFICIAL_FP='https://wardenofthekeys.github.io/SUROB/v3/fingerprint.json';
+const VERIFY_FILES=['index.html','data-sheet.js','sw.js','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png'];
+const MUST_MATCH=['index.html','data-sheet.js'];  // the calculator and the data sheet; an unzipped copy has no sw.js
+async function sha256hex(buf){const d=await crypto.subtle.digest('SHA-256',buf);return[...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function officialPrint(){
+  const r=await fetch(OFFICIAL_FP+'?t='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw new Error('official list not available');
+  return r.json();
+}
+// mine: {file name: hex}. Shows the result; returns 'match', 'changed' or 'offline' (used by the smoke test).
+async function showVerify(mine){
+  const msg=$('verifyMsg'),code=mine['index.html']?mine['index.html'].slice(0,12):'(no index.html)';
+  let fp;
+  try{fp=await officialPrint()}
+  catch(e){msg.innerHTML=`<b style="color:var(--warn)">Could not reach the official site to compare.</b> This copy's calculator code is <b>${code}</b>. Try again with a connection.`;return'offline'}
+  const changed=Object.keys(mine).filter(n=>fp.files[n]&&fp.files[n]!==mine[n]);
+  const missing=MUST_MATCH.filter(n=>!mine[n]);
+  const when=fp.made?fmtWhen(Date.parse(fp.made)):'';
+  if(!changed.length&&!missing.length){
+    msg.innerHTML=`<b style="color:var(--ok)">✓ This copy matches the official version.</b> Calculator code <b>${code}</b>${when?`, official version of ${esc(when)}`:''}. ${Object.keys(mine).length} files checked.`;
+    return'match';
+  }
+  const what=[...changed.map(n=>esc(n)+' changed'),...missing.map(n=>esc(n)+' not chosen')].join(', ');
+  msg.innerHTML=`<b style="color:var(--bad)">✗ This copy does NOT match the official version</b> (${what}). It may be older or it may have been edited. Do not use it for planning: get a fresh copy from https://wardenofthekeys.github.io/SUROB/v3/ and tell the BPTC or SRM.`;
+  return'changed';
+}
+async function verifyServed(){
+  const msg=$('verifyMsg');msg.textContent='Checking…';
+  if(!(window.crypto&&crypto.subtle)){msg.textContent='This browser cannot check files. Open the copy in Chrome, Edge, Safari or Firefox.';return'error'}
+  const mine={};
+  for(const f of VERIFY_FILES){
+    try{const r=await fetch(f,{cache:'no-cache'});if(r.ok)mine[f]=await sha256hex(await r.arrayBuffer())}catch(e){}
+  }
+  return showVerify(mine);
+}
+// An unzipped copy (file://) cannot read its own files, so the person chooses them.
+async function verifyPicked(files){
+  const msg=$('verifyMsg');msg.textContent='Checking…';
+  if(!(window.crypto&&crypto.subtle)){msg.textContent='This browser cannot check files. Open the copy in Chrome, Edge, Safari or Firefox.';return'error'}
+  const mine={};
+  for(const f of files)if(VERIFY_FILES.includes(f.name))mine[f.name]=await sha256hex(await f.arrayBuffer());
+  return showVerify(mine);
 }
 
 /* ---------- SUROB / MSI data sheet (fillable PDF), filled in the browser with no library ---------- */
@@ -1768,6 +1819,8 @@ function init(){
     // Opened from an unzipped copy, the page cannot read its own files back, and the copy is already on hand.
     if(location.protocol==='file:')$('takeIt').querySelector('.btnrow').style.display='none',$('copyMsg').textContent='This is an offline copy. For newer NOAA data, download a new one from the web page.';
     else $('copyDl').addEventListener('click',downloadCopy);
+    if(location.protocol==='file:'){$('verifyBtn').addEventListener('click',()=>{$('verifyMsg').textContent='Choose every file in the unzipped SUROB-MSI folder (at least index.html and data-sheet.js).';$('verifyPick').click()});$('verifyPick').addEventListener('change',e=>{if(e.target.files.length)verifyPicked(e.target.files)})}
+    else $('verifyBtn').addEventListener('click',verifyServed);
     $('sheetFilled').addEventListener('click',()=>sheetDownload(true));
     $('sheetBlank').addEventListener('click',()=>sheetDownload(false));
     if(!canSpeak)document.querySelectorAll('.speak').forEach(el=>el.style.display='none');

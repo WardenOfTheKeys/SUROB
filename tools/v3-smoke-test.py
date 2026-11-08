@@ -373,6 +373,50 @@ with sync_playwright() as p:
     check("report Mic opens the report box", rp.evaluate("document.activeElement.id") == "scanText" and "Read report" in rp.inner_text("[data-miclive=scanText]"))
     rp.context.close()
 
+    # Check this copy: the official list is served from the local v3/fingerprint.json (run tools/make-fingerprint.py first).
+    import json, os, hashlib
+    v3dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "v3")
+    fp_body = open(os.path.join(v3dir, "fingerprint.json"), "rb").read()
+    fp_now = json.loads(fp_body)["files"]
+    fresh = {n: hashlib.sha256(open(os.path.join(v3dir, n), "rb").read()).hexdigest() for n in fp_now}
+    check("fingerprint.json is current (run tools/make-fingerprint.py)", fresh == fp_now)
+    vc = b.new_context(service_workers="block")
+    vp = vc.new_page()
+    verrs = []
+    vp.on("pageerror", lambda e: verrs.append(str(e)))
+    vc.route("https://wardenofthekeys.github.io/SUROB/v3/fingerprint.json*", lambda r: r.fulfill(status=200, body=fp_body, headers={"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}))
+    vp.goto(base + "/index.html?all")
+    vp.wait_for_timeout(300)
+    res = vp.evaluate("verifyServed()")
+    check("Check this copy: unchanged copy matches", res == "match" and "matches the official version" in vp.inner_text("#verifyMsg"), vp.inner_text("#verifyMsg")[:120])
+    # Someone edits the calculator: the copy no longer matches.
+    vp.route("**/index.html", lambda r: r.fulfill(status=200, body=open(os.path.join(v3dir, "index.html"), "rb").read().replace(b"MSI", b"MSl", 1), headers={"Content-Type": "text/html"}))
+    res = vp.evaluate("verifyServed()")
+    check("Check this copy: edited copy does NOT match", res == "changed" and "does NOT match" in vp.inner_text("#verifyMsg") and "index.html changed" in vp.inner_text("#verifyMsg"), vp.inner_text("#verifyMsg")[:120])
+    vp.unroute("**/index.html")
+    vc.unroute("https://wardenofthekeys.github.io/SUROB/v3/fingerprint.json*")
+    vc.route("https://wardenofthekeys.github.io/**", lambda r: r.abort())
+    res = vp.evaluate("verifyServed()")
+    check("Check this copy: no connection says so and shows the code", res == "offline" and fresh["index.html"][:12] in vp.inner_text("#verifyMsg"), vp.inner_text("#verifyMsg")[:120])
+    check("Check this copy: no console errors", not verrs, "; ".join(verrs))
+    vc.close()
+    # Unzipped copy (file://): the person chooses the files; an unzipped copy has no sw.js and still matches.
+    fc = b.new_context(service_workers="block")
+    fc.route("https://wardenofthekeys.github.io/SUROB/v3/fingerprint.json*", lambda r: r.fulfill(status=200, body=fp_body, headers={"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}))
+    fpg = fc.new_page()
+    fpg.goto("file://" + os.path.join(v3dir, "index.html") + "?all")
+    fpg.wait_for_timeout(400)
+    picks = [os.path.join(v3dir, n) for n in ["index.html", "data-sheet.js", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "conditions-data.js"]]
+    with fpg.expect_file_chooser() as fcinfo:
+        fpg.click("#verifyBtn")
+    fcinfo.value.set_files(picks)
+    for _ in range(50):  # the page's security policy blocks wait_for_function, so poll the message
+        if "official version" in fpg.inner_text("#verifyMsg"):
+            break
+        fpg.wait_for_timeout(100)
+    check("Check this copy: unzipped copy, chosen files match", "matches the official version" in fpg.inner_text("#verifyMsg"), fpg.inner_text("#verifyMsg")[:120])
+    fc.close()
+
     # Offline: one visit with a connection installs the service worker, then the app opens with no network.
     ctx = b.new_context()
     off = ctx.new_page()
